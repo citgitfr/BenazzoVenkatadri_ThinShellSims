@@ -39,16 +39,16 @@ Minimum coiled/packaging radius before material failure
 
 Topics for relevant papers/sources:
 Optimization of thin-shell deployable composite booms
-Liu et al. (2023): Folding behavior of the thin-walled lenticular deployable composite boom: Analytical analysis and many-objective optimization
+    Liu et al. (2023): Folding behavior of the thin-walled lenticular deployable composite boom: Analytical analysis and many-objective optimization
 How OpenSeesPy works
-Zhu et al. (2018): OpenSeesPy Python library for the OpenSees finite element framework
+    Zhu et al. (2018): OpenSeesPy Python library for the OpenSees finite element framework
 Use of OpenSeesPy for orthotropic shell elements (e.g. CFRP):
-Geometrically nonlinear/large deformation shell elements: ShellNLDKGT (3-node triangle) and ShellNLDKGQ (4-node quadrilateral)
-Seems like we can’t define an ABD matrix for the whole composite directly, so we need to use a LayeredShell where we specify properties for each layer and the thickness of the layers
-To create material properties for each layer, we would use the ElasticOrthotropic material properties with the orientations we want for each layer
-Cite OpenSeesPy documentation for each of these
-There really seem to be no papers on using OpenSeesPy for thin-shell CFRP – that might be our gap in the literature in itself
+    Geometrically nonlinear/large deformation shell elements: ShellNLDKGT (3-node triangle) and ShellNLDKGQ (4-node quadrilateral)
+    Seems like we can’t define an ABD matrix for the whole composite directly, so we need to use a LayeredShell where we specify properties for each layer and the thickness of the layers
+    To create material properties for each layer, we would use the ElasticOrthotropic material properties with the orientations we want for each layer
+    Cite OpenSeesPy documentation for each of these
+    There really seem to be no papers on using OpenSeesPy for thin-shell CFRP – that might be our gap in the literature in itself
 Use of LLMs to create agents that run OpenSeesPy
-Zhang et al. (2026): LLM agent framework for structural steel design
-Liu et al. (2026): A large language model-empowered agent for reliable and robust structural analysis
+    Zhang et al. (2026): LLM agent framework for structural steel design
+    Liu et al. (2026): A large language model-empowered agent for reliable and robust structural analysis
 

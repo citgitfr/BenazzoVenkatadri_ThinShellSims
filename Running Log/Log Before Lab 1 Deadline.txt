@@ -12,3 +12,4 @@ We ensured that we are both able to create and edit files and commit/push files 
 We tested that Claude Code can create a simple Python script called "hello.py" and that we can edit it.
 We set up a file structure within the GitHub repository that will help to keep our documents organized.
 Issue we encountered: Claude cannot run the Python script because Python is not installed in the virtual machine.  We spoke to Alice at office hours, and she said she will sort it out.
+See Meetings --> 10-12-26 Meeting.txt for notes on our initial planning meeting, in which we discussed our general plan for what our agents will do, what kind of design problems we're interested in, and some relevant sources.
