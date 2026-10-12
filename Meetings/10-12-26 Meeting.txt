@@ -1,0 +1,54 @@
+Things to do today:
+Articulate our project proposal/problem statement/goal in more detail
+Set up GitHub repository (not sure exactly what will be going into this)
+Set up a running log of updates to our project – shared Google Sheet or Doc?
+Figure out how to interface between Claude and Python – do we need to install Python onto AWS or will Claude run it locally?  Do we need to install anything to get it to run OpenSeesPy?
+Create a list of papers relevant to the project
+
+Things our AI agent/team of agents needs to be able to do:
+For a given design problem/set of requirements, formulate an objective function and constraints for the optimization
+Decide on an initial set of material properties/layup/geometric parameters to start the optimization
+For a given composite material and layup, define material properties in a way that OpenSeesPy can read them
+For a given set of geometric parameters, define the geometry of the part and mesh for OpenSeesPy
+For a given desired loading/set of boundary conditions, define the OpenSeesPy implementation
+Write and run OpenSeesPy code for finite element analysis for the loading case of interest
+Visualize the results from OpenSeesPy using OpsVis
+Analyze the output and check whether constraints are satisfied and objective function is minimized/maximized, and suggest adjustments to the material/layup/geometry to improve the objective function’s value
+
+Possible verification that we can do: 
+Output the objective/constraints and make sure it’s not missing any key points or doing something that wouldn’t be physically realistic
+Take the composite material/layup properties from OpenSeesPy and calculate ABD matrix so we can compare it to our known properties and ensure that the elements are being defined correctly
+Abaqus modeling of the same problem to check whether the outputs are the same (can compare visualizations and numerical values from the outputs)
+
+Possible loading cases/design problems to test:
+Might be better to stick to simple design problems (not worrying about issues like contact, folding/coiling/deployment, etc.), at least at first, to demonstrate that the agent works as intended
+Before we even start with TRAC/omega booms, it might be prudent to do simple examples with a thin, flat strip of CFRP to make sure we can get the right material properties and load it
+Then move to different geometries – tape spring, TRAC, omega boom
+Could do tests like tip loading of a cantilevered boom along different directions, center loading of a simply supported boom, and various distributed loading scenarios.  These are essentially beam bending problems but applied to these thin-shell composite booms
+Buckling under axial compressive load
+Twisting
+Coiling
+Center folding
+Will depend on OpenSeesPy capabilities
+
+Objectives:
+Minimum weight
+Buckling strength
+Maximum values of failure criteria
+Minimum coiled/packaging radius before material failure
+
+Topics for relevant papers/sources:
+Optimization of thin-shell deployable composite booms
+Liu et al. (2023): Folding behavior of the thin-walled lenticular deployable composite boom: Analytical analysis and many-objective optimization
+How OpenSeesPy works
+Zhu et al. (2018): OpenSeesPy Python library for the OpenSees finite element framework
+Use of OpenSeesPy for orthotropic shell elements (e.g. CFRP):
+Geometrically nonlinear/large deformation shell elements: ShellNLDKGT (3-node triangle) and ShellNLDKGQ (4-node quadrilateral)
+Seems like we can’t define an ABD matrix for the whole composite directly, so we need to use a LayeredShell where we specify properties for each layer and the thickness of the layers
+To create material properties for each layer, we would use the ElasticOrthotropic material properties with the orientations we want for each layer
+Cite OpenSeesPy documentation for each of these
+There really seem to be no papers on using OpenSeesPy for thin-shell CFRP – that might be our gap in the literature in itself
+Use of LLMs to create agents that run OpenSeesPy
+Zhang et al. (2026): LLM agent framework for structural steel design
+Liu et al. (2026): A large language model-empowered agent for reliable and robust structural analysis
+

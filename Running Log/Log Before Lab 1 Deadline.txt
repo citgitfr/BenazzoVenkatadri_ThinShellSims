@@ -1,0 +1,14 @@
+Format for lab report entries:
+Date
+Person (Tara or Federico)
+Entry
+
+10/12/26
+Tara
+Actions taken:
+Both Federico and I set up the AWS system and Claude desktop app on our respective computers last week.
+We set up the shared GitHub folder today.  We connected it to our VSCode apps so VSCode can see the files in our GitHub folder.
+We ensured that we are both able to create and edit files and commit/push files to the repository, and that the other can see the changes by pulling (all in VSCode).
+We tested that Claude Code can create a simple Python script called "hello.py" and that we can edit it.
+We set up a file structure within the GitHub repository that will help to keep our documents organized.
+Issue we encountered: Claude cannot run the Python script because Python is not installed in the virtual machine.  We spoke to Alice at office hours, and she said she will sort it out.

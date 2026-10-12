@@ -1,4 +1,0 @@
-Format for lab report entries:
-Date
-Person (Tara or Federico)
-Entry
