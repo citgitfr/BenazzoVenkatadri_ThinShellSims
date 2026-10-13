@@ -9,6 +9,8 @@ File structure of repository:
 
 "Initial GitHub tests" has documents that Tara and Federico used to ensure that GitHub was synced with their respective VSCode desktop apps.
 
+"Literature" contains papers from our literature review.
+
 "Meetings" contains notes of all meetings related to the project.
 
 "Running Log" contains the log files, organized by the lab report to which they correspond.
