@@ -15,4 +15,4 @@ File structure of repository:
 
 "Running Log" contains the log files, organized by the lab report to which they correspond.
 
-"Tara's Lab Reports" has PDFs of Federico's lab reports.
+"Tara's Lab Reports" has PDFs of Tara's lab reports.
