@@ -1,0 +1,25 @@
+# Conda environment for the OpenSeesPy thin-shell simulations.
+#   conda env create -f environment.yml
+#   conda activate shells
+# conda-forge only (avoids the Anaconda `defaults` channel and its ToS prompt).
+name: shells
+channels:
+  - conda-forge
+  - nodefaults
+dependencies:
+  - python=3.12
+  - numpy
+  - scipy
+  - matplotlib
+  - pyvista
+  # The MKL build of BLAS/LAPACK crashes numpy.linalg on the AWS VM
+  # (Windows error 0xc06d007f); OpenBLAS works.
+  - libblas=*=*openblas
+  - liblapack=*=*openblas
+  # Software OpenGL (llvmpipe) for VTK/PyVista on the GPU-less VM;
+  # shell_viewer.py preloads its opengl32.dll.
+  - mesalib
+  - pip
+  - pip:
+      - openseespy==3.8.0.0
+      - opsvis==1.3.7
