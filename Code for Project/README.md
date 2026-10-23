@@ -5,6 +5,8 @@ toward the design-space-exploration agent.
 
 Units throughout: N, mm, MPa, tonne (density in t/mm^3).
 
+For a plain-language account of what was done and why, see `SUMMARY.md`.
+
 ## Setup (AWS VM, no admin rights)
 
 ```
