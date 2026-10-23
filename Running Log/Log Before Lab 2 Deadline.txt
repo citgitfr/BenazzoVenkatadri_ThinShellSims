@@ -2,3 +2,9 @@ Format for lab report entries:
 Date
 Person (Tara or Federico)
 Entry
+
+10/22/26
+Federico
+- Set up a working Python environment on the AWS VM (Miniconda, "shells" env with OpenSeesPy and a fast PyVista 3D viewer), fixing a numpy crash and the lack of a GPU along the way.
+- Verified OpenSees shell elements on a 1000 x 100 x 0.1 mm aluminum cantilever plate: matches beam theory for small loads (deflection within 1.2-2.8%, stress within 0.06%), and with corotational shells matches the large-deflection elastica within 0.2-2% up to a 75% tip drop. Wide thin plates stiffen to EI/(1-nu^2) under large bending.
+- Code, results and details: Code for Project --> 10-22-26 (Federico) --> SUMMARY.md
