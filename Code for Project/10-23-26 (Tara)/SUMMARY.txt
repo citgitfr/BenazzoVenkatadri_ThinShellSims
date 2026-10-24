@@ -1,0 +1,344 @@
+SUMMARY OF WORK: PYTHON ENVIRONMENT AND CFRP LAMINATE AGENTS FOR OPENSEESPY
+
+Date:  10/23/26
+Who:   Tara, working with Claude Code (Opus 5.5) in the Claude desktop app
+Sessions covered:
+  1. "Python environment setup for ME295 project"
+     (installing Python/OpenSeesPy and re-running Federico's 10/22 models)
+  2. "OpenSeesPy CFRP ply property generator"
+     (building the four CFRP laminate agents and their Python code)
+  3. "CFRP layup with 0/90 plies"
+     (using the four agents on a [90/0] laminate and on four 4-ply layups)
+Status: nothing from today is committed yet. The new files are untracked in
+git: .claude/agents/ and "Code for Project/10-23-26 (Tara)/".
+
+Units everywhere: N, mm, MPa, tonne (density in t/mm^3).
+
+
+======================================================================
+PART 1. PYTHON ENVIRONMENT (session "Python environment setup")
+======================================================================
+
+Goal: install the same Python and libraries that Federico used, so all the
+code in "Code for Project/10-22-26 (Federico)" runs on my AWS VM.
+
+What was installed
+- Miniforge 3 (conda installer, conda-forge channel only), for my user only,
+  at D:\Users\tvenkata\miniforge3. It is NOT on the PATH. There was no Python
+  or conda on the VM before.
+- Conda environment "shells" from Federico's environment.yml, at
+  D:\Users\tvenkata\miniforge3\envs\shells:
+    Python 3.12.15, numpy 2.5.4, scipy 1.18.1, matplotlib 3.11.2,
+    pyvista 0.49.1 (vtk 9.7.1), OpenBLAS BLAS/LAPACK 3.11.0,
+    mesalib 26.2.5 (software OpenGL), pip 26.2.2,
+    openseespy 3.8.0.0 (+ openseespywin 3.8.0.0), opsvis 1.3.7,
+    conda-launchers (see workaround below).
+  The pinned versions match environment.yml exactly. Unpinned packages are
+  the newest builds and may be newer than Federico's.
+
+Workaround
+- The current Miniforge release failed to create the env because it could
+  not find a launcher file. Fix: add "conda-launchers" to the dependencies.
+  I used a temporary copy of environment.yml with that line added; Federico's
+  file is unchanged. If you rebuild the env and hit the same error, add
+  "- conda-launchers" under dependencies.
+
+How to run anything
+  D:/Users/tvenkata/miniforge3/envs/shells/python.exe <script>.py
+  (or "conda activate shells" from a Miniforge prompt)
+
+Federico's models re-run on my VM (all reproduce his README)
+- smoke_tests/smoke_shell.py: all 4 checks pass (tip deflection 0.35%,
+  4-layer 0.00%, 20-layer 0.25%, first frequency 0.24%).
+- smoke_tests/gui_check.py: 3 opsvis/matplotlib windows open and close
+  cleanly (TkAgg backend). Side effect: it saved a new file
+  smoke_tests/gui_check.png in Federico's folder.
+- plate_tip_load.py: all 7 checks pass, 606k DOFs solved in 26 s; tip 1.2%
+  stiffer than beam theory, bending stress within 0.06%. PyVista viewer works.
+- plate_large_deflection.py (5 mm mesh, ASDShellQ4 -corotational): 13 min,
+  same v/L table as Federico's README (FE vs wide-plate elastica +2.1% at
+  alpha = 0.5 down to +0.2% at alpha = 5). Newton stops converging above
+  alpha = 6.817, exactly as in Federico's run. Result CSV/PNG were rewritten
+  but are byte-identical to the committed ones.
+
+
+======================================================================
+PART 2. CFRP LAMINATE AGENTS (session "OpenSeesPy CFRP ply property
+generator")
+======================================================================
+
+Goal: model large (geometrically nonlinear) deformation of a thin-shell beam
+made of a multi-angle CFRP laminate in OpenSeesPy, with the laminate
+material defined from ply properties, and check the result.
+
+Four Claude Code subagents were created. They are instruction files in the
+repo; each one runs a Python file in "Code for Project/10-23-26 (Tara)".
+
+  Agent (.claude/agents/)        Python file              What it does
+  -----------------------------  -----------------------  ------------------
+  PlyPropertyGenerator.md        ply_properties.py        one ply -> OpenSees
+                                                          materials at an angle
+  LayupFromPlyGenerator.md       layup.py                 layup -> LayeredShell
+                                                          sections + elements
+  ABDFromOpenSeesPyLayup.md      abd_from_opensees.py     ABD measured from the
+                                                          OpenSees calls
+  TheoreticalABDGenerator.md     theoretical_abd.py       ABD from classical
+                                                          lamination theory
+
+Using the agents
+- They are project-level agents (.claude/agents/ at the repo root), so any
+  NEW Claude Code session opened in ME295_project or a subfolder loads them.
+  A session that was already open when an agent file was created does not
+  see it; start a new session.
+- Ask by name, e.g. "Use LayupFromPlyGenerator for [0/+-45/90]s with
+  E1 = 135 GPa, E2 = 10 GPa, nu12 = 0.3, G12 = 5 GPa, t = 0.125 mm".
+- The agents hard-code my Python path
+  (D:\Users\tvenkata\miniforge3\envs\shells\python.exe). Federico: change that
+  line to your own "shells" env, or we make it portable.
+- The Python files can also be run directly; each has --help.
+- A subagent cannot launch another subagent in Claude Code. So
+  LayupFromPlyGenerator does not "call" PlyPropertyGenerator as an agent; it
+  runs the same Python code (ply_properties.py) for every ply.
+
+2.1 PlyPropertyGenerator (ply_properties.py)
+- Inputs: E1, E2, nu12, G12, ply angle theta (required); nu23, density, tag.
+- Transverse isotropy: E3 = E2, G13 = G12, nu13 = nu12,
+  G23 = E2 / (2 (1 + nu23)). If nu23 is not given, nu23 = nu12 is assumed and
+  a note is printed.
+- Angle convention: theta from global x to the fibre, CCW about global +z.
+- Outputs: all 3D constants, the rotated stiffness matrices in the global
+  frame (6x6 C_bar and 3x3 plane-stress Q_bar), and the OpenSees chain
+    ElasticOrthotropic -> PlaneStress -> PlateFromPlaneStress
+  plus the element orientation  '-local', cos(theta), sin(theta), 0.
+- --check builds it in OpenSees and confirms the shell element's membrane
+  stiffness equals t * Q_bar (machine precision at 0, +-45, 90, 30, 17.3 deg).
+
+2.2 LayupFromPlyGenerator (layup.py)
+- Inputs: ply angles bottom to top, thicknesses (one or per ply), ply
+  constants. Python API also allows a different material per ply.
+- Builds one LayeredShell per ply and one ASDShellQ4 per ply on each facet
+  (see takeaways 2-4 for why). Model-script usage:
+      p = ply_properties(E1, E2, nu12, G12, nu23, rho)
+      plies = make_plies([0, 45, -45, 90], [0.125], p)   # bottom to top
+      layup = build_layup(plies)
+      for quad in quads:
+          ele = add_laminate_elements(ele, quad, layup, '-corotational')
+- --check compares the OpenSees laminate with CLT; --emit FILE writes the
+  exact OpenSees calls for one facet (input for ABDFromOpenSeesPyLayup).
+
+2.3 ABDFromOpenSeesPyLayup (abd_from_opensees.py)
+- Input: a file of ops.nDMaterial / ops.section / ops.element calls (from
+  layup.py --emit, or pasted). The file is parsed, not executed.
+- Imposes the 3 membrane strains and 3 curvatures on a 1 x 1 mm patch and
+  gets ABD from work (imposed displacements x reactions), so no OpenSees sign
+  conventions are involved. Prints A, B, D; --save writes a CSV.
+- Deliberately independent: no CLT, nothing imported from layup.py or
+  ply_properties.py (only numpy + openseespy).
+
+2.4 TheoreticalABDGenerator (theoretical_abd.py)
+- Same inputs as the ply and layup agents. Classical lamination theory with
+  the Tsai-Pagano invariant form of Q_bar. Prints A, B, D; --save writes a
+  CSV in the same layout as abd_from_opensees.py.
+- Deliberately independent: numpy only, never calls the other agents,
+  scripts or OpenSees.
+
+Verification done today
+- Single brick element: ElasticOrthotropic gives the right E1, E2, E3 and all
+  six Poisson's ratios.
+- Ply rotation: OpenSees membrane stiffness = t * Q_bar to ~1e-16.
+- Laminate ABD, OpenSees vs CLT, for [0/45/-45/90], [0/+-45/90]s,
+  [0/90/-30] (unequal thicknesses), single ply:
+  A and B agree to ~1e-15; D within ~0.4% (see takeaway 5).
+- Large deflection (cantilever strip, corotational, 20 x 2 mesh): per-ply
+  elements vs an independent single-element model agree to ~1e-14 for
+  [0/90]s, [0/90/0/90] and [30]4 (tip deflection up to ~60% of L, tip
+  rotation ~66 deg, with bend-twist coupling).
+- ABD agent catches a flipped ply angle and plies out of order (ABD changes
+  27-80%).
+- Hand check of CLT: single 0-deg ply, t = 0.2 mm: A11 = Q11 t = 27181.2 N/mm,
+  D11 = Q11 t^3/12 = 90.604 N mm. Matches.
+
+
+======================================================================
+PART 3. USING THE AGENTS (session "CFRP layup with 0/90 plies")
+======================================================================
+
+Goal: run the full workflow with the four agents on real layups:
+  PlyPropertyGenerator -> LayupFromPlyGenerator -> ABDFromOpenSeesPyLayup
+  and, independently, TheoreticalABDGenerator; then compare the two ABDs.
+The main session launched each agent as a subagent and passed results on.
+
+3.1 Two-ply unsymmetric [90/0] laminate
+- Material: E1 = 140 GPa, E2 = 10 GPa, G12 = 6 GPa, nu12 = 0.34 (converted to
+  MPa). nu23 not given -> nu23 = nu12 = 0.34 assumed (G23 = 3731.34 MPa).
+  rho = 0.
+- Layup: 90-deg ply on the bottom (z = -1..0 mm), 0-deg ply on top
+  (z = 0..1 mm), 1 mm each.
+- Files:
+    ply_materials_0_90.py  0 and 90 deg materials (tags 1/2/3 and 4/5/6)
+    layup_90_0.py          the [90/0] laminate: void material 7, sections 1-2,
+                           two ASDShellQ4 per facet; run with [--n-sub N]
+- Results (N/mm, N, N mm):
+    A11 = A22 = 151248.88, A12 = 6856.62, A66 = 12000 (both methods)
+    B11 = -B22 = 65541.18, other B = 0 (both methods; unsymmetric cross-ply
+      coupling, B11 = (Q11 - Q22)/2 * 1 mm^2)
+    D11 = D22 = 50416.29 (CLT) vs 50219.36 (OpenSees); every D term low by
+      exactly 1/256 = 1/16^2 = 0.391% (16 layers through the thickness).
+      --n-sub 32 brings it to 0.02%.
+- Hand checks for this layup: A11 = Q11 + Q22, B11 = (Q11 - Q22)/2, D = A/3.
+
+3.2 Four symmetric 4-ply layups (54 micron plies)
+- Material: E1 = 139.5 GPa, E2 = 6.101 GPa, G12 = 2.574 GPa, nu12 = 0.2750.
+  The given nu21 = 0.0120 was NOT used as an input; nu21 = nu12 E2 / E1 =
+  0.0120271 was used so the constants are consistent (matches 0.0120 to the
+  given rounding). nu23 = nu12 assumed (G23 = 2392.55 MPa). t = 0.054 mm,
+  h = 0.216 mm.
+- Layups (given top to bottom; all symmetric, so the order is the same
+  bottom to top): L1 [0/90/90/0], L2 [90/0/0/90], L3 [45/0/0/45],
+  L4 [-45/90/90/-45].
+- Files:
+    ply_materials_139GPa.py   0/90/45/-45 materials, tags 11-22 (start at 11
+                              to avoid clashing with ply_materials_0_90.py)
+    layup_L1_0_90_90_0.py, layup_L2_90_0_0_90.py, layup_L3_45_0_0_45.py,
+    layup_L4_m45_90_90_m45.py   one script per layup, 8 layers per ply
+- New in these scripts: plies with the SAME angle share one element (its
+  LayeredShell holds that angle's material at each of those plies' z
+  positions). So each facet has 2 elements (one per distinct angle) instead
+  of 4. This is exact with -noeas (element stiffness is linear in section
+  stiffness), was checked against one-element-per-ply, and halves the cost.
+- Results: B = 0 for all four (symmetric). A agrees to ~1e-16.
+    D, OpenSees vs CLT: 0.058% (L1, L2), 0.17% (L3, L4), OpenSees lower.
+    L1 vs L2: same A; D11 = 103.49 vs 19.19 N mm (outer plies dominate
+      bending).
+    L3, L4: non-zero A16/A26 (shear-extension) and D16/D26 (bend-twist),
+      because the +-45 plies have no opposite-sign partner.
+      L3: A16 = A26 = 3613.73 N/mm, D16 = D26 = 24.59 N mm.
+    L4 is L3 rotated by 90 deg: 11 and 22 swap and the 16/26 terms change
+      sign.
+- The comparison was done by the main session from the saved CSVs, not only
+  from the agents' reports.
+- The ABD CSVs (abd_clt_L1..L4.csv, abd_opensees_L1..L4.csv, and the [90/0]
+  ones) were saved in that session's temporary scratchpad folder, not in the
+  project. They are easy to regenerate with --save if needed.
+
+
+======================================================================
+MAJOR TAKEAWAYS (read these before building laminate models)
+======================================================================
+
+1. ElasticOrthotropic Poisson's ratios. In
+     nDMaterial('ElasticOrthotropic', tag, Ex, Ey, Ez, vxy, vyz, vzx, Gxy, Gyz, Gzx, rho)
+   v_ij = -eps_j / eps_i under stress in i. So with x = 1 (fibre):
+   vxy = nu12, vyz = nu23, but vzx = nu31 = nu12 * E2 / E1 (~0.02 for CFRP),
+   NOT nu13 = 0.3. Checked numerically on a brick element.
+
+2. OpenSees 3.8 cannot rotate a material. There is no nDMaterial that takes
+   a ply angle or a full anisotropic stiffness matrix, and ElasticOrthotropic
+   cannot hold the coupling terms (Q16, Q26) of an off-axis ply. The ply is
+   defined in its own axes and the angle is applied on the element with
+   ASDShellQ4 '-local' cos(theta) sin(theta) 0. One element = one orientation
+   for ALL its layers.
+
+3. Multi-angle laminates: one ASDShellQ4 per ply on the same four nodes, each
+   with its own '-local' angle and its own LayeredShell spanning the full
+   laminate in ply order: its ply at the true z position, zero-stiffness
+   "void" layers (ElasticIsotropic, E = 0) for the other plies. Their
+   stiffnesses add to the exact laminate, including B and the 16/26
+   couplings, and with -corotational they share the same kinematics.
+   Cost: n_plies elements per facet.
+
+4. -noeas is required for takeaway 3, and it costs mesh accuracy.
+   ASDShellQ4's enhanced assumed strain (EAS) modes are condensed out per
+   element, which does not add up across the per-ply elements (with EAS
+   they were 2% off a single laminate element on a 20 x 2 mesh). With -noeas
+   they match to ~1e-14. But without EAS the element is stiffer on coarse
+   meshes: for [30]4 at large load the tip deflection was 5.1% below the EAS
+   element at 20 x 2 and 2.1% below at 40 x 4 (80 x 8 did not converge with
+   my solver settings). => Always do a mesh convergence study.
+
+5. LayeredShell integrates each layer at its mid-plane (one point per layer;
+   Federico found the same on 10/22). A ply modelled as one layer misses its
+   own Q t^3/12 bending term: D error ~ 1 / (number of layers)^2 (11% with
+   3 layers, 1.6% with 8). layup.py splits each ply into sublayers so there
+   are at least 15 layers through the thickness (D within ~0.5%); --n-sub
+   raises it. So OpenSees D is always slightly BELOW CLT D; A and B are exact.
+
+6. LayeredShell needs at least 3 layers.
+
+7. Layer order: LayeredShell layer 1 is the BOTTOM layer, on the -z side of
+   the element normal (n1->n2 x n1->n4). Checked from the sign of B.
+
+8. With every DOF prescribed (patch tests), system('FullGeneral') makes
+   Python exit silently (exit code 127). Use system('UmfPack').
+
+9. PlateFromPlaneStress takes one isotropic transverse shear modulus; the
+   ply really has G13 and G23. Default used: G13 (= G12). Negligible for
+   thin shells; revisit for thick ones.
+
+10. The ABD matrix does not depend on nu13, nu23, nu31 or G23 (plane stress
+    only), so an ABD comparison cannot catch errors in those. Takeaway 1 is
+    guarded by the brick-element test instead.
+
+11. ABD is a small-strain property: -corotational is dropped when measuring
+    it (otherwise geometric terms of the size of the imposed strain appear).
+
+12. Convergence: very tight tolerances (RelativeNormDispIncr 1e-9 or 1e-10)
+    stall near the end of large-deflection runs, especially for off-axis
+    layups that twist. 1e-6 to 1e-7 worked.
+
+13. When comparing ABDFromOpenSeesPyLayup with TheoreticalABDGenerator,
+    expect A and B to agree to round-off and D to agree within ~0.5% (D from
+    OpenSees lower, takeaway 5). Anything bigger means a definition error.
+    Confirmed on five real layups in Part 3.
+
+14. Plies with the same angle can share one element (Part 3.2), so the
+    element count per facet is the number of DISTINCT angles, not plies.
+    layup.py itself still makes one element per ply; the L1-L4 scripts do
+    the merging. Worth adding to layup.py.
+
+15. Give consistent material constants. A separately rounded nu21 (e.g.
+    0.0120) makes the compliance matrix slightly unsymmetric; compute
+    nu21 = nu12 E2 / E1 instead, as was done in Part 3.2.
+
+16. Material tags must not clash between files loaded into the same model:
+    ply_materials_0_90.py + layup_90_0.py use tags 1-7, and
+    ply_materials_139GPa.py uses 11-22.
+
+17. Check the agents' wording, not just their numbers. In Part 3.1 the
+    ABDFromOpenSeesPyLayup report described the ElasticOrthotropic arguments
+    with the Poisson slots mislabelled (it called 0.0242857 "nu23"). The
+    model itself was right (vyz = 0.34, vzx = nu31 = 0.0243); only the
+    report's labels were wrong.
+
+18. LayupFromPlyGenerator produced separate per-layup scripts that import
+    layup.py and temporarily swap in their own builder for the check. The
+    agent's abd_from_opensees.py input therefore had to be recorded from the
+    script's calls; layup.py --emit does this for layups built by layup.py.
+
+
+======================================================================
+FUTURE WORK
+======================================================================
+
+- Commit and push today's files (agents + code) so Federico has them, and
+  replace the hard-coded Python path in the agent files with something
+  portable.
+- Build an agent or script that compares the two ABD CSVs
+  (abd_from_opensees.py --save and theoretical_abd.py --save) and reports
+  pass/fail with the tolerances in takeaway 13. (In Part 3 the main session
+  did this by hand.)
+- Add the same-angle element merging (takeaway 14) to layup.py, and a
+  --emit-style export to the per-layup scripts, so the agents produce one
+  consistent kind of file.
+- Mesh convergence study for the -noeas per-ply laminate on the actual beam
+  geometry (takeaway 4) before trusting large-deflection results.
+- Apply the laminate to the real geometry: curved thin-shell beams (tape
+  springs / lenticular booms, see Liu et al. 2022 in Literature/), with
+  corotational large-deflection analysis as in plate_large_deflection.py.
+- Possible improvements if cost or accuracy become a problem:
+  * exact D with only 2 layers per ply by placing the two sublayers at the
+    2-point Gauss positions of each ply (padding the section with void);
+  * a custom C++ OpenSees material that takes a ply angle, which would
+    allow one element per facet with EAS (needs building OpenSees).
+- Transverse shear: per-direction G13/G23 if thicker laminates are studied.
+
