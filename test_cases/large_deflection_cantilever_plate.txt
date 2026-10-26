@@ -1,0 +1,103 @@
+TEST CASE: Large-deflection bending of a clamped aluminum plate under a tip load
+Run: 10/22/26 (Federico), OpenSeesPy 3.8.0
+Script: Code for Project/10-22-26 (Federico)/plate_large_deflection.py --size 5
+Units: N, mm, MPa
+
+GEOMETRY
+  Flat rectangular plate, initially in the global x-y plane (z = 0)
+  Length  L = 1000 mm   (along x, from x = 0 to x = L)
+  Width   b = 100 mm    (along y, from y = 0 to y = b)
+  Thickness t = 0.1 mm
+  Second moment of area for bending about the weak axis:
+    I = b t^3 / 12 = 0.00833333 mm^4
+
+MATERIAL (aluminum 6061-T6, linear elastic, isotropic)
+  Young's modulus  E  = 69000 MPa
+  Poisson's ratio  nu = 0.33
+  Density          rho = 2.7e-09 t/mm^3 (not used: static analysis, no gravity)
+  Bending stiffness, beam:        EI           = 575 N mm^2
+  Bending stiffness, wide plate:  EI/(1-nu^2)  = 645.27 N mm^2
+
+BOUNDARY CONDITIONS
+  Edge x = 0 clamped: all 6 DOFs (ux uy uz rx ry rz) fixed at all 21 nodes
+  All other edges free
+
+LOAD
+  Direction: -z (vertically downward), fixed in space (does NOT follow the
+             plate as it rotates)
+  Location:  free edge x = L, spread uniformly along the width as a line load
+             of P/b, applied as consistent nodal loads (21 nodes; the two
+             corner nodes carry half the share of the others)
+  Magnitude: total P = alpha * EI / L^2, with EI = 575 N mm^2, so
+             P = alpha * 0.000575 N. Listed for every step below.
+
+MODEL
+  Elements: ASDShellQ4 with -corotational (geometrically nonlinear: large
+            displacements and rotations, small strains)
+  Section:  ElasticMembranePlateSection (E, nu, t above)
+  Mesh:     200 x 20 = 4000 elements of 5 x 5 mm, 4221 nodes
+  Solution: static, Newton-Raphson, displacement control on the vertical
+            displacement of the monitored node in steps of 0.02 L (halved near
+            the end); convergence: relative displacement increment < 1e-6
+  Mesh convergence: a 10 mm mesh gives the same tip displacements within 0.1%
+
+RESULTS (monitored node: free edge, mid-width, initial position x = L, y = b/2, z = 0)
+  v = vertical tip deflection, positive downward (= -uz)
+  h = horizontal tip pull-back toward the clamp, positive toward x = 0 (= -ux)
+  alpha = P L^2 / EI
+
+ step    alpha       P [N]      v [mm]      h [mm]      v/L       h/L
+    0   0.0000  0.00000e+00      0.000      0.000   0.00000   0.00000
+    1   0.0628  3.61152e-05     20.000      0.241   0.02000   0.00024
+    2   0.1290  7.41733e-05     40.000      0.963   0.04000   0.00096
+    3   0.1958  1.12573e-04     60.000      2.167   0.06000   0.00217
+    4   0.2630  1.51253e-04     80.000      3.854   0.08000   0.00385
+    5   0.3311  1.90366e-04    100.000      6.028   0.10000   0.00603
+    6   0.4000  2.30028e-04    120.000      8.693   0.12000   0.00869
+    7   0.4702  2.70344e-04    140.000     11.852   0.14000   0.01185
+    8   0.5416  3.11417e-04    160.000     15.512   0.16000   0.01551
+    9   0.6145  3.53361e-04    180.000     19.679   0.18000   0.01968
+   10   0.6892  3.96301e-04    200.000     24.359   0.20000   0.02436
+   11   0.7659  4.40374e-04    220.000     29.562   0.22000   0.02956
+   12   0.8447  4.85731e-04    240.000     35.297   0.24000   0.03530
+   13   0.9262  5.32539e-04    260.000     41.575   0.26000   0.04158
+   14   1.0104  5.80983e-04    280.000     48.409   0.28000   0.04841
+   15   1.0979  6.31269e-04    300.000     55.811   0.30000   0.05581
+   16   1.1889  6.83629e-04    320.000     63.797   0.32000   0.06380
+   17   1.2840  7.38322e-04    340.000     72.384   0.34000   0.07238
+   18   1.3837  7.95642e-04    360.000     81.591   0.36000   0.08159
+   19   1.4886  8.55926e-04    380.000     91.439   0.38000   0.09144
+   20   1.5992  9.19561e-04    400.000    101.951   0.40000   0.10195
+   21   1.7165  9.86992e-04    420.000    113.154   0.42000   0.11315
+   22   1.8413  1.05874e-03    440.000    125.078   0.44000   0.12508
+   23   1.9746  1.13541e-03    460.000    137.754   0.46000   0.13775
+   24   2.1178  1.21773e-03    480.000    151.220   0.48000   0.15122
+   25   2.2723  1.30655e-03    500.000    165.517   0.50000   0.16552
+   26   2.4399  1.40292e-03    520.000    180.692   0.52000   0.18069
+   27   2.6228  1.50808e-03    540.000    196.797   0.54000   0.19680
+   28   2.8236  1.62358e-03    560.000    213.893   0.56000   0.21389
+   29   3.0458  1.75134e-03    580.000    232.047   0.58000   0.23205
+   30   3.2935  1.89377e-03    600.000    251.337   0.60000   0.25134
+   31   3.5721  2.05393e-03    620.000    271.853   0.62000   0.27185
+   32   3.8884  2.23582e-03    640.000    293.696   0.64000   0.29370
+   33   4.2516  2.44466e-03    660.000    316.985   0.66000   0.31698
+   34   4.6739  2.68748e-03    680.000    341.854   0.68000   0.34185
+   35   5.1720  2.97391e-03    700.000    368.458   0.70000   0.36846
+   36   5.7694  3.31742e-03    720.000    396.973   0.72000   0.39697
+   37   6.4998  3.73740e-03    740.000    427.592   0.74000   0.42759
+   38   6.7086  3.85742e-03    745.000    435.600   0.74500   0.43560
+   39   6.8175  3.92004e-03    747.500    439.659   0.74750   0.43966
+
+REFERENCE VALUES (for convenience; computed with elastica.py, see SUMMARY.md)
+  Elastica: inextensible cantilever, vertical tip load of fixed direction,
+  EI theta'' = -P cos(theta), theta(0) = 0, theta'(L) = 0.
+  Evaluated at the FE load levels with the beam stiffness EI and with the
+  wide-plate stiffness EI/(1-nu^2) (anticlastic curvature suppressed).
+
+  alpha   v/L FE   v/L beam  v/L plate   h/L FE   h/L beam  h/L plate   linear v/L = alpha/3
+   0.50   0.1484    0.1621    0.1453     0.0134    0.0159    0.0128    0.1667
+   1.00   0.2775    0.3017    0.2739     0.0476    0.0564    0.0462    0.3333
+   2.00   0.4635    0.4935    0.4604     0.1401    0.1606    0.1379    0.6667
+   3.00   0.5759    0.6033    0.5736     0.2283    0.2544    0.2259    1.0000
+   5.00   0.6931    0.7138    0.6920     0.3593    0.3876    0.3574    1.6667
+  (FE values interpolated linearly between load steps)
