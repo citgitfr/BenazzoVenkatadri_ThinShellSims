@@ -1,0 +1,96 @@
+# UD lamina property catalog (readable units: GPa, MPa, mm)
+# Maintained by the CompositeLaminaLibrarian agent. SI twin: UD_lamina_catalog_SI.txt
+# (generated from this file by lamina_catalog_to_SI.py; do not edit the SI file by hand).
+#
+# Columns: ID | Fiber | Polymer system | E1 | E2 | G12 | nu12 | nu23 | G23 | Xc | Xt | Yc | Yt | S12 | t_ply | Source
+#   Xc/Xt = longitudinal compressive/tensile strength, Yc/Yt = transverse compressive/tensile strength,
+#   S12 = in-plane shear strength. Strengths are positive magnitudes.
+#   NA = not reported by the source.  * = estimate, not measured:
+#     nu23* : matrix-dominated default (0.45 carbon/epoxy, 0.40 glass & basalt/epoxy, 0.45 flax)
+#             or taken from the AS4/PEEK set L026 (0.49) for PEEK/PAEK rows.
+#     G23*  : G23 = E2 / (2 (1 + nu23))  (transverse isotropy, same relation as PlyPropertyGenerator).
+#     t*    : see per-ID note.
+#   Conditions are room temperature dry/ambient, mean (not B-basis) values unless noted.
+#   Unit conversions from US units: 1 ksi = 6.894757 MPa, 1 Msi = 6.894757 GPa, 1 in = 25.4 mm.
+#
+# Per-ID notes
+#  L001 NCAMP CAM-RP-2009-015 Rev A Table 2-1, RTD mean. E1/Xt/Xc normalized to CPT 0.0072 in; Xc = UNC0 back-out; S12 at 5% strain (0.2% offset: 53.5 MPa). Vf ~59%.
+#  L002 Camanho, Maimi & Davila 2007, Tables 1-2, 5-specimen means (ASTM D3039/D3410/D5379). Vf 59.1%. Unconstrained (not in-situ) strengths.
+#  L003 NCAMP CAM-RP-2010-002 Rev A Table 2-1, RTD mean. Same conventions as L001. Vf ~59%.
+#  L004 NCAMP CAM-RP-2013-002 Rev A Table 2-1, RTD mean; out-of-autoclave (VBO) cure. Vf ~59%.
+#  L005 NCAMP CAM-RP-2010-048 / NCP-RP-2010-037. nu12 is the RTD compression value (RTD tension value invalid in report). S12 flagged by NCAMP as estimate (13 specimens). Vf ~56%.
+#  L006 NCAMP CAM-RP-2008-007 Rev C, RTD mean; OOA cure. nu12 is the compression value (no tension nu12 reported). Xt, Xc back-outs.
+#  L007 NCAMP NCP-RP-2008-004 Rev B Table 3-3, RTD mean (normalized E1/Xt/Xc). nu12 is the compression value. Yt very scattered.
+#  L008 Toray 2510 datasheet, lot averages, RTA, oven cure, Vf 54.4%. S12 = D5379 ultimate (not 5% strain), so higher than other rows.
+#  L009 FAA DOT/FAA/TC-19/50 Pt 2 (ASU, MAT213), 3-5 specimen averages. nu23 (=nu32, single specimen) and G23 measured; they do not satisfy G23 = E2/(2(1+nu23)) (would give 2.55). Xc (ASTM D3410) is suspiciously low. S12 = peak at ~13% strain. t* = 3.1 mm / 16 plies.
+#  L010 Toray 3900 datasheet, P2362W-19L, RTA. nu12 not given. S12 at 5% strain. RTA E2 higher than CTD (as printed).
+#  L011 Toray 3960 datasheet, P173EBN-19 Gr 192 autoclave, RTA. nu12 not given. Vf 57.9%.
+#  L012 Toray 2511 datasheet, P211AS-200, RTA. nu12 not given. Vf 54.9%. Fiber assignment from datasheet layout (T800S, 200 gsm).
+#  L013-L016 WWFE-I input data (Soden, Hinton & Kaddour 1998), read from NASA TM-107331 Table III ("Pristine" column), which reprints it. Vf 0.60 (L015: 0.62). nu23 = 0.4 as given; G23* from relation. Ply thickness not in reprint.
+#  L016 G23 = 5.7 as tabulated in the WWFE-II input data for the same material (reprint: Zhang, Xu & Ye 2013, Table 2).
+#  L017-L020 WWFE-II input data (Kaddour & Hinton 2012), read from Zhang, Xu & Ye 2013 (WWFE-II Part B) draft Table 2. Initial (linear) moduli; nu23, G23 as tabulated. Vf and ply thickness not given.
+#  L018 CAUTION: G12 = 1.33 GPa is anomalously low and E2/G12 carry an unexplained footnote mark in the reprint; S12 differs between sources (97 / 76 / 60 MPa). Verify against the original before use.
+#  L019, L020 resin not named in source ("Epoxy 1" / "Epoxy 2"). L020 Xt/Xc reported as 1410/1147 elsewhere.
+#  L021 Amacher et al. 2014 via Frossard EPFL thesis Table 3.2; 30 g/m2 thin ply, normalized to Vf 55%. S12 = max shear stress (0.2% offset: 50.2 MPa).
+#  L022 Liu, Bai et al. 2023 (arXiv Table 1), ASTM tests, resin not named. CAUTION: source G23 = 4.50 equals its G13 and is inconsistent with E2 (would need nu23 < 0); relation would give 2.59*. S12 = 216 MPa unusually high.
+#  L023 Ning (Caltech thesis 2015) / Ning & Pellegrino IJSS 2017 measured stiffness, Vf ~50%; strengths not measured. G12 > E2 is unusual. Also used by Leclerc (Caltech thesis).
+#  L024 Lenticular-boom CFRP of Liu et al. 2022 Table 2 (project Literature folder), citing Bai et al. 2019; fiber and Vf not given; E1 below normal carbon range. nu23* back-calculated from source G23 = 2.50.
+#  L025 Sun & Yoon (Purdue CML 88-3, NASA) Table 1 (E1, E2, nu12, Xt, Yt, S12 via off-axis Tsai-Hill) and Sun & Rui (CML 89-2) Xc, Yc; 75 F dry. G12 not reported. t = 0.05 in / 10 plies.
+#  L026 Zhang et al. 2022 Tables 2-3; compiled from APC-2 literature (not the authors' own tests). Vf 59%, nominal t 0.14 mm. nu23/G23 as tabulated (consistent with relation, likely computed).
+#  L027 Fu et al. 2024 Table 2 (manufacturer-measured NIMTE prepreg). Yc and S12 left NA (paper borrows them from a different material). t from [0]8 = 1 mm.
+#  L028 Toray Cetex TC1225 PDS v9, M55JB, RTA. Xc = back-out (D6641). S12 at 5% strain (0.2% offset: 42.2 MPa).
+#  L029 Toray Cetex TC1200 PDS v4.0, AS4D, RTD, Vf 59% ("limited dataset"). nu12, Yc not given.
+#  L030 Toray Cetex TC1225 PDS v9, T1100GC, RTA. S12 at 5% strain. nu12, Yc not given.
+#  L031 Victrex LMPAEK UDT AS4-143-34 TDS (AE 250 family), RTA, Vf 58.1%. E2 is the 90 deg COMPRESSION modulus; no 90 deg tension (Yt NA). S12 per EN 6031.
+#  L032 Victrex LMPAEK UDT AS7-192-34 TDS, RTA, Vf 58.5%, VBO panels. E2 = 90 deg compression modulus. S12 = 0.2% offset (D3518), not comparable to L031.
+#  L033 Toray Cetex TC1100 PDS v6.1, AS4A/PPS, RTD, Vf 59%. nu12, Yc not given.
+#  L034 Montana State Univ. (Samborsky, Mandell, Agastra; DOE/Sandia) Table 1, Vf 56.8%, infused stitched UD fabric. All values measured incl. nu23 and G23 (not consistent with relation, which gives 6.30). Tensile moduli (E1c 42.8, E2c 16.0). Yt = first-crack knee; S12 at 5% strain. E2 high due to ~6% transverse backing strands. t = 6-ply laminate / 6.
+#  L035 Materials 2021 (PMC7914699) Table 4, U-E-600-1200 fabric, hand lay-up, Vf 60%, ISO 527-4 / 14126 / 14129. t = fabric thickness from Table 2.
+#  L036 Plappert et al. 2020 Table 2, Vf 60%, ASTM D3039 / ISO 14126 / ISO 14129; tensile moduli (E1c 46.2, E2c 15.2). S12 at 5% strain. t* = 300 g/m2 / (2.75 g/cm3 x 0.60), basalt density assumed.
+#  L037 Liang et al. (LAMPA Angers): stiffness from Liang 2015 (via IJIE 2015 Table 1), Xt/Yt from Int J Fatigue 2014 Table 1; Vf 43.1%. nu12 = 0.43 high (typical of flax). t* = 2.55 mm / 12 plies. Xc, Yc, S12 not reported.
+#
+# Usability (see check output of lamina_catalog_to_SI.py):
+#   PlyPropertyGenerator needs E1, E2, G12, nu12 (+ nu23).  In-plane Tsai-Hill needs Xt, Xc, Yt, Yc, S12.
+#   Both (25): L001-L009 L013-L022 L024 L026 L028 L034-L036
+#   Stiffness only (3): L023 L027 L037      Strength only, nu12 or G12 missing (4): L010 L011 L012 L025
+#   Partial (5): L029-L033 (nu12 missing, and Yc or Yt missing)
+#   G23 not equal to E2/(2(1+nu23)) as given by the source: L009, L016 (small), L022 (suspect), L034.
+#
+ID     Fiber                           Polymer_system                                E1_GPa   E2_GPa   G12_GPa   nu12    nu23    G23_GPa   Xc_MPa    Xt_MPa    Yc_MPa   Yt_MPa   S12_MPa   t_ply_mm   Source
+L001   IM7                             Hexcel HexPly 8552 epoxy (NCAMP)              158.5    8.95     4.67      0.316   0.45*   3.09*     1716      2501      285.7    64.0     91.1      0.183      https://energy.ornl.gov/CFCrush/materials/uou/CAM-RP-2009-015_Rev_A_April_22_2011_Hexcel_8552_IM7_Uni_Data_Report.pdf ; https://www.wichita.edu/industry_and_defense/NIAR/Research/hexcel-8552/IM7-Unitape-2.pdf
+L002   IM7                             Hexcel HexPly 8552 epoxy                      171.42   9.08     5.29      0.32    0.45*   3.13*     1200.1    2326.2    199.8    62.3     92.3      0.131      https://doi.org/10.1016/j.compscitech.2007.02.005 ; https://ntrs.nasa.gov/api/citations/20070035071/downloads/20070035071.pdf
+L003   AS4                             Hexcel HexPly 8552 epoxy (NCAMP)              127.2    9.21     4.79      0.302   0.45*   3.18*     1398      1996      267.9    63.9     91.6      0.188      https://www.wichita.edu/industry_and_defense/NIAR/Research/hexcel-8552/AS4-Unitape-2.pdf ; https://web.archive.org/web/20250521142813/https://www.wichita.edu/industry_and_defense/NIAR/Research/hexcel-8552/AS4-Unitape-2.pdf
+L004   T650                            Solvay CYCOM 5320-1 epoxy (NCAMP)             138.5    9.18     4.95      0.326   0.45*   3.17*     1635      2062      274.1    69.6     93.1      0.140      https://www.wichita.edu/industry_and_defense/NIAR/Research/cytec-5320-1/T650-Unitape-2.pdf ; https://web.archive.org/web/20260108074330/https://www.wichita.edu/industry_and_defense/NIAR/Research/cytec-5320-1/T650-Unitape-2.pdf
+L005   T40-800                         Solvay CYCOM 5215 epoxy (NCAMP)               148.8    7.79     3.74      0.366   0.45*   2.69*     1405      2560      204.6    42.0     71.2      0.145      https://www.wichita.edu/industry_and_defense/NIAR/Research/cytec-5215/T40-800-Unitape-2.pdf ; https://www.wichita.edu/industry_and_defense/NIAR/Research/cytec-5215/T40-800-Unitape-3.pdf
+L006   IM7                             Solvay MTM45-1 epoxy (NCAMP)                  157.9    7.65     3.90      0.361   0.45*   2.64*     1252      2466      192.8    52.3     72.1      0.140      https://www.wichita.edu/industry_and_defense/NIAR/Research/cytec-mtm45-1/ACG-IM7-Uni-CAM-RP-2008-007-Rev-C-2.12.2024-MPDR-FINAL.pdf
+L007   AS4                             Solvay MTM45-1 epoxy (NCAMP)                  127.6    7.93     3.93      0.31    0.45*   2.73*     1398      1867      184.8    47.7     67.8      0.140      https://www.wichita.edu/industry_and_defense/NIAR/Documents/NCP-RP-2008-004-Rev-B-MTM45-1-AS4-145-UNI-Qual-Stat-report-10-20-23-Final.pdf
+L008   T700G                           Toray 2510 epoxy (P707AG-15)                  125      8.41     4.23      0.31    0.45*   2.90*     1448      2172      199      44.3     154       0.152      https://www.toraycma.com/wp-content/uploads/2510-Prepreg-System.pdf
+L009   T800S                           Toray F3900 epoxy                             161.7    7.35     4.00      0.317   0.439   2.31      693       2524      170.5    44.8     128.7     0.194*     https://rosap.ntl.bts.gov/view/dot/57814/dot_57814_DS1.pdf
+L010   T800S                           Toray 3900 epoxy (P2362W-19L)                 148      10.1     3.94      NA      0.45*   3.48*     1779      3006      216      60.8     68.9      0.191      https://www.toraycma.com/wp-content/uploads/3900-Prepreg-System.pdf
+L011   T1100G                          Toray 3960 epoxy (P173EBN-19)                 172      9.24     5.38      NA      0.45*   3.19*     2062      3778      259      68.3     107       0.183      https://www.toraycma.com/wp-content/uploads/3960-Prepreg-System.pdf
+L012   T800S                           Toray 2511 epoxy (P211AS-200)                 145      9.0      3.79      NA      0.45*   3.10*     1241      2792      221      51       90.3      0.201      https://www.toraycma.com/wp-content/uploads/2511-Prepreg-System.pdf
+L013   AS4                             Hercules 3501-6 epoxy (WWFE-I)                126      11       6.6       0.28    0.4     3.93*     1480      1950      200      48       79        NA         https://doi.org/10.1016/S0266-3538(98)00078-5 ; https://ntrs.nasa.gov/api/citations/19970010089/downloads/19970010089.pdf
+L014   T300                            BSL914C epoxy (WWFE-I)                        138      11       5.5       0.28    0.4     3.93*     900       1500      200      27       80        NA         https://doi.org/10.1016/S0266-3538(98)00078-5 ; https://ntrs.nasa.gov/api/citations/19970010089/downloads/19970010089.pdf
+L015   E-glass (Gevetex 21xK43)        LY556/HT907/DY063 epoxy (WWFE-I)              53.48    17.7     5.83      0.278   0.4     6.32*     570       1140      114      35       72        NA         https://doi.org/10.1016/S0266-3538(98)00078-5 ; https://ntrs.nasa.gov/api/citations/19970010089/downloads/19970010089.pdf
+L016   E-glass (Silenka 1200tex)       MY750/HY917/DY063 epoxy (WWFE-I/II)           45.6     16.2     5.83      0.278   0.4     5.7       800       1280      145      40       73        NA         https://doi.org/10.1016/S0266-3538(98)00078-5 ; https://ntrs.nasa.gov/api/citations/19970010089/downloads/19970010089.pdf ; https://doi.org/10.1177/0021998312454478 ; https://eprints.lancs.ac.uk/59365/1/WWFE_II_B.pdf
+L017   IM7                             8551-7 epoxy (WWFE-II)                        165      8.4      5.6       0.34    0.5     2.8       1590      2560      185      73       90        NA         https://doi.org/10.1177/0021998312454478 ; https://eprints.lancs.ac.uk/59365/1/WWFE_II_B.pdf
+L018   T300                            PR-319 epoxy (WWFE-II)                        129      5.6      1.33      0.318   0.5     1.86      950       1378      125      40       97        NA         https://doi.org/10.1177/0021998312454478 ; https://eprints.lancs.ac.uk/59365/1/WWFE_II_B.pdf
+L019   A-S carbon                      epoxy, unnamed (WWFE-II Epoxy 1)              140      10       6         0.3     0.49    3.35      1500      1990      150      38       70        NA         https://doi.org/10.1177/0021998312454478 ; https://eprints.lancs.ac.uk/59365/1/WWFE_II_B.pdf
+L020   S2-glass                        epoxy, unnamed (WWFE-II Epoxy 2)              52       19       6.7       0.3     0.42    6.7       1150      1700      180      63       72        NA         https://doi.org/10.1177/0021998312454478 ; https://eprints.lancs.ac.uk/59365/1/WWFE_II_B.pdf
+L021   M40JB                           NTPT ThinPreg TP80EP epoxy (thin ply)         222      7.01     4.66      0.314   0.45*   2.42*     1052      2250      117.7    23       88.26     0.030      https://doi.org/10.1016/j.compscitech.2014.06.027 ; https://infoscience.epfl.ch/server/api/core/bitstreams/bb94fa1a-af5e-4b17-bb9f-397c5701b504/content
+L022   T700                            epoxy, unnamed (ultra-thin prepreg)           128.62   7.52     4.82      0.314   0.45*   4.50      1233.65   2103.44   181.46   75.97    216.36    0.030      https://doi.org/10.1016/j.compstruct.2023.117178 ; https://arxiv.org/pdf/2305.05289
+L023   T800                            NTPT ThinPreg 120EPHTg-402 epoxy (thin ply)   127.9    6.49     7.62      0.354   0.45*   2.24*     NA        NA        NA       NA       NA        0.030      https://doi.org/10.1016/j.ijsolstr.2017.02.028 ; https://thesis.library.caltech.edu/8877/
+L024   carbon, unspecified             epoxy (lenticular boom CFRP)                  80.08    6.67     2.93      0.344   0.33*   2.50      662.69    1063.48   144.54   65.99    126.76    0.08       https://doi.org/10.1080/15376494.2022.2053766 ; https://doi.org/10.1016/j.actaastro.2019.02.014
+L025   AS4                             PEEK (ICI APC-2)                              127.7    10.27    NA        0.32    0.49*   3.45*     1234      2132      176      95.1     82.0      0.127      https://ntrs.nasa.gov/citations/19880017858 ; https://ntrs.nasa.gov/citations/19900003643
+L026   AS4                             PEEK (APC-2 type, compiled set)               127      10.3     6.0       0.32    0.49    3.45      1234      2023      176      92.7     82.6      0.14       https://doi.org/10.3390/ma15072386
+L027   T700                            PEEK (NIMTE prepreg)                          130      10.1     5.77      0.32    0.49*   3.39*     1094      2419      NA       50.2     NA        0.125      https://doi.org/10.3390/ma17133317
+L028   M55JB                           LM-PAEK (Toray Cetex TC1225)                  310      6.83     3.83      0.30    0.49*   2.29*     807       1827      160      40.3     62.4      0.076      https://www.toraytac.com/media/3bd72fac-0406-48e4-bfc4-2ffd2398ac0c/a7eCOg/TAC/Documents/Data_sheets/Thermoplastic/UD%20tapes,%20prepregs%20and%20laminates/Toray-Cetex-TC1225_PAEK_PDS.pdf
+L029   AS4D                            PEEK (Toray Cetex TC1200)                     135      10       5.2       NA      0.49*   3.36*     1300      2410      NA       86       152       0.14       https://www.toraytac.com/media/7765d981-1f9f-472d-bf24-69a647412e38/oMCfAQ/TAC/Documents/Data_sheets/Thermoplastic/UD%20tapes,%20prepregs%20and%20laminates/Toray-Cetex-TC1200_PEEK_PDS.pdf
+L030   T1100GC                         LM-PAEK (Toray Cetex TC1225)                  173      9.0      4.03      NA      0.49*   3.02*     1595      3613      NA       90       69.0      0.135      https://www.toraytac.com/media/3bd72fac-0406-48e4-bfc4-2ffd2398ac0c/a7eCOg/TAC/Documents/Data_sheets/Thermoplastic/UD%20tapes,%20prepregs%20and%20laminates/Toray-Cetex-TC1225_PAEK_PDS.pdf
+L031   AS4                             LM-PAEK (Victrex LMPAEK UDT AS4-143-34)       130      9.6      4.5       NA      0.49*   3.22*     1420      2320      192      NA       145       0.137      https://cdn.victrex.com/-/media/downloads/datasheets/tds_victrex-lmpaek-udt-as4-143-34.pdf
+L032   AS7                             LM-PAEK (Victrex LMPAEK UDT AS7-192-34)       141      9.6      3.93      NA      0.49*   3.22*     1496      2523      204      NA       39.9      0.183      https://www.victrex.com/-/media/downloads/datasheets/tds_victrex-lmpaek-udt--as7--192---34.pdf
+L033   AS4A                            PPS (Toray Cetex TC1100)                      134      10       3.5       NA      0.45*   3.45*     1100      2020      NA       39       82        0.21       https://www.toraytac.com/media/221a4fcf-6a4d-49f3-837f-9d85c3c34f74/dMki-Q/TAC/Documents/Data_sheets/Thermoplastic/UD%20tapes,%20prepregs%20and%20laminates/Toray-Cetex-TC1100_PPS_PDS.pdf
+L034   E-glass (Vectorply E-LT-5500)   Epikote RIMR 135 / Epicure RIMH 1366 epoxy    44.6     17.0     3.49      0.262   0.350   3.46      774       1240      179      43.9     55.8      1.19       https://www.montana.edu/composites/documents/3D%20Static%20Property%20Report-2.pdf
+L035   E-glass (U-E-600-1200)          Araldite LY1564 / Aradur 3489 epoxy           35.48    10.46    3.14      0.24    0.40*   3.74*     482.89    765.92    114.16   58.29    34.24     0.42       https://doi.org/10.3390/ma14040761
+L036   Basalt                          c-m-p CP003 epoxy prepreg                     44.3     11.9     3.73      0.27    0.40*   4.25*     776       1310      135      49.8     50.5      0.18*      https://doi.org/10.3390/jcs4030101 ; https://freidok.uni-freiburg.de/data/166869
+L037   Flax (Hermes UD)                Sicomin SR 8200 / SD 8205 epoxy               22.8     4.52     1.96      0.43    0.45*   1.56*     NA        318       NA       26.1     NA        0.213*     https://doi.org/10.1016/j.matdes.2014.11.048 ; https://doi.org/10.1016/j.ijimpeng.2015.01.006 ; https://doi.org/10.1016/j.ijfatigue.2014.01.003
