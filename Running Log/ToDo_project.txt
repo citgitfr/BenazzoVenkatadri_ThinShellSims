@@ -1,0 +1,18 @@
+1) Check that openseespy can run on the aws server with a representative number of nodes and elements and results of simulations can be extracted and visualized.
+2) Check that simulations of thin membrane bending with isotropic material properties can be run and that the results match with analytical equations.
+3) Write a python code that goes from standard material properties of fibers and matrices to a constitutive property definition that can be inserted into openseepy - this should be a skill/tool to call whenever going from material properties to simulation.
+4) write two catalogs for fiber and matrix material properties, respectively, with the help of a librarian agent. Provide example of the table, which should include stiffnesses, Poisson ratios and failure strength (make sure they are sufficient to formulate constitutive model and failure criteria).
+5) Check that simulating a thin square or rectangular sample with the given constitutive model gives the same answer as it should analytically.
+---------------
+6) Write a script to analyze the bending of a tape spring and check it against an abaqus simulation.
+7) Write a script to analyze the buckling of a tape spring - it will likely require finding some literature and offering it to the agent - and ask to create a skill file so that whenever a buckling analysis is later requested, the agent knows what steps to follow correctly
+8) Check the buckling strength under compression/bending against abaqus analysis.
+9) Write a script to do even/opposite sense bending of the tape spring around a hub - will require specific instructions of the steps that the simulation will require (papers from our group) and also literature for contact in openseespy.
+10) Check coiling stresses and possible buckle formation is similar to abaqus.
+11) Write a python script that takes the curvatures and strains in all the elements in the coiling simulation, takes in the laminate layup and material properties, and determines the stress in each-ply (use Leclerc paper as example).
+12) Write a python script that takes the ply stresses and applies them to a failure criteria (simple one is ok since this is proof of concept). This should also be a tool.
+13) Check failure criteria for standard test case under bending with analytical formulation.
+
+
+If all works well, repeat these steps for TRAC and omega and corrugated omega shapes -> will require writing routine to tie geometries together.
+
