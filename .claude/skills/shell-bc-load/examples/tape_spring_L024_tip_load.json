@@ -1,0 +1,10 @@
+{
+ "name": "tape_spring_L024_tip_load",
+ "laminate": {"catalog": "L024", "layup": "[0/90]s"},
+ "geometry": {"L": 500, "section": {"type": "arc", "R": 50, "b": 100}, "size": 5},
+ "element": {"type": "ASDShellQ4", "corotational": false},
+ "supports": [{"edge": "x0", "dofs": [1, 1, 1, 1, 1, 1]}, {"rigid_end": "xL"}],
+ "loads": [{"node": {"rigid": "xL"}, "force": [0, 0, -10]}],
+ "analysis": {"type": "linear"},
+ "report_node": {"rigid": "xL"}
+}

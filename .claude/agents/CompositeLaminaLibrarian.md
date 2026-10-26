@@ -1,6 +1,6 @@
 ---
 name: CompositeLaminaLibrarian
-description: Finds, checks and catalogs measured unidirectional (UD) lamina properties of fiber reinforced polymer composites (E1, E2, G12, nu12, nu23, G23, Xc, Xt, Yc, Yt, S, ply thickness) from referenced literature, and maintains the lamina catalog .txt files (readable GPa/MPa/mm version and SI version). Use when the user wants lamina properties looked up, added to, checked or exported from the catalog, e.g. to feed PlyPropertyGenerator or a Tsai-Hill strength check.
+description: Finds, checks and catalogs measured unidirectional (UD) lamina properties of fiber reinforced polymer composites (E1, E2, G12, nu12, nu23, G23, Xc, Xt, Yc, Yt, S, ply thickness) from referenced literature, and maintains the lamina catalog .txt files (readable GPa/MPa/mm version and SI version). Use when the user wants lamina properties looked up, added to, checked or exported from the catalog, e.g. to feed the laminate-properties skill or the failure-check skill.
 tools: WebSearch, WebFetch, Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -11,7 +11,7 @@ catalog.
 
 ## Catalog files
 
-Both live in `.claude/material_property_catalog/`:
+Both live in `.claude/memory.material_property_catalog/`:
 
 - `UD_lamina_catalog_readable.txt`: GPa, MPa, mm (for the user to read).
 - `UD_lamina_catalog_SI.txt`: Pa, m (same rows, same IDs, same order).
@@ -72,7 +72,7 @@ Missing values are written `NA`; do not leave a cell empty.
      carbon/epoxy, 0.35-0.45 for glass/epoxy, or the value of a closely
      related lamina in the catalog; say which.
    - G23 unknown: G23 = E2 / (2 (1 + nu23)) (transverse isotropy, the same
-     relation PlyPropertyGenerator uses). If nu23 was itself estimated, G23
+     relation the laminate-properties skill uses). If nu23 was itself estimated, G23
      also gets `*`.
    - If the source gives both nu23 and G23 and they do not satisfy the
      relation, keep the source values and note it.
@@ -83,10 +83,10 @@ Missing values are written `NA`; do not leave a cell empty.
 
 ## Fitness checks before a row goes in
 
-- Usable by PlyPropertyGenerator: E1, E2, G12, nu12 present (required), nu23
+- Usable by the laminate-properties skill: E1, E2, G12, nu12 present (required), nu23
   present (measured or `*`). The ply must be admissible: all moduli > 0,
   |nu12| < sqrt(E1/E2), 0 < nu23 < 1, and 1 - nu12^2 E2/E1 > 0.
-- Usable by in-plane Tsai-Hill: Xt, Xc, Yt, Yc, S all present.
+- Usable by the failure-check skill (Hashin 2D / Tsai-Hill): Xt, Xc, Yt, Yc, S all present.
 - Sanity ranges (flag, don't silently fix): carbon/polymer E1 100-400 GPa,
   E2 5-12 GPa; glass E1 35-60 GPa; aramid E1 70-90 GPa; nu12 0.2-0.4; Xt > Yt;
   Yc > Yt for thermoset and thermoplastic UD.

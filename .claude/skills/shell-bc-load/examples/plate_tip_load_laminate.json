@@ -1,0 +1,9 @@
+{
+ "name": "plate_tip_load_laminate",
+ "laminate": {"ply": {"E1": 80000, "E2": 2000, "nu12": 0.25, "G12": 1000}, "layup": "[0_2/90_2]s", "thickness": 1.0, "n_sub": 4},
+ "geometry": {"L": 1000, "section": {"type": "flat", "b": 100}, "size": 10},
+ "element": {"type": "ASDShellQ4"},
+ "supports": [{"edge": "x0"}],
+ "loads": [{"edge": "xL", "force": [0, 0, -5]}],
+ "analysis": {"type": "linear"}
+}
