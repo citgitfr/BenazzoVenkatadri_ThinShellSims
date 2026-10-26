@@ -1,0 +1,187 @@
+SUMMARY OF WORK: CFRP LAMINATE TEST CASES, RESULT VIEWER AND ABAQUS EXPORT
+
+Date:  10/26/26
+Who:   Tara, working with Claude Code (Opus 5.5) in the Claude desktop app
+Status: nothing from today is committed yet. The new files are untracked in
+git: this folder, plus two new agents in .claude/agents/
+(FEResultVisualizer.md, OpenSeesPyToAbaqusPythonGenerator.md).
+
+Units everywhere: N, mm, MPa (Abaqus script uses the same).
+
+
+======================================================================
+PART 1. TEXTBOOK PROBLEM: CURVATURE OF A [0_2/90_2]_s LAMINATE
+======================================================================
+
+Problem (from a textbook screenshot): a laminated plate with layup
+[0_2/90_2]_s, E1 = 80 GPa, E2 = 2 GPa, nu12 = 0.25, each ply 1 mm thick,
+loaded by moments Mx = 50 N m/m and My = 0. Find the curvature changes.
+
+Missing data
+- G12 was not given. It only affects the twisting stiffness D66, which does
+  not enter this load case, so G12 = 1 GPa was used as a placeholder.
+- nu23 was not given, so nu23 = nu12 = 0.25 was assumed (the agents' usual
+  rule). It does not affect this result either.
+
+How it was solved (all three project agents, in order)
+1. PlyPropertyGenerator made the 0 deg and 90 deg ply materials
+   (ply_materials_E80_E2.py). Checked against hand values to round-off.
+2. LayupFromPlyGenerator built the 8-ply laminate (layup_0_0_90_90_s.py).
+   Plies bottom to top: 0, 0, 90, 90, 90, 90, 0, 0, 8 mm total.
+   OpenSees allows only one ply direction per element, so each ply is its own
+   element on the same four nodes; together they add up to the laminate.
+   Its bending stiffness matches classical lamination theory (CLT) within
+   0.06%: D11 = 3002, D12 = 21.4, D22 = 502 N m.
+3. MeshBCLoadGenerator modelled a free 100 x 100 mm plate with moments on
+   two opposite edges, held only enough to stop it floating away
+   (plate_pure_moment_Mx.py).
+
+Answer
+                 OpenSeesPy             CLT (hand)            difference
+  kx             1.6670e-2 1/m          1.6661e-2 1/m         +0.06%
+  ky            -7.111e-4  1/m         -7.090e-4  1/m         +0.3%
+  kxy            0                      0
+The plate bends along x (radius about 60 m) and curves slightly the other
+way across y. The answer does not depend on the mesh (10 mm and 5 mm agree
+to 7 digits).
+
+Why ky is 0.3% off: OpenSees evaluates each ply at 4 points through its
+thickness, which slightly under-counts the stiffness of the 90 deg plies near
+the middle. Using more points per ply would shrink this.
+
+Pictures (Federico's 10/22 viewer style): results/model_5mm.png and
+results/deformed_sigma_xx_5mm.png. The top surface stress is 5.34 MPa
+everywhere (uniform, as expected under a pure moment), within 0.06% of CLT.
+Along the way the stress read-out was corrected for the 4-points-per-ply
+effect; before that it was 0.7% low.
+
+Run:  python plate_pure_moment_Mx.py   (--no-gui, --screenshot)
+
+
+======================================================================
+PART 2. FEDERICO'S CANTILEVER, WITH THE LAMINATE
+======================================================================
+
+Federico's 10/22 test (plate_tip_load.py): a 1000 x 100 mm plate clamped at
+one end with a load spread along the free end. Here the 0.1 mm aluminum was
+replaced by the 8 mm laminate above.
+
+Load: P = 5 N downward. Chosen so the moment at the clamp is 50 N mm/mm (the
+same as Part 1) and the tip drops about 0.56% of the length, like Federico's
+case.
+
+Script: plate_tip_load_laminate.py (written by MeshBCLoadGenerator, same
+PASS/FAIL checks as Federico's).
+
+Result: tip deflection -5.563 mm vs beam theory -5.554 mm (+0.17%).
+- Most of the 0.17% is transverse shear, which simple beam theory leaves out.
+  Adding it brings the difference to 0.03%.
+- 10, 5 and 2.5 mm meshes agree within 0.003%, so 10 mm is enough.
+- Top-surface stress matches laminate theory within 0.06% along the length,
+  peaking at 5.38 MPa at the clamp (a small local effect of the clamp).
+- All checks pass. Full run about 30 s.
+
+Pictures: results/tip_load_model_2p5mm.png and
+results/tip_load_deformed_sigma_xx_2p5mm.png.
+
+Run:  python plate_tip_load_laminate.py   (--no-gui, --screenshot)
+
+
+======================================================================
+PART 3. NEW AGENT: FEResultVisualizer
+======================================================================
+
+Shows the results of any OpenSeesPy shell model as PNG pictures and as a 3D
+window you can rotate, zoom and pan.
+Agent: .claude/agents/FEResultVisualizer.md
+Code:  fe_result_viewer.py (built on Federico's shell_viewer.py)
+
+How it works
+1. After a model is solved, save_results() writes it to a .vtp file (mesh,
+   displacements, rotations, supports, stresses).
+2. The viewer opens that file as often as needed without solving again:
+     python fe_result_viewer.py case.vtp --field sigma_xx --png out.png --no-gui
+     python fe_result_viewer.py case.vtp --field sigma_xx      (3D window)
+   Window controls: drag = rotate, shift+drag = pan, wheel = zoom,
+   r = reset, x/y/z = look along an axis, s = screenshot, q = close.
+
+Improvements over the 10/22 viewer
+- The 8 overlapping per-ply elements are merged into one face, so laminate
+  plots no longer look grayish.
+- The deformed outline is drawn, so side views (e.g. --view xz) show the
+  bent shape. Before, a flat plate seen edge-on showed nothing.
+Tested on the laminate cantilever: two PNGs and a 3D window all worked.
+
+
+======================================================================
+PART 4. ABAQUS VERSION OF THE CANTILEVER
+======================================================================
+
+Script: abaqus_tip_load_laminate.py, for running on another computer
+(Abaqus is not installed on this VM).
+  abaqus cae noGUI=abaqus_tip_load_laminate.py            (10 mm, S4R)
+  abaqus cae noGUI=abaqus_tip_load_laminate.py -- 5 S4    (size, element)
+
+- Same problem as Part 2. The laminate is one Abaqus composite shell
+  section with one layer per ply (Abaqus does not need one element per ply).
+- After solving, it reads the Abaqus results and prints the same PASS/FAIL
+  checks. It also writes them to TipLoadLaminate_<elem>_<size>mm_results.txt,
+  because Abaqus's no-GUI mode does not always print to the screen.
+- Works with both older and newer Abaqus versions (Python 2.7 and 3).
+- Checked here: it compiles, and its reference numbers match the OpenSeesPy
+  script (tip -5.5535 mm, root stress 5.338 MPa).
+- NOT checked: the Abaqus run itself. The parts most likely to need a fix
+  are the tip edge load and reading the top-surface stress.
+- Expected: tip about -5.56 mm; compare with "b/d11 + shear" (-5.561 mm).
+
+The file was offered as a download in the chat. It could not be emailed:
+this session has no email connection.
+
+
+======================================================================
+PART 5. NEW AGENT: OpenSeesPyToAbaqusPythonGenerator
+======================================================================
+
+Turns an OpenSeesPy model made with the project agents into an Abaqus
+script to run elsewhere, the way Part 4 was done by hand.
+Agent: .claude/agents/OpenSeesPyToAbaqusPythonGenerator.md
+Template: abaqus_tip_load_laminate.py
+
+- It has a translation table from each OpenSeesPy piece (ply materials,
+  laminate, flat or arc-shaped strips, elements, supports, rigid end
+  fixtures, edge/point loads and moments, linear or large-deflection runs,
+  results) to its Abaqus equivalent.
+- It includes the lessons from Part 4 (Python 2.7/3 compatible, correct
+  imports, results written to a file, .cae saved).
+- It checks what it can on this VM (compiles, reference numbers match) and
+  always says the Abaqus run is untested.
+- Not tried out yet. A new agent usually appears only in a new Claude Code
+  session.
+
+
+======================================================================
+FILES IN THIS FOLDER
+======================================================================
+
+ply_materials_E80_E2.py       0/90 deg ply materials (PlyPropertyGenerator)
+layup_0_0_90_90_s.py          [0_2/90_2]_s laminate (LayupFromPlyGenerator)
+plate_pure_moment_Mx.py       Part 1 plate under pure moment + viewer
+plate_tip_load_laminate.py    Part 2 laminate cantilever + viewer
+fe_result_viewer.py           Part 3 result viewer (FEResultVisualizer)
+abaqus_tip_load_laminate.py   Part 4 Abaqus script
+results/                      PNGs from Parts 1 and 2
+.gitignore                    keeps __pycache__ out of git
+
+Python: D:\Users\tvenkata\miniforge3\envs\shells\python.exe
+
+
+======================================================================
+OPEN ITEMS
+======================================================================
+
+- Run the Abaqus script on a computer with Abaqus and compare with the
+  OpenSees tip deflection (-5.563 mm).
+- G12 for this material is still a placeholder (1 GPa). It does not affect
+  Parts 1-2, but will matter for angled plies or twisting.
+- Try the two new agents in a new session.
+- Commit this folder and the two new agents.
