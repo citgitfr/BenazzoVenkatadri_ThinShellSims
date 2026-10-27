@@ -26,6 +26,7 @@ reference (v1 number or closed form) and the tolerance.
 | T16 | new | per-facet ply orientation on curved facets |
 | T17, T18 | new | Hashin (AIAA 2025-0188 Eq. 3) and Tsai-Hill closed forms; FE ply stresses and Hashin index vs CLT |
 | T19 | new | JSON case -> npz -> Hashin -> PNG |
+| T20 | new | abaqus-export: generated scripts run on a stand-in Abaqus API; supports, couplings, nodal loads, seeds, layup, step vs OpenSees |
 
 Report any FAIL with its numbers; do not loosen a tolerance to make a test
 pass without saying why.

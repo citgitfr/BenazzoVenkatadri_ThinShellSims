@@ -108,7 +108,7 @@ T07_merged_vs_per_ply_large_deflection: Per-ply coincident elements vs merged sa
   [PASS] [30]4: load factor, merged (40 el.) vs per ply (160 el.)   got +3.69324e-13  ref +0  diff 3.69e-13 (tol 1e-08)
   [PASS] [30]4: tip ux and corner uz, merged vs per ply             got +8.91139e-15  ref +0  diff 8.91e-15 (tol 1e-08)
   (info) [30]4: at tip w = -60 mm (0.6 L): load factor 1.7279, tip ux -28.12 mm, corner w -62.35 mm (twist if != -60)
-  (20.8 s)
+  (16.8 s)
 
 T08_smoke_strip: Steel strip 1000 x 30 x 0.1 mm, ShellMITC4 100 x 3 (10-22 smoke_shell.py).
   [PASS] tip deflection, homogeneous [mm] (v1 6.643)                got +6.64313  ref +6.643  err 2.01e-05 (tol 1e-04)
@@ -129,7 +129,7 @@ T10_flat_linear_5mm: verify_mesh_bc_load.py check 1 (ShellMITC4, 5 mm).
   (0.8 s)
 
 T11_large_deflection_10mm: Al plate, ASDShellQ4 -corotational, displacement control to alpha = 7
-  (info) 10 mm sweep: 38 steps, 319 Newton iterations, 63 s, alpha_max reached 7.4298
+  (info) 10 mm sweep: 38 steps, 319 Newton iterations, 62 s, alpha_max reached 7.4298
   [PASS] 10 mm: number of steps (saved 38)                          got +38  ref +38  diff 0.00e+00 (tol 0e+00)
   [PASS] 10 mm: steps on the same path as the saved run             got +39  ref +39  diff 0.00e+00 (tol 0e+00)
   [PASS] 10 mm: max |alpha - saved| on those steps                  got +2.3324e-08  ref +0  diff 2.33e-08 (tol 1e-06)
@@ -140,7 +140,7 @@ T11_large_deflection_10mm: Al plate, ASDShellQ4 -corotational, displacement cont
   [PASS] 10 mm: v/L at alpha = 3 vs wide-plate elastica (5 mm: +0.4%) got +0.57527  ref +0.573568  err 2.97e-03 (tol 8e-03)
   [PASS] 10 mm: v/L at alpha = 5 vs wide-plate elastica (5 mm: +0.2%) got +0.692636  ref +0.692017  err 8.94e-04 (tol 6e-03)
   [PASS] mid-span top sigma_xx at alpha = 7.43 vs statics on deformed shape got +4.07689  ref +4.039  err 9.38e-03 (tol 1e-02)
-  (63.1 s)
+  (62.3 s)
 
 T12_large_deflection_5mm: skipped (slow; use --full)
 
@@ -216,7 +216,7 @@ T15_tip_load_laminate: [0_2/90_2]s cantilever 1000 x 100 x 8 mm, P = -5 N on the
   [PASS] 2.5 mm: top sigma_xx(x = 500) vs beam                      got +2.66398  ref +2.66246  err 5.70e-04 (tol 1e-03)
   [PASS] 2.5 mm: top sigma_xx(x = 750) [MPa] vs v1                  got +1.32865  ref +1.3287  err 3.72e-05 (tol 2e-04)
   [PASS] 2.5 mm: top sigma_xx(x = 750) vs beam                      got +1.32865  ref +1.3279  err 5.68e-04 (tol 1e-03)
-  (15.4 s)
+  (15.5 s)
 
 T16_orientation_on_curved_facets: Per-facet '-local' on an arc: the fibre axis must lie in the facet at
   [PASS] per-facet axis: in-plane and at 45.000 deg from facet x (max error) got +7.10543e-15  ref +0  diff 7.11e-15 (tol 1e-09)
@@ -269,6 +269,43 @@ T19_case_file_and_viewer: Example case files run end to end (JSON -> npz -> Hash
   [PASS] results file round trip (strains)                          got +0  ref +0  diff 0.00e+00 (tol 1e-15)
   [PASS] tape spring: hashin_max field present and finite           got +1  ref +1  diff 0.00e+00 (tol 0e+00)
   [PASS] tape spring: PNG written                                   got +1  ref +1  diff 0.00e+00 (tol 0e+00)
-  (5.3 s)
+  (5.2 s)
 
-204 checks, 204 passed, 0 failed (110 s)
+T20_abaqus_export: abaqus-export: run the generated Abaqus scripts on a stand-in Abaqus API
+  [PASS] plate_tip_load_laminate: script runs up to the job         got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] plate_tip_load_laminate: faces flipped to the OpenSees normal got +0  ref +0  diff 0.00e+00 (tol 0e+00)
+  [PASS] plate_tip_load_laminate: nodal forces/moments = OpenSees (all 11 loaded nodes) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  [PASS] plate_tip_load_laminate: fixed DOFs = OpenSees (11 nodes)  got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] plate_tip_load_laminate: rigid ends (reference point, coupled nodes) = OpenSees got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] plate_tip_load_laminate: seeds across the section = OpenSees ny (10) got +10  ref +10  diff 0.00e+00 (tol 0e+00)
+  [PASS] plate_tip_load_laminate: seeds along x = OpenSees nx (100) got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] plate_tip_load_laminate: composite layers = plies bottom to top (angle, t) got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] plate_tip_load_laminate: step = Static                     got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] plate_tip_load_laminate (normals flipped): script runs up to the job got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] plate_tip_load_laminate (normals flipped): faces flipped to the OpenSees normal got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load: script runs up to the job       got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load: faces flipped to the OpenSees normal got +0  ref +0  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load: nodal forces/moments = OpenSees (all 1 loaded nodes) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  [PASS] tape_spring_L024_tip_load: fixed DOFs = OpenSees (21 nodes) got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load: rigid ends (reference point, coupled nodes) = OpenSees got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load: seeds across the section = OpenSees ny (20) got +20  ref +20  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load: seeds along x = OpenSees nx (100) got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load: composite layers = plies bottom to top (angle, t) got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load: step = Static                   got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load (normals flipped): script runs up to the job got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load (normals flipped): faces flipped to the OpenSees normal got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination: script runs up to the job           got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination: faces flipped to the OpenSees normal got +0  ref +0  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination: nodal forces/moments = OpenSees (all 13 loaded nodes, pressure excluded: Abaqus Pressure) got +4.34139e-12  ref +0  diff 4.34e-12 (tol 1e-09)
+  [PASS] trac_like_combination: fixed DOFs = OpenSees (42 nodes)    got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination: rigid ends (reference point, coupled nodes) = OpenSees got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination: seeds across the section = OpenSees ny (11) got +11  ref +11  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination: seeds along x = OpenSees nx (40)    got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination: composite layers = plies bottom to top (angle, t) got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination: step = Riks                         got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination: Abaqus pressure = -p x factor (acts along -n) got -2e-05  ref -2e-05  err 0.00e+00 (tol 1e-12)
+  [PASS] trac_like_combination (normals flipped): script runs up to the job got +1  ref +1  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_combination (normals flipped): faces flipped to the OpenSees normal got +3  ref +3  diff 0.00e+00 (tol 0e+00)
+  (126.8 s)
+
+238 checks, 238 passed, 0 failed (232 s)

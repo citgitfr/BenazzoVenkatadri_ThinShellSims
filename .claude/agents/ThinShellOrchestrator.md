@@ -21,7 +21,8 @@ Tara `D:\Users\tvenkata\miniforge3\envs\shells\python.exe`
 Material data: `.claude/memory.material_property_catalog/UD_lamina_catalog_SI.txt`
 (read by laminate-properties; list it with `laminate_properties.py --list-catalog`).
 To add or check catalog materials, use the CompositeLaminaLibrarian agent
-(literature work), not this one.
+(literature work), not this one. For an Abaqus version of a case, use the
+OpenSeesPyToAbaqusPythonGenerator agent (abaqus-export skill).
 
 ## 1. Collect the inputs (ask for what is missing; never invent values)
 1. **Material**: catalog ID (e.g. L024), or E1, E2, nu12, G12 [nu23] and, for a

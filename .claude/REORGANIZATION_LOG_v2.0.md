@@ -13,6 +13,7 @@ not modified (it stays the verified v1 record).
 .claude/skills/shell-bc-load/                  3. supports, load combinations, solvers, results .npz; JSON case runner; elastica.py
 .claude/skills/shell-visualize/                4. deformed shape, curvature + stress/FI panels, PNG / window / .vtp
 .claude/skills/failure-check/                  5. ply stresses in every element, Hashin 2D (paper Eq. 3) / Tsai-Hill, strength ratio
+.claude/skills/abaqus-export/                  case JSON -> Abaqus/CAE script with embedded OpenSees reference (added 10/26)
 .claude/skills/regression-tests/               re-runs all recorded test cases (run_regression.py, last_run_full.txt)
 .claude/agents_v2.0/ThinShellOrchestrator.md   runs skills 1-5 in order, checks, reports
 .claude/agents_v2.0/CompositeLaminaLibrarian.md  v1 librarian (literature work, kept as an agent), catalog path updated
@@ -184,3 +185,47 @@ suite (`run_regression.py`, all but T09/T12) passes: 204 checks, 0 failed
 (`regression-tests/last_run.txt`). The skills the switch touched
 (failure-check, shell-visualize) are not used by T09/T12, which passed
 before (`last_run_full.txt`, `last_run_T11_T12.txt`).
+
+## Abaqus export (added 10/26, after merging Tara's 10-26 commits)
+
+Tara's `OpenSeesPyToAbaqusPythonGenerator` agent (pushed after this
+reorganization) told Claude to hand-translate v1 model scripts
+(ply_properties.py, layup.py, mesh_bc_load.py) into Abaqus scripts, starting
+from `abaqus_tip_load_laminate.py`. It is now:
+- `.claude/skills/abaqus-export/case_to_abaqus.py`: writes the Abaqus/CAE
+  script from a v2.0 case JSON (laminate from a laminate JSON, catalog ID,
+  ply constants or isotropic), for any cross-section, supports, rigid ends,
+  edge/point/pressure loads and linear, displacement-control (Riks) or
+  load-control steps; embeds the OpenSees results and prints Abaqus vs
+  OpenSees in `<job>_results.txt`.
+- `agents_v2.0/` and `agents/OpenSeesPyToAbaqusPythonGenerator.md`: rewritten to
+  use the skill; the original is kept in `agents_v1.0/`.
+- Regression T20 runs the generated scripts for the two examples and a
+  TRAC-like case (lines + arc, rigid end, edge force + moment, point load,
+  pressure, Riks) on a stand-in Abaqus API (`regression-tests/abaqus_mock.py`):
+  nodal loads equal OpenSees to 1e-9 (round-off of chord-length shares),
+  fixed DOFs, rigid-end couplings, mesh seeds, layup and step type match,
+  and every face is flipped when its normal is reversed. Full fast suite:
+  238 checks, 0 failed.
+
+Issues / limits:
+20. **The Abaqus run itself is untested** (no Abaqus on the VM); neither was
+    the v1 template. Least certain calls: `Face.getNormal`, the DISCRETE
+    `MaterialOrientation` arguments (fallback: rectangular CSYS, flat or
+    shallow sections only), `rotateInstance` about (1,1,1), and reading Riks
+    frames together with the `LPF` history output.
+21. Displacement control is exported as Riks with the same proportional
+    reference loads, stopped at step x n_steps of the control DOF, so cases
+    need `n_steps`. The v1 agent used a prescribed displacement, which is
+    only equivalent when the load acts at the controlled point.
+22. Pressure: OpenSees lumps p along each facet's initial normal into nodal
+    loads; Abaqus gets a `Pressure` load (magnitude -p, acting along -n),
+    distributed by the element. Same resultant, slightly different nodal
+    distribution on curved meshes.
+23. Expected small differences: Abaqus Simpson integration (exact) vs
+    LayeredShell midpoint layers (OpenSees D lower by ~1/(layers)^2); S4R/S4
+    vs ASDShellQ4 (`-noeas` with coincident elements); Abaqus uses G13 and G23
+    for transverse shear, OpenSees one modulus.
+24. Tara's 10-26 SUMMARY.txt results (pure moment kx +0.06%, ky +0.3%,
+    sigma_top 5.34 MPa; tip load -5.563 mm, +0.17%) are the cases of
+    regression tests T14/T15, which pass.

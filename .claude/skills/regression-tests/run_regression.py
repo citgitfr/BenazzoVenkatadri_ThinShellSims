@@ -586,11 +586,154 @@ def T19_case_file_and_viewer():
         check('tape spring: PNG written', float((Path(tmp) / 'ts.png').stat().st_size > 10000), 1, 0, True)
 
 
+T20_CASE = {
+    'name': 'trac_like_combination',
+    'laminate': {'catalog': 'L024', 'layup': '[45/-45]s'},
+    'geometry': {'L': 200, 'section': {'type': 'segments', 'segments': [['line', 15], ['arc', 20, 25], ['line', 15]],
+                                       'center': True}, 'size': 5},
+    'element': {'type': 'ASDShellQ4', 'corotational': True},
+    'supports': [{'rigid_end': 'x0', 'dofs': [1, 1, 1, 1, 1, 1]}, {'edge': 'y0', 'dofs': [0, 1, 0, 0, 0, 0]}],
+    'loads': [{'edge': 'xL', 'force': [0, 0, -0.2], 'moment': [0, 5, 0]}, {'pressure': 1e-5, 'factor': 2.0},
+              {'node': {'x': 100, 's': 30}, 'force': [0, 0.05, 0]}],
+    'analysis': {'type': 'displacement_control', 'node': 'tip', 'dof': 3, 'step': -0.5, 'n_steps': 4},
+}
+
+
+def T20_abaqus_export():
+    """abaqus-export: run the generated Abaqus scripts on a stand-in Abaqus API
+    and check supports, couplings, loads, seeds and layup against OpenSees."""
+    import json
+    import os
+    import tempfile
+    sys.path.insert(0, str(SKILLS / 'abaqus-export'))
+    sys.path.insert(0, str(Path(__file__).parent))
+    import abaqus_mock
+    import case_to_abaqus as c2a
+    ex = SKILLS / 'shell-bc-load' / 'examples'
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / 'c.json').write_text(json.dumps(T20_CASE))
+        for path in (ex / 'plate_tip_load_laminate.json', ex / 'tape_spring_L024_tip_load.json', Path(tmp) / 'c.json'):
+            case = json.loads(path.read_text())
+            with redirect_stdout(io.StringIO()):
+                script, M, ref = c2a.generate(path, Path(tmp) / f'abaqus_{case["name"]}.py')
+            # OpenSees side: record nodal loads and fixities as the skills apply them
+            lam = lp.laminate_from_spec(case['laminate'])
+            mesh = sm.build_from_spec(case['geometry'])
+            sm.build_model(mesh, lam)
+            rec = {'load': [], 'fix': [], 'rigidLink': []}
+            real = {k: getattr(ops, k) for k in rec}
+            for k in rec:
+                setattr(ops, k, (lambda name: lambda *a: (rec[name].append(a), real[name](*a))[1])(k))
+            try:
+                bc.apply_supports(mesh, case.get('supports', []))
+                bc.apply_loads(mesh, [l for l in case.get('loads', []) if 'pressure' not in l])   # Abaqus: Pressure load
+            finally:
+                for k, fn in real.items():
+                    setattr(ops, k, fn)
+            key = lambda xyz: tuple(round(float(v), 6) for v in xyz)
+            os_load, os_fix = {}, {}
+            for node, *v in rec['load']:
+                os_load[key(ops.nodeCoord(node))] = os_load.get(key(ops.nodeCoord(node)), np.zeros(6)) + np.array(v)
+            for node, *v in rec['fix']:
+                os_fix[key(ops.nodeCoord(node))] = tuple(v)
+            os_links = {key(ops.nodeCoord(m)): set() for m, *_ in []}
+            for _, m, s in rec['rigidLink']:
+                os_links.setdefault(key(ops.nodeCoord(m)), set()).add(key(ops.nodeCoord(s)))
+            grid = [mesh.coords(i, j) for j in range(mesh.ny + 1) for i in range(mesh.nx + 1)]
+            for flip in (False, True):
+                want = {key(abaqus_mock_P((M['L'] / 2, f[0][0], f[0][1]))): f[1] for f in M['faces']}
+
+                def normal_of(pt, flip=flip):
+                    w = want[key(pt)]
+                    n = abaqus_mock_P(w)
+                    return tuple(-x for x in n) if flip else n
+                log = abaqus_mock.install(grid, normal_of)
+                cwd = os.getcwd()
+                os.chdir(tmp)
+                ns = {'__name__': '__main__'}
+                try:
+                    sys.argv = [script.name]
+                    exec(compile(script.read_text(), str(script), 'exec'), ns)
+                    stopped = False
+                except abaqus_mock.StopAtJob:
+                    stopped = True
+                finally:
+                    if 'REPORT' in ns:
+                        ns['REPORT'].close()
+                    os.chdir(cwd)
+                    for m in ('abaqus', 'abaqusConstants', 'mesh', 'regionToolset', 'section', 'odbAccess'):
+                        sys.modules.pop(m, None)
+                tag = f'{case["name"]}{" (normals flipped)" if flip else ""}'
+                check(f'{tag}: script runs up to the job', float(stopped), 1, 0, True)
+                flips = sum(1 for c in log if c[0] == 'part.flipNormal')
+                check(f'{tag}: faces flipped to the OpenSees normal', flips, len(M['faces']) if flip else 0, 0, True)
+                if flip:
+                    continue
+                lab = {k + 1: key(p) for k, p in enumerate(grid)}
+                rp = {}
+                ab_load, ab_fix, ab_links = {}, {}, {}
+
+                def coords_of(region):
+                    if region[2] and isinstance(region[2][0], tuple) and region[2][0][0] == 'RP':
+                        return [key(region[2][0][1])]
+                    return [lab[n] for n in region[2]]
+                for name, args, kw in log:
+                    if name in ('model.ConcentratedForce', 'model.Moment'):
+                        off = 0 if name.endswith('Force') else 3
+                        pre = 'cf' if off == 0 else 'cm'
+                        v = np.zeros(6)
+                        for d in range(3):
+                            x = kw.get(f'{pre}{d + 1}', 'UNSET')
+                            v[off + d] = 0.0 if x == 'UNSET' else x
+                        for c in coords_of(kw['region']):
+                            ab_load[c] = ab_load.get(c, np.zeros(6)) + v
+                    elif name == 'model.DisplacementBC':
+                        for c in coords_of(kw['region']):
+                            ab_fix[c] = tuple(int(kw[k] != 'UNSET') for k in ('u1', 'u2', 'u3', 'ur1', 'ur2', 'ur3'))
+                    elif name == 'model.Coupling':
+                        ab_links[coords_of(kw['controlPoint'])[0]] = set(coords_of(kw['surface']))
+                keys = set(os_load) | set(ab_load)
+                diff = max(np.abs(ab_load.get(k, np.zeros(6)) - os_load.get(k, np.zeros(6))).max() for k in keys)
+                scale = max(np.abs(v).max() for v in os_load.values())
+                pressure = any(l.get('pressure') for l in case.get('loads', []))
+                check(f'{tag}: nodal forces/moments = OpenSees (all {len(keys)} loaded nodes'
+                      f'{", pressure excluded: Abaqus Pressure" if pressure else ""})', diff / scale, 0, 1e-9, True)   # chord-length shares: round-off
+                check(f'{tag}: fixed DOFs = OpenSees ({len(os_fix)} nodes)', float(ab_fix == os_fix), 1, 0, True)
+                check(f'{tag}: rigid ends (reference point, coupled nodes) = OpenSees', float(ab_links == os_links), 1, 0, True)
+                seeds = [(abaqus_mock_G(c[1][0]), kw2['number']) for c, (n2, a2, kw2) in
+                         zip([c for c in log if c[0] == 'part.edges.findAt'],
+                             [c for c in log if c[0] == 'part.seedEdgeByNumber'])]
+                across = sum(n for p, n in seeds if abs(p[0]) < 1e-9)
+                along = {n for p, n in seeds if abs(p[0] - mesh.L / 2) < 1e-9}
+                check(f'{tag}: seeds across the section = OpenSees ny ({mesh.ny})', across, mesh.ny, 0, True)
+                check(f'{tag}: seeds along x = OpenSees nx ({mesh.nx})', float(along == {mesh.nx}), 1, 0, True)
+                layers = [c[2] for c in log if c[0] == 'section.SectionLayer']
+                check(f'{tag}: composite layers = plies bottom to top (angle, t)',
+                      float([(l['orientAngle'], l['thickness']) for l in layers] ==
+                            [(float(q['theta']), q['t']) for q in lam.plies] or lam.kind == 'isotropic'), 1, 0, True)
+                stepname = [c[0] for c in log if c[0] in ('model.StaticStep', 'model.StaticRiksStep')]
+                check(f'{tag}: step = {"Riks" if case["analysis"]["type"] == "displacement_control" else "Static"}',
+                      float(stepname == (['model.StaticRiksStep'] if case['analysis']['type'] == 'displacement_control'
+                                         else ['model.StaticStep'])), 1, 0, True)
+                pr = [c[2] for c in log if c[0] == 'model.Pressure']
+                if pressure:
+                    check(f'{tag}: Abaqus pressure = -p x factor (acts along -n)', pr[0]['magnitude'], -2e-5, 1e-12)
+            ops.wipe()
+
+
+def abaqus_mock_P(g):
+    return (g[1], g[2], g[0])
+
+
+def abaqus_mock_G(p):
+    return (p[2], p[0], p[1])
+
+
 TESTS = [T01_poisson_convention, T02_ply_rotation, T03_hand_check, T04_90_0, T05_L1_L4, T06_other_layups,
          T07_merged_vs_per_ply_large_deflection, T08_smoke_strip, T09_al_plate_1mm, T10_flat_linear_5mm,
          T11_large_deflection_10mm, T12_large_deflection_5mm, T13_curved_strip, T14_pure_moment,
          T15_tip_load_laminate, T16_orientation_on_curved_facets, T17_failure_unit, T18_failure_vs_clt,
-         T19_case_file_and_viewer]
+         T19_case_file_and_viewer, T20_abaqus_export]
 SLOW = {'T09', 'T12'}
 
 
@@ -627,6 +770,8 @@ def main():
         except Exception as e:                      # record and go on
             RECORD.append((code, f'EXCEPTION {type(e).__name__}: {e}', 0, 0, 0, 0, False))
             print(f'  [FAIL] exception: {type(e).__name__}: {e}')
+            import traceback
+            print('    ' + traceback.format_exc().strip().splitlines()[-3].strip())
         print(f'  ({time.perf_counter() - t0:.1f} s)')
     ops.wipe()
     n_fail = sum(not r[-1] for r in RECORD)
