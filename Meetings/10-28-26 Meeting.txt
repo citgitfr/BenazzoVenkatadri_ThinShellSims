@@ -1,0 +1,25 @@
+Agents:
+- Librarian (scours literature to find CFRP material properties, puts in table of properties)
+- Optimizer/orchestrator (takes the user inputs, chooses a material/layup/set of geometric parameters that looks like it will be able to satisfy them, then writes/runs/visualizes OpenSeesPy code to plot deformation of that structure, checks against failure criteria, chooses how to change material/layup/geometry to improve behavior)
+- OpenSeesPy to Abaqus verifier (takes OpenSeesPy code after optimizer finishes running or every X runs of loop and translates to an Abaqus Python script that we can use to verify design, then takes Abaqus ODB file and compares behavior to OpenSeesPy result)
+
+Databases:
+- Material properties from Librarian
+- Viable layups (we create this)
+- Viable geometric parameters for each cross-section class (flat plate, tape spring, TRAC, omega, etc.) (we create this)
+
+Tools:
+- Create OpenSeesPy code of ply and layup material properties
+- Create OpenSeesPy code of loads/BCs
+- Create OpenSeesPy code of geometry/mesh
+- Runs OpenSeesPy code, checks that model converges
+- Visualizes OpenSeesPy output
+- Checks OpenSeesPy output against Hashin failure criteria
+
+User actions:
+- Provide input to optimizer (class of cross-section/BCs/loading, objective function such as maximizing stiffness/minimizing mass/minimizing deflection, constraints such as strength or maximum deflection)
+- Run Abaqus files on a different server
+
+Baseline to compare against:
+- Something with analytical result known to be optimal case for some criterion
+- Find a paper with more constrained optimization, see if it gets to same optimum
