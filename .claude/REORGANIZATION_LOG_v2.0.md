@@ -209,8 +209,11 @@ from `abaqus_tip_load_laminate.py`. It is now:
   238 checks, 0 failed.
 
 Issues / limits:
-20. **The Abaqus run itself is untested** (no Abaqus on the VM); neither was
-    the v1 template. Least certain calls: `Face.getNormal`, the DISCRETE
+20. **The Abaqus run of the generated scripts is untested** (no Abaqus on the
+    VM). The v1 hand-written template was run in Abaqus by Tara on her lab's
+    server and gave the same tip deflection as OpenSees (running log,
+    10/26/26); the generator differs from it in the extrusion + instance
+    rotation, the discrete material orientation and the Riks step. Least certain calls: `Face.getNormal`, the DISCRETE
     `MaterialOrientation` arguments (fallback: rectangular CSYS, flat or
     shallow sections only), `rotateInstance` about (1,1,1), and reading Riks
     frames together with the `LPF` history output.
