@@ -23,6 +23,7 @@ case JSON ------------------------------------------------------------------> ab
 | failure-check | new (ToDo items 11-12, Hashin 2D of AIAA 2025-0188); top_surface_stresses() variants |
 | abaqus-export | OpenSeesPyToAbaqusPythonGenerator's hand translation; abaqus_tip_load_laminate.py template |
 | regression-tests | the verification runs in the SUMMARY files and verify_mesh_bc_load.py |
+| shell-buckling | new (10/29/26, ToDo 7-8): buckling load/moment and mode (ShellNLDKGQ tangent-eigenvalue scan) and buckling strength (ASDShellQ4 imperfect path); boom_buckling.py case runner |
 
 The v1 code in `Code for Project/` is left unchanged as the verified record.
 Python: conda env `shells` (openseespy 3.8). Units: N, mm, MPa.

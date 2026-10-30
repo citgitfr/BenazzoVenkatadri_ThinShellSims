@@ -1,0 +1,20 @@
+Part 1: Al strip column 500 x 10 x 1 mm, rigid ends, Euler P = pi^2 E I / (K L)^2, I = b t^3 / 12
+strip pinned-pinned, element 10 mm         ref    2.3029 | path    2.3030 ( +0.00%) | LBA    2.3030 ( +0.00%) | 624 DOFs, 0 + 1 s | mean (uy, uz) = (0.00, 1.00), spread 0.00
+strip pinned-pinned, element 5 mm          ref    2.3029 | path    2.3030 ( +0.00%) | LBA    2.3030 ( +0.01%) | 1830 DOFs, 1 + 2 s | mean (uy, uz) = (0.00, 1.00), spread 0.00
+strip clamped-free, element 10 mm          ref    0.5757 | path    0.5757 ( +0.00%) | LBA    0.5764 ( +0.12%) | 624 DOFs, 0 + 0 s | mean (uy, uz) = (0.00, 0.29), spread 0.00
+strip clamped-free, element 5 mm           ref    0.5757 | path    0.5758 ( +0.01%) | LBA    0.5765 ( +0.14%) | 1830 DOFs, 1 + 2 s | mean (uy, uz) = (0.00, 0.29), spread 0.00
+strip clamped-clamped, element 10 mm       ref    9.2116 | path    9.2291 ( +0.19%) | LBA    9.2351 ( +0.25%) | 624 DOFs, 0 + 0 s | mean (uy, uz) = (0.00, 1.00), spread 0.00
+strip clamped-clamped, element 5 mm        ref    9.2116 | path    9.2321 ( +0.22%) | LBA    9.2380 ( +0.29%) | 1830 DOFs, 1 + 2 s | mean (uy, uz) = (0.00, 1.00), spread 0.00
+strip clamped-pinned, element 10 mm        ref    4.7112 | path    4.7147 ( +0.07%) | LBA    4.7171 ( +0.13%) | 624 DOFs, 0 + 0 s | mean (uy, uz) = (0.00, 0.93), spread 0.00
+strip clamped-pinned, element 5 mm         ref    4.7112 | path    4.7155 ( +0.09%) | LBA    4.7179 ( +0.14%) | 1830 DOFs, 1 + 2 s | mean (uy, uz) = (0.00, 0.93), spread 0.00
+  (plate-strip bound with D = E t^3 / 12(1 - nu^2): +9.9%)
+
+Part 2: CuBe tape spring column, fork supports (Timoshenko & Gere thin-walled theory)
+  section: A 2.4605 mm^2, I (z-defl.) 6.2629, I (y-defl.) 104.540 mm^4, J 0.00820 mm^4, Cw 33.050 mm^6 (closed form 33.051), shear centre 14.4817 mm from arc centre (closed form 14.4818)
+  L = 300: flexural (z) 89.9709 N, torsional 16.4367 N, flexural-torsional 16.4066 N -> P_cr = 16.4066 N
+tape spring L = 300, element 2 mm          ref   16.4066 | path   17.6168 ( +7.38%) | LBA       nan (  +nan%) | 11778 DOFs, 18 + 0 s | mean (uy, uz) = (0.27, 0.00), spread 2.13
+tape spring L = 300, element 1.25 mm       ref   16.4066 | path   17.6064 ( +7.31%) | LBA       nan (  +nan%) | 30366 DOFs, 63 + 0 s | mean (uy, uz) = (0.26, 0.00), spread 2.13
+  L = 1200: flexural (z) 5.6232 N, torsional 8.1980 N, flexural-torsional 5.6232 N -> P_cr = 5.6232 N
+tape spring L = 1200, element 5 mm         ref    5.6232 | path    7.2793 (+29.45%) | LBA       nan (  +nan%) | 8676 DOFs, 12 + 0 s | mean (uy, uz) = (0.00, 1.00), spread 0.00
+tape spring L = 1200, element 2.5 mm       ref    5.6232 | path    7.3663 (+31.00%) | LBA       nan (  +nan%) | 31746 DOFs, 55 + 0 s | mean (uy, uz) = (0.00, 1.00), spread 0.00
+EXIT 0

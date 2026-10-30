@@ -1,0 +1,3 @@
+WARNING: keyword block '*Buckle' not found; '*NODE FILE\nU' not inserted
+WARNING: keyword block '*Step' not found; '*IMPERFECTION, FILE=tape_col_L1200_LBA, STEP=1\n1, 1.2' not inserted
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 1.2 mm); scale S = 5.6

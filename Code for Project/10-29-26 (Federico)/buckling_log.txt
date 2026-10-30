@@ -1,0 +1,256 @@
+Buckling of thin-shell coilable booms with OpenSeesPy - running log
+Started 10/29/26 (Federico, with Claude). Python: conda env shells (openseespy 3.8.0).
+Units: N, mm, MPa. Times are wall-clock on the 2-core VM.
+
+[1] Workspace survey
+- Read .claude/skills (shell-mesh, shell-bc-load, laminate-properties) and the
+  ThinShellOrchestrator agent. Re-use: CrossSection / ShellMesh / rigid_end /
+  edge_load; laminates via laminate_properties.
+- ToDo items 7-8 (buckling of a tape spring + skill file) are the target.
+
+[2] What OpenSeesPy 3.8 exposes for a stability (eigen) analysis - probes on a
+    500 x 10 x 1 mm Al strip column (E = 70 GPa), pinned via rigid ends,
+    Euler P_cr = pi^2 E I / L^2 = 2.3029 N
+- printA('-ret') returns the assembled tangent ONLY with system FullGeneral
+  (dense; every other system returns an empty list). nodeDOFs gives equation
+  numbers. eleResponse(e, 'stiffness') is not implemented for shells.
+- eigen('-standard', '-symmBandLapack', n) works after a static step and gives
+  the n smallest eigenvalues of the CURRENT tangent K_T (checked against the
+  dense printA matrix: identical to 4 digits). Default ARPACK only solves the
+  generalized problem (needs mass); -fullGenLapack returned inf.
+- Pitfall: with NormDispIncr 1e-12 the step did not converge, the domain
+  reverted to zero load and the "loaded" K_T was K0 (first, wrong conclusion
+  that Kg = 0). Tolerance 1e-8 converges in 2 iterations.
+- KEY FINDING: smallest eigenvalue of K_T vs load P/P_cr = 0, 0.5, 0.9:
+    ASDShellQ4 -corotational : 3.031e-4, 3.033e-4, 3.034e-4  (no change!)
+    ShellNLDKGQ              : 3.030e-4, 1.515e-4, 3.03e-5   (-> 0 at P_cr, linear)
+    ShellDKGQ, ShellMITC4    : constant (linear elements, expected)
+  ASDShellQ4 corotational has a correct (geometrically nonlinear) residual -
+  with a lateral perturbation the midspan deflection grows as 1/(1 - P/P_cr) -
+  but its tangent has NO initial-stress (geometric) stiffness: Newton
+  iterations grow 9 -> 43 as P -> 0.7 P_cr (modified-Newton convergence) and
+  the eigenvalues of K_T say nothing about stability. ShellNLDKGQ has a
+  consistent tangent: its lowest eigenvalue falls linearly to zero exactly
+  at the Euler load.
+- Consequence for the method:
+  (A) stability (eigen) analysis = ShellNLDKGQ: follow the equilibrium path,
+      compute the lowest eigenvalues of K_T at each converged state, and find
+      the load where the smallest one crosses zero (the OpenSees counterpart of
+      the Abaqus "preload + eigenvalue" approach of the MDPI paper).
+  (B) path following with an imperfection (Riks-type): any element, including
+      ASDShellQ4 laminates with off-axis plies; the peak of the load path is
+      the buckling strength; the imperfection shape comes from (A).
+
+[3] Literature survey (sub-agent, web; details and sources in BUCKLING_STUDY.md)
+- MDPI Biomimetics 9:494 (Palmeri & Laurenzi 2024) is about a CTM boom
+  (two omega shells, 500 mm, [+-45 GFPW/0 CF/+-45 GFPW]); read through the
+  authors' open-access copy (MDPI blocked here). Abaqus S4R, MPC end
+  reference points; "nonlinear buckling load" = (1) linear eigen buckling,
+  (2) load-controlled nonlinear static run to that load (no stabilisation),
+  (3) eigen buckling about a deformed state backed off until "close to but
+  not in" post-buckling. Perfect geometry. Only Pareto maxima reported
+  (Mx 11.71 N m, My 10.27 N m, F 545 N): weak benchmark to reproduce.
+- Leclerc & Pellegrino 2020 (IJSS 203) use the same 3 steps + Riks with a
+  first-mode imperfection of 0.2 t; Bessa & Pellegrino 2018: Riks with
+  mode-combination imperfections. Royer, Hutchinson & Pellegrino 2022:
+  bifurcations along the nonlinear fundamental path (isotropic longerons).
+- Closed form for tape springs: steady fold moments M+* = (1 + nu) D alpha,
+  M-* = -(1 - nu) D alpha (Calladine; Seffen & Pellegrino 1999 Eqs 2.29-31);
+  orthotropic: M+- = +-(sqrt(D11 D22) +- D12) alpha (Yee et al. 2004).
+- Seffen & Pellegrino tape: CuBe E = 131 GPa, nu = 0.3, R = 13.3 mm,
+  alpha = 1.85 rad, t = 0.1 mm, L = 200 mm. Peak moments only in plots;
+  M+max depends on L, |M-max| does not.
+- opstool's LBA uses K_T(after a reference step) - K0 with ShellNLDKGT; a
+  forum thread confirms eigen with M = 1 does not give buckling loads.
+
+[4] Module .claude/skills/shell-buckling/shell_buckling.py (new skill)
+- build_shell (ShellNLDKGQ with 0/90 laminates by node renumbering, or
+  ASDShellQ4 corotational; optional imperfection in the node coordinates),
+  tangent_eigen, mode_shape, stability_path (method A), lba (dense, small
+  models), imperfect_path (method B), section_properties / column_buckling /
+  arc_closed_form (analytical references).
+- section_properties checked: arc (R = 20, 100 deg, t = 0.2): shear centre
+  21.5752 vs closed form 21.5753 mm, Cw 335.250 vs 335.259 mm^6; channel
+  10/20/10 x 1: shear centre -3.75 mm (exact), Cw 29166.67 (exact).
+- Pitfalls fixed: (a) eigen before any analysis object -> no RCM numbering,
+  huge bandwidth (an eigen call ran > 10 min); stability_path now creates
+  the analysis first. (b) 'Linear' algorithm: ShellNLDKGQ K_T stays K0 ->
+  lba uses a Newton step and the dense K_T difference instead. (c) Newton
+  fails ON the singular point (step halving crawled towards it): the step
+  now aims 15% past the predicted crossing and interpolates the bracket.
+
+[5] Euler column checks (verify_column_buckling.py, quick run, 5 mm mesh)
+  strip 500 x 10 x 1 Al, rigid ends    Euler     path (A)        LBA
+  pinned-pinned                         2.3029   2.3030 +0.00%   2.3030 +0.01%
+  clamped-free                          0.5757   0.5762 +0.09%   0.5765 +0.14%
+  clamped-clamped                       9.2116   9.2370 +0.27%   9.2380 +0.29%
+  clamped-pinned (20.19 EI/L^2)         4.7112   4.7176 +0.13%   4.7179 +0.14%
+  Tape spring column (CuBe section, L = 300, fork ends), 4 mm mesh, first
+  try: 17.505 N vs Timoshenko-Gere flexural-torsional 16.407 N (+6.7%,
+  coarse mesh; full run with 2 and 1.25 mm meshes in progress).
+
+[6] Eigen solver speed
+- eigen('-standard','-symmBandLapack') forms all eigenvectors: 7.8 s at 3.2k
+  DOFs and > 20 min at 11.8k DOFs (tape column run killed). Default ARPACK
+  ('-genBandArpack', shift-invert about 0) with a unit mass on every DOF
+  (M = I -> the same standard problem): identical eigenvalues, 0.42 s at
+  3.2k and 1.9 s at 11.8k DOFs. tangent_eigen() now uses it. ('PythonSparse'
+  eigen does not exist in 3.8.)
+
+[7] Full column check (verify_column_buckling.py, ARPACK, two meshes)
+  strip, rigid ends    Euler     10 mm path / LBA        5 mm path / LBA
+  pinned-pinned        2.3029    +0.00% / +0.00%         +0.00% / +0.01%
+  clamped-free         0.5757    -0.01% / +0.12%         -0.00% / +0.14%
+  clamped-clamped      9.2116    +0.19% / +0.25%         +0.22% / +0.29%
+  clamped-pinned       4.7112    +0.07% / +0.13%         +0.09% / +0.14%
+  CuBe tape spring column, fork ends (thin-walled theory, Timoshenko-Gere):
+   section: Cw 33.050 (closed form 33.051) mm^6, shear centre 14.4817
+   (14.4818) mm from the arc centre; J = 0.0082 mm^4.
+   L = 300 (flexural-torsional 16.407 N): A 17.617 (2 mm), 17.606 (1.25 mm): +7.3%
+   L = 1200 (flexural in z 5.623 N):      A 7.279 (5 mm), 7.366 (2.5 mm):  +29 / +31%
+  The L = 1200 mode is pure z-translation of the section (mean uz = 1),
+  i.e. the right mode, but 31% too high and mesh-converged.
+  1 / mean(cos^2 phi) over the arc facets (|phi| <= 0.925 rad) = 1.315:
+  ShellNLDKGQ's geometric stiffness only contains the gradients of the
+  displacement NORMAL to each facet (plate / von Karman type), not the
+  in-plane ones. Exact for flat plates and strips (part 1), wrong for global
+  modes of curved sections where the section translates partly in the plane
+  of its facets. Confirmed with a fresh model and ONE eigen call per load
+  level (mu_min linear in P, zero at 1.295 P_th for L = 1200, 1.07 for 300):
+  it is the element, not the path.
+
+[8] Rigid ends for rotations: rigidLink + Transformation is broken here
+- Tip moment on the tape spring (rigid ends via shell_bc_load.rigid_end):
+  linear solve fine (rotation 0.25% from M L / E I), but rotation control
+  (DisplacementControl on ry of the master) diverges with ShellNLDKGQ and
+  gives ZERO moment with ASDShellQ4; load control gives a 50% too large
+  rotation at 4 N mm. With constraints('Penalty') all three are right.
+  rigidLink is also a linear (small-rotation) constraint. New
+  sb.rigid_end(mesh, edge, E, t): stiff elasticBeamColumn "spokes" (E_b =
+  1000 E, Corotational transformation) from the master to each edge node:
+  rotation control M/theta = 3967 (NLDKGQ) / 4063 (ASD) N mm/rad vs
+  beam theory 4102 (3 mm mesh), load and rotation control consistent.
+  (The strip columns of [7] were axial only: rigidLink was fine there.)
+
+[9] ShellNLDKGQ state is changed by an eigen call
+- Rotation control of the tape, 0.004 rad steps: without eigen calls
+  15.38, 30.74, 46.04, 61.26 N mm; with an eigen call after each step every
+  later step fails (wipeAnalysis + new analysis, band solver: same). A
+  LoadControl(0) Newton step after the eigen call re-converges, but to a
+  different equilibrium (rotation 0.00400 -> 0.00388 at the same moment):
+  the element state was modified. ASDShellQ4 is not affected.
+- New sb.stability_scan(build, step, max_param): every evaluation rebuilds
+  the model, marches to the path parameter without eigen calls, then ONE
+  eigen call; coarse scan + Illinois regula falsi on mu_min(p).
+
+[10] Method B with ASDShellQ4 needs load control for bifurcations
+- DisplacementControl of the lateral deflection of the imperfect tape column
+  diverged at step 1 (ASDShellQ4's tangent has no load-deflection coupling,
+  so the predictor is singular). imperfect_path rewritten: load or
+  displacement/rotation control (of a loaded DOF) or ArcLength, KrylovNewton
+  (accelerates the modified-Newton-like convergence), step cut/regrow.
+
+[11] Method B on the tape columns (verify_column_path_B.py; imperfection =
+     mode A, a0 = L/1000; load control, KrylovNewton; Southwell fit)
+  L = 1200 flexural, theory 5.6232 N: ASDShellQ4 5.4973 (-2.2%),
+     ShellNLDKGQ 5.5662 (-1.0%)   [method A was 7.28, +29%]
+  L = 300 flex.-torsional, theory 16.4066 N: ASDShellQ4 16.4999 (+0.6%),
+     ShellNLDKGQ 22.72 (+38%)      [method A was 17.6, +7%]
+  -> ASDShellQ4's residual is right for both modes; ShellNLDKGQ's residual
+     is right in pure flexure but too stiff in torsion. ASDShellQ4 path
+     following = the reference method for the buckling strength.
+  boom_buckling.py smoke test (clamped tape column L = 300, 4 mm mesh):
+     A 45.02 N (+5.3%), B peak 44.08 N (+3.1%) vs thin-walled theory 42.75 N
+     (clamped: K = 0.5 for flexure and warping).
+
+[12] Tape spring end moments (tape_spring_bending.py; Seffen & Pellegrino
+     CuBe tape, L = 200; root clamped, tip free ux uz ry; spokes)
+  Opposite sense (snap = limit point):
+     B ASDShellQ4 3 mm: 402.1 N mm at 0.145 rad (perfect-ish, 0.1 t of a
+       small-rotation mode); with the A crossing mode at 0.5 t: 403.7
+     B ShellNLDKGQ 3 mm: 395.2 at 0.145;  B ASDShellQ4 2 mm (perfect):
+       394.9 at 0.140 (-1.8%)
+     after the peak the slope falls to -18000 N mm/rad: genuine snap.
+     A scan (ShellNLDKGQ): crossing at 311.5 N mm, 0.090 rad, symmetric
+       flattening/tip-deflection mode; NOT real (the ASDShellQ4 path seeded
+       with that mode passes it; the NLDKGQ path slope there is still
+       +2500 N mm/rad) -> another effect of the incomplete NLDKGQ tangent.
+     L = 400 (ASDShellQ4, 3 mm): 361.1 N mm at 0.265 rad: M+max decreases
+       with L, as Seffen & Pellegrino report.
+     ArcLength continuation after the snap: "imaginary roots", failed ->
+       steady fold moment M+* = 28.85 N mm not reached.
+  Equal sense (bifurcation, flexural-torsional per Seffen):
+     A scan 3 mm: 140.7 N mm at 0.0339 rad; ShellNLDKGQ path stalls at 139.5
+     B ASDShellQ4 3 mm: path stalls at 173.3 N mm, 0.0453 rad, slope down
+       from 4060 to 1298 N mm/rad (32%), 100 iterations per step: close to a
+       maximum, lower bound.
+     L = 400: A 60.1 N mm at 0.027 rad; B ASDShellQ4 stalls at 93.8 N mm
+       with the slope still 75% of the initial one (KrylovNewton), 89.8
+       (BFGS, worse): only a lower bound. Length (in)dependence of |M-max|
+       not resolved: the solver cannot follow the bifurcation because the
+       ASDShellQ4 tangent lacks the geometric stiffness (Seffen & Pellegrino
+       report Abaqus also missed this bifurcation).
+  Equal sense, 2 mm mesh (7.9k DOFs): A scan 172.3 N mm at 0.0424 rad (march
+     fails at 0.0429: instability), B ASDShellQ4 (2 mm mode A, 0.1 t)
+     stalls at 167.2 N mm, 0.0434 rad. With B 3 mm (173.3): |M-max| ~ 170
+     N mm at L = 200, A and B within 3%; the 3 mm A value (140.7) was mesh-
+     coarse. |M-max| / M+max ~ 0.43.
+  Figure: results/tape_spring_bending.png (plot_tape_bending.py).
+
+[13] Deliverables
+- .claude/skills/shell-buckling/: shell_buckling.py (library), boom_buckling.py
+  (case-file CLI: A scan + B path -> JSON + PNG), examples/*.json, SKILL.md.
+- This folder: BUCKLING_STUDY.md (report), verify_column_buckling.py,
+  verify_column_path_B.py, tape_spring_bending.py, plot_tape_bending.py,
+  results/.
+- Not done / open: Abaqus cross-check (ToDo 8); post-snap fold moments
+  (needs pseudo-dynamic continuation); equal-sense length dependence;
+  Royer 2022 and Yee 2004 benchmarks; regression tests for the new skill
+  were not added to regression-tests (existing skills were not modified).
+
+[14] Verification figures and Abaqus export (second request, 10/29/26)
+- verify_column_path_B.py now saves the paths and the method A modes; rerun:
+  identical values (5.4973 / 5.5662 / 16.4999 / 22.7247 N).
+- plot_verification.py -> results/verify_strip.png (K_T eigenvalue vs load:
+  ShellNLDKGQ exactly 1 - P/P_E, ASDShellQ4 flat at 1; Euler errors),
+  verify_tape_column.png (imperfect paths vs theory and method A),
+  verify_modes.png (method A modes on the unrolled shell: flexural, flexural-
+  torsional, equal-sense antisymmetric edge mode at mid-length, spurious
+  opposite-sense flattening mode).
+- .claude/skills/shell-buckling/buckling_to_abaqus.py: Abaqus/CAE script
+  from a buckling case (shell-bc-load format + "buckling" + "reference"),
+  reusing the abaqus-export model builder: (1) *BUCKLE LBA with *NODE FILE,
+  (2) nonlinear preload f x LBA + *BUCKLE (3-step "nonlinear buckling load"),
+  (3) *IMPERFECTION (LBA mode 1) + Riks; results vs references in
+  <job>_results.txt. Four cases in abaqus/ (tape columns L = 1200 / 300,
+  opposite / equal bending L = 200), scripts generated, syntax-checked and
+  run on the stand-in API up to the first job (expected BCs, loads,
+  couplings, buckle and Riks steps). The keyword inserts were unit-tested
+  on a sample keyword-block list (after the *Buckle block; before the
+  first *Step, past '** STEP:' comment lines). NOT run in Abaqus.
+
+[15] Buckled shapes (third request, 10/29/26)
+- buckled_shapes.py re-runs the method B paths (ASDShellQ4, mode-A
+  imperfection; columns L = 1200 / 300 under load control, tape L = 200,
+  3 mm mesh, opposite / equal sense under rotation control). It saves every
+  nodal displacement at every converged step in results/shape_<case>.npz.
+  Same values as before: 4.6036 N, 12.552 N, opposite peak 403.7 N mm ->
+  351.6 at 0.1705 rad, equal 173.3 N mm (stall at 0.0453 rad).
+- New run eq05: equal sense with a 0.05 mm (0.5 t) imperfection. It peaks
+  at 159.2 N mm at 0.0416 rad, then falls slightly (159.185) before Newton
+  stops: the first falling branch for equal-sense bending. The peak is
+  imperfection-sensitive (-8% vs the 0.01 mm run).
+- Figures:
+  - results/buckled_shapes_columns.png: x5, with the mid-length section.
+    Flexural translation in z at L = 1200; twist plus sideways translation
+    at L = 300.
+  - results/buckled_shapes_bending.png:
+    - Opposite sense, true scale, colour = transverse curvature x R
+      (computed from the deformed cross-section polyline): 0.6 at the
+      peak, 0.3 after it, with the flattening at mid-length.
+    - Equal sense: kappa R >= 0.94, so the buckling displacement
+      V = U - (theta/theta1) U1 (theta1 = 0.01 rad) is drawn x20 instead.
+      It is antisymmetric about mid-length (a twisting mode).
+- Plotting: matplotlib 3D axes shrank or cropped the long, thin shells, so
+  the views are drawn as an orthographic projection (painter's algorithm)
+  on 2D equal-aspect axes.

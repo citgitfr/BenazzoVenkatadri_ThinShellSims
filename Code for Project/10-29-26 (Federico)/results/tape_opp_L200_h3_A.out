@@ -1,0 +1,14 @@
+tape_opp_L200_h3: D = 11.9963 N mm, steady fold moment 28.851 N mm
+  scan p =  2e-10: load factor  8.18467e-07, mu_min  2.0068e-03
+  scan p =  0.025: load factor  93.6537, mu_min  1.5328e-03
+  scan p =  0.05: load factor  181.509, mu_min  9.9360e-04
+  scan p =  0.075: load factor  258.737, mu_min  4.0856e-04
+  scan p =  0.1: load factor  321.042, mu_min -2.4157e-04
+  scan p =  0.0907108: load factor  311.456, mu_min -8.7980e-06
+  scan p =  0.0903796: load factor  311.481, mu_min -1.0194e-06
+  scan p =  0.0903032: load factor  311.484, mu_min  7.5933e-07
+  scan p =  0.0903358: load factor  311.483, mu_min  1.7242e-08
+  scan p =  0.0903373: load factor  311.483, mu_min  1.8727e-08
+  scan p =  0.0903796: load factor  311.481, mu_min -1.0002e-06
+A: 3684 DOFs, 236 s; critical moment 311.4826600996731 N mm at theta 0.09033803273084376 rad
+EXIT 0

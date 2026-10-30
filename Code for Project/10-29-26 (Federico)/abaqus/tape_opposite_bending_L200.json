@@ -1,0 +1,10 @@
+{"name": "tape_opp_L200", "laminate": {"isotropic": {"E": 131000, "nu": 0.3, "t": 0.1}},
+ "geometry": {"L": 200, "section": {"type": "arc", "R": 13.3, "b": 24.605}, "size": 2},
+ "supports": [{"rigid_end": "x0", "dofs": [1,1,1,1,1,1]}, {"rigid_end": "xL", "dofs": [0,1,0,1,0,1]}],
+ "loads": [{"node": {"rigid": "xL"}, "moment": [0, 1, 0]}],
+ "buckling": {"scale": 400, "n_modes": 4, "preload_fractions": [0.5, 0.8, 0.95],
+   "riks": {"amplitude": 0.01, "control": {"rigid": "xL", "dof": 5}, "max_disp": 0.25, "max_lpf": 1.5,
+            "max_inc": 300, "initial_inc": 0.02, "max_arc_inc": 0.05},
+   "monitor": {"rigid": "xL", "dof": 5}},
+ "reference": {"OpenSees A ShellNLDKGQ scan (3 mm, spurious)": 311.48, "OpenSees B ASDShellQ4 peak (2 mm)": 394.87,
+               "OpenSees B ASDShellQ4 peak (3 mm)": 402.14}}
