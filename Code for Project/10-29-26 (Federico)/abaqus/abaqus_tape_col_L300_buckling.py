@@ -52,7 +52,7 @@ M = {
     0.0,
     13.3
    ],
-   False
+   True
   ]
  ],
  "breaks": [
@@ -10250,6 +10250,8 @@ part.BaseShellExtrude(sketch=sk, depth=M['L'])     # extrusion along part Z = gl
 for mid, want in M['faces']:
     pm = P((M['L'] / 2, mid[0], mid[1]))
     face = part.faces.findAt((pm,))
+    if len(face) == 0:
+        raise RuntimeError('no shell face through %s: the part geometry does not match the cross-section' % (pm,))
     try:
         n = face[0].getNormal(point=pm)
     except TypeError:

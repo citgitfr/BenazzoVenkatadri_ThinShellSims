@@ -616,6 +616,14 @@ def T20_abaqus_export():
             case = json.loads(path.read_text())
             with redirect_stdout(io.StringIO()):
                 script, M, ref = c2a.generate(path, Path(tmp) / f'abaqus_{case["name"]}.py')
+            # the stand-in API has no geometry: check that every sketched arc (from p0 around the
+            # centre in the given direction to p1) passes through its face's probe point
+            arcs = [(pc, f[0]) for pc, f in zip(M['pieces'], M['faces']) if pc[0] == 'arc']
+            for (_, p0, p1, c, ccw), q in arcs:
+                ang = lambda p: np.arctan2(p[1] - c[1], p[0] - c[0])
+                sweep = lambda p: ((ang(p) - ang(p0)) if ccw else (ang(p0) - ang(p))) % (2 * np.pi)
+                check(f'{case["name"]}: sketched arc ({"CCW" if ccw else "CW"}) contains the face midpoint',
+                      float(sweep(q) < sweep(p1)), 1, 0, True)
             # OpenSees side: record nodal loads and fixities as the skills apply them
             lam = lp.laminate_from_spec(case['laminate'])
             mesh = sm.build_from_spec(case['geometry'])

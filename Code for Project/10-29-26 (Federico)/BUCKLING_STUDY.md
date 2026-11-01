@@ -226,7 +226,12 @@ Expected outcome, if the OpenSees conclusions are right:
 - **LBA in bending:** expected to be well off, since it ignores the
   flattening of the cross-section.
 
-The scripts have not been run in Abaqus. Only the model building ran here,
+The first Abaqus attempt (11/01) stopped while building the part. The
+abaqus-export skill drew every circular arc of the cross-section in the
+wrong direction (the complementary 254° arc), so no face was found at the
+tape mid-line. The skill is fixed, a regression check was added, and the
+scripts were regenerated (log entry [16]). A full Abaqus run is still
+pending. Only the model building ran here,
 on the stand-in API: steps, BCs, loads and couplings were created as
 expected for all four cases.
 

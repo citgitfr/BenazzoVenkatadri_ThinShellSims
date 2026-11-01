@@ -73,7 +73,7 @@ def section_pieces(sec):
         A = np.array([[2 * (pm[0] - p0[0]), 2 * (pm[1] - p0[1])], [2 * (p1[0] - p0[0]), 2 * (p1[1] - p0[1])]])
         rhs = np.array([pm @ pm - p0 @ p0, p1 @ p1 - p0 @ p0])
         ctr = np.linalg.solve(A, rhs)
-        out.append(('arc', p0.tolist(), p1.tolist(), ctr.tolist(), bool(cross < 0)))   # p0->pm->p1 turning left = CCW
+        out.append(('arc', p0.tolist(), p1.tolist(), ctr.tolist(), bool(cross > 0)))   # p0->pm->p1 turning left (cross > 0) = CCW
     return out
 
 
@@ -273,6 +273,8 @@ part.BaseShellExtrude(sketch=sk, depth=M['L'])     # extrusion along part Z = gl
 for mid, want in M['faces']:
     pm = P((M['L'] / 2, mid[0], mid[1]))
     face = part.faces.findAt((pm,))
+    if len(face) == 0:
+        raise RuntimeError('no shell face through %%s: the part geometry does not match the cross-section' %% (pm,))
     try:
         n = face[0].getNormal(point=pm)
     except TypeError:

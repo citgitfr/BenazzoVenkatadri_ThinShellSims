@@ -254,3 +254,25 @@ Units: N, mm, MPa. Times are wall-clock on the 2-core VM.
 - Plotting: matplotlib 3D axes shrank or cropped the long, thin shells, so
   the views are drawn as an orthographic projection (painter's algorithm)
   on 2D equal-aspect axes.
+
+[16] Abaqus error on the first run (11/01/26)
+- First run of abaqus_tape_opp_L200_buckling.py in Abaqus: it stopped
+  at "n = face[0].getNormal(point = pm)" (line 10254) with "sequence index
+  out of range": part.faces.findAt found no face through the mid-point of
+  the arc.
+- Cause: abaqus-export section_pieces() gave the wrong direction for arcs.
+  The flag was CCW for cross < 0, but a left turn p0 -> pm -> p1 has
+  cross > 0. The tape arc (-143 -> -90 -> -37 deg about its centre, i.e.
+  CCW) was therefore sketched CW, which draws the complementary 254 deg arc;
+  the face mid-point is not on it.
+- Why it was not caught: Tara's 10/26 Abaqus run was a flat strip (no arcs),
+  and the stand-in API in regression-tests has no geometry.
+- Fix in .claude/skills/abaqus-export/case_to_abaqus.py:
+  - ccw = cross > 0;
+  - the generated script now raises a clear error if a face is not found.
+- Regression-tests T20: new check that each sketched arc, swept from p0 in
+  the given direction, contains its face mid-point. It fails with the old
+  sign (checked for both curvature senses); 36/36 checks pass now.
+- The four scripts in abaqus/ were regenerated (only the arc flag and the
+  guard changed) and re-run on the stand-in API. No other committed Abaqus
+  script has arcs.
