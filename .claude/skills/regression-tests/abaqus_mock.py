@@ -92,6 +92,18 @@ class Nodes(list):
         return ('NODES', tuple(labels))
 
 
+def _kernel_sum(seq, *a):
+    # the Abaqus/CAE kernel's own sum: no generators (as reported by Abaqus 11/02/26)
+    if isinstance(seq, types.GeneratorType):
+        raise TypeError("arg1; found 'generator', expecting a recognized type")
+    return __builtins__['sum'](seq, *a) if isinstance(__builtins__, dict) else __builtins__.sum(seq, *a)
+
+
+def kernel_namespace():
+    """Globals for exec(): like 'abaqus cae noGUI', where sum is an Abaqus function."""
+    return {'__name__': '__main__', 'sum': _kernel_sum}
+
+
 def install(nodes_xyz, normal_of):
     """Put fake abaqus modules in sys.modules. nodes_xyz: global coordinates
     of the mesh nodes; normal_of(part_point): normal the fake face reports."""

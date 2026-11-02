@@ -52,3 +52,4 @@ Federico
 11/2/26
 Federico
 - Second Abaqus attempt got further (the part and mesh were built) and stopped at a wrong Abaqus command name for rotating the part instance (rotateInstance instead of rotate). Fixed it, made the point loads pass only their nonzero components, and added a check that the rotated mesh lies along the boom axis. Reviewed the remaining Abaqus commands in the scripts. The stand-in Abaqus used by the regression tests now rejects command names that do not exist in Abaqus, so this kind of error is caught before running on the server. Regenerated the four scripts (buckling_log.txt, entry [17]).
+- Third Abaqus attempt got past the rotation and stopped at the first support: inside Abaqus the name "sum" is an Abaqus function, not the Python one. The scripts now explicitly use the Python sum/min/max/abs/round, the stand-in Abaqus in the regression tests now reproduces this error, and the four scripts were regenerated (buckling_log.txt, entry [18]).

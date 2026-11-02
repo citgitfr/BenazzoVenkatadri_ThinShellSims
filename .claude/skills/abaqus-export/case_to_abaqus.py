@@ -206,6 +206,13 @@ Usage (Abaqus command line, in an empty working folder):
 Output: <job>_results.txt (also printed), <job>.odb, <job>.cae
 """
 import sys
+try:
+    import builtins                     # Python 3 (Abaqus 2024+)
+except ImportError:
+    import __builtin__ as builtins      # Python 2
+# 'abaqus cae noGUI' runs the script in a namespace where some names are Abaqus
+# functions (sum rejects generators: "found 'generator', expecting a recognized type")
+sum, min, max, abs, round = builtins.sum, builtins.min, builtins.max, builtins.abs, builtins.round
 
 from abaqus import mdb
 from abaqusConstants import (ANALYSIS, AXIS_1, AXIS_3, CARTESIAN, CENTROID, CLOCKWISE, COUNTERCLOCKWISE,

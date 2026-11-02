@@ -318,7 +318,7 @@ def mock_run(script, case):
     cwd = os.getcwd()
     os.chdir(Path(script).parent)
     try:
-        exec(compile(Path(script).read_text(encoding='utf-8'), str(script), 'exec'), {'__name__': '__main__'})
+        exec(compile(Path(script).read_text(encoding='utf-8'), str(script), 'exec'), am.kernel_namespace())
     except am.StopAtJob:
         pass
     finally:

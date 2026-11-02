@@ -658,7 +658,7 @@ def T20_abaqus_export():
                 log = abaqus_mock.install(grid, normal_of)
                 cwd = os.getcwd()
                 os.chdir(tmp)
-                ns = {'__name__': '__main__'}
+                ns = abaqus_mock.kernel_namespace()
                 try:
                     sys.argv = [script.name]
                     exec(compile(script.read_text(), str(script), 'exec'), ns)

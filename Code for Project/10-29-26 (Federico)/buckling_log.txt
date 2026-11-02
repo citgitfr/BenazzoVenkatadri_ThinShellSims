@@ -299,3 +299,16 @@ Units: N, mm, MPa. Times are wall-clock on the 2-core VM.
   attribute raises AttributeError, as in Abaqus (rotateInstance is now
   rejected). T20: 36/36 pass. The four scripts were regenerated and run on
   the stand-in API.
+
+[18] Third Abaqus error (11/02/26)
+- abaqus_tape_col_L1200_buckling.py got past the rotation and stopped in
+  edge_nodes (first support): "sum(...): arg1; found 'generator', expecting
+  a recognized type". 'abaqus cae noGUI' runs the script in a namespace
+  where sum is an Abaqus function, not the Python builtin.
+- Fix (abaqus-export template, so all scripts): bind sum, min, max, abs and
+  round to the Python builtins at the top of the script (builtins /
+  __builtin__ for Python 3 / 2).
+- regression-tests/abaqus_mock.kernel_namespace(): exec globals with an
+  Abaqus-like sum that rejects generators. It is used by T20 and by
+  buckling_to_abaqus --mock; the pre-fix script now fails on the mock with
+  the same message. T20 36/36; the four scripts were regenerated.
