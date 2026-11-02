@@ -338,9 +338,12 @@ part.generateMesh()
 
 asm = model.rootAssembly
 inst = asm.Instance(name='Shell-1', part=part, dependent=ON)
-asm.rotateInstance(instanceList=('Shell-1',), axisPoint=(0.0, 0.0, 0.0), axisDirection=(1.0, 1.0, 1.0),
-                   angle=120.0)                   # part X, Y, Z -> global y, z, x
+asm.rotate(instanceList=('Shell-1',), axisPoint=(0.0, 0.0, 0.0), axisDirection=(1.0, 1.0, 1.0),
+           angle=120.0)                           # part X, Y, Z -> global y, z, x
 NODES = [(nd.label, nd.coordinates) for nd in inst.nodes]   # assembly (= global) coordinates
+if abs(max(c[0] for _, c in NODES) - M['L']) > 1e-3 * M['L']:
+    raise RuntimeError('instance node coordinates are not along global x (max x = %%g, L = %%g)'
+                       %% (max(c[0] for _, c in NODES), M['L']))
 TOL = 1e-3 * SIZE
 
 
@@ -378,6 +381,11 @@ def nearest(p):
     if dist > TOL:
         log('note: node %%d used for point %%s is %%.3g mm away (mesh size differs from the case)' %% (lab, p, dist))
     return lab
+
+
+def components(prefix, v):
+    # nonzero components only (cf1/cm1... take floats, not UNSET)
+    return dict(('%%s%%d' %% (prefix, d + 1), float(x)) for d, x in enumerate(v) if x)
 
 
 rps = {}
@@ -420,11 +428,9 @@ for k, s in enumerate(M['supports']):
 
 def point_loads(name, reg, F, M_):
     if any(F):
-        model.ConcentratedForce(name=name + 'F', createStepName=STEP, region=reg,
-                                cf1=F[0] or UNSET, cf2=F[1] or UNSET, cf3=F[2] or UNSET)
+        model.ConcentratedForce(name=name + 'F', createStepName=STEP, region=reg, **components('cf', F))
     if any(M_):
-        model.Moment(name=name + 'M', createStepName=STEP, region=reg,
-                     cm1=M_[0] or UNSET, cm2=M_[1] or UNSET, cm3=M_[2] or UNSET)
+        model.Moment(name=name + 'M', createStepName=STEP, region=reg, **components('cm', M_))
 
 
 for k, ld in enumerate(M['loads']):

@@ -115,10 +115,10 @@ def add_loads(mdl, step, factor, tag):
     for k, (nm, F, Mo) in enumerate(LOADS):
         if any(F):
             mdl.ConcentratedForce(name='%%sF%%d' %% (tag, k), createStepName=step, region=sets[nm],
-                                  cf1=factor * F[0] or UNSET, cf2=factor * F[1] or UNSET, cf3=factor * F[2] or UNSET)
+                                  **components('cf', [factor * f for f in F]))
         if any(Mo):
             mdl.Moment(name='%%sM%%d' %% (tag, k), createStepName=step, region=sets[nm],
-                       cm1=factor * Mo[0] or UNSET, cm2=factor * Mo[1] or UNSET, cm3=factor * Mo[2] or UNSET)
+                       **components('cm', [factor * m for m in Mo]))
 
 
 def insert_keyword(mdl, text, before=None, after=None):

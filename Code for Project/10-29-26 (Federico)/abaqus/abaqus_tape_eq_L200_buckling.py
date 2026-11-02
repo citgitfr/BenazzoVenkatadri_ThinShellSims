@@ -10296,9 +10296,12 @@ part.generateMesh()
 
 asm = model.rootAssembly
 inst = asm.Instance(name='Shell-1', part=part, dependent=ON)
-asm.rotateInstance(instanceList=('Shell-1',), axisPoint=(0.0, 0.0, 0.0), axisDirection=(1.0, 1.0, 1.0),
-                   angle=120.0)                   # part X, Y, Z -> global y, z, x
+asm.rotate(instanceList=('Shell-1',), axisPoint=(0.0, 0.0, 0.0), axisDirection=(1.0, 1.0, 1.0),
+           angle=120.0)                           # part X, Y, Z -> global y, z, x
 NODES = [(nd.label, nd.coordinates) for nd in inst.nodes]   # assembly (= global) coordinates
+if abs(max(c[0] for _, c in NODES) - M['L']) > 1e-3 * M['L']:
+    raise RuntimeError('instance node coordinates are not along global x (max x = %g, L = %g)'
+                       % (max(c[0] for _, c in NODES), M['L']))
 TOL = 1e-3 * SIZE
 
 
@@ -10336,6 +10339,11 @@ def nearest(p):
     if dist > TOL:
         log('note: node %d used for point %s is %.3g mm away (mesh size differs from the case)' % (lab, p, dist))
     return lab
+
+
+def components(prefix, v):
+    # nonzero components only (cf1/cm1... take floats, not UNSET)
+    return dict(('%s%d' % (prefix, d + 1), float(x)) for d, x in enumerate(v) if x)
 
 
 rps = {}
@@ -10431,10 +10439,10 @@ def add_loads(mdl, step, factor, tag):
     for k, (nm, F, Mo) in enumerate(LOADS):
         if any(F):
             mdl.ConcentratedForce(name='%sF%d' % (tag, k), createStepName=step, region=sets[nm],
-                                  cf1=factor * F[0] or UNSET, cf2=factor * F[1] or UNSET, cf3=factor * F[2] or UNSET)
+                                  **components('cf', [factor * f for f in F]))
         if any(Mo):
             mdl.Moment(name='%sM%d' % (tag, k), createStepName=step, region=sets[nm],
-                       cm1=factor * Mo[0] or UNSET, cm2=factor * Mo[1] or UNSET, cm3=factor * Mo[2] or UNSET)
+                       **components('cm', [factor * m for m in Mo]))
 
 
 def insert_keyword(mdl, text, before=None, after=None):

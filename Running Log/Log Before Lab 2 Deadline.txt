@@ -48,3 +48,7 @@ Federico
 11/1/26
 Federico
 - First Abaqus run of the buckling scripts stopped while building the part (no face found at the middle of the tape). The cause was a sign error in the abaqus-export skill: every circular arc of a cross-section was drawn in the wrong direction, so Abaqus built the other 254 degrees of the circle instead of the 106 degree tape. Earlier Abaqus runs used flat strips, and the regression test cannot see geometry, so it had not shown up. Fixed the sign, added a clear error message, added a regression check of the arc direction (it fails with the old sign), and regenerated the four scripts in Code for Project --> 10-29-26 (Federico) --> abaqus. Details in buckling_log.txt, entry [16].
+
+11/2/26
+Federico
+- Second Abaqus attempt got further (the part and mesh were built) and stopped at a wrong Abaqus command name for rotating the part instance (rotateInstance instead of rotate). Fixed it, made the point loads pass only their nonzero components, and added a check that the rotated mesh lies along the boom axis. Reviewed the remaining Abaqus commands in the scripts. The stand-in Abaqus used by the regression tests now rejects command names that do not exist in Abaqus, so this kind of error is caught before running on the server. Regenerated the four scripts (buckling_log.txt, entry [17]).

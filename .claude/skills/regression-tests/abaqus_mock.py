@@ -17,6 +17,20 @@ class StopAtJob(Exception):
     pass
 
 
+# Abaqus Scripting Reference names the generated scripts may use; anything else
+# raises AttributeError, as in Abaqus (a misnamed method such as
+# rootAssembly.rotateInstance passed unnoticed before this list existed).
+KNOWN = {
+    'ArcByCenterEnds', 'BaseShellExtrude', 'BuckleStep', 'CompositeShellSection', 'ConcentratedForce',
+    'ConstrainedSketch', 'Coupling', 'DatumCsysByThreePoints', 'Density', 'DisplacementBC', 'Elastic', 'ElemType',
+    'HistoryOutputRequest', 'HomogeneousShellSection', 'Line', 'Material', 'MaterialOrientation', 'Moment',
+    'Pressure', 'Region', 'SectionAssignment', 'SectionLayer', 'StaticRiksStep', 'StaticStep',
+    'flipNormal', 'generateMesh', 'seedEdgeByNumber', 'setElementType', 'setMeshControls', 'rotate', 'translate',
+    'keywordBlock', 'synchVersions', 'sieBlocks', 'insert', 'setValues', 'keys', 'values', 'items', 'sets',
+    'datums', 'name',
+}
+
+
 class Rec:
     """Records attribute calls; returns new Rec objects."""
 
@@ -26,6 +40,8 @@ class Rec:
     def __getattr__(self, item):
         if item.startswith('__'):
             raise AttributeError(item)
+        if item not in KNOWN:
+            raise AttributeError(f"'{self._name}' object has no attribute '{item}'")
         return Rec(self._log, f'{self._name}.{item}')
 
     def __call__(self, *args, **kw):

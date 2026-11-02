@@ -276,3 +276,26 @@ Units: N, mm, MPa. Times are wall-clock on the 2-core VM.
 - The four scripts in abaqus/ were regenerated (only the arc flag and the
   guard changed) and re-run on the stand-in API. No other committed Abaqus
   script has arcs.
+
+[17] Second Abaqus error (11/02/26)
+- abaqus_tape_col_L1200_buckling.py stopped at line 10318:
+  "'Assembly' object has no attribute 'rotateInstance'". The Abaqus method
+  is rootAssembly.rotate(instanceList, axisPoint, axisDirection, angle).
+  The part was built and meshed before the error, so the arc fix of [16]
+  works.
+- Fixes in abaqus-export/case_to_abaqus.py (shared with buckling_to_abaqus.py):
+  - asm.rotate(...).
+  - ConcentratedForce / Moment now get only the nonzero cf/cm components as
+    floats (they were given UNSET, which these float arguments may refuse).
+    The same change was made in add_loads of buckling_to_abaqus.py.
+  - The script stops with a clear message if the instance node coordinates
+    are not along global x after the rotation (max x must equal L).
+- Template audit: the other Abaqus calls (BuckleStep, StaticStep,
+  StaticRiksStep, HistoryOutputRequest, keywordBlock synchVersions /
+  sieBlocks / insert, Model objectToCopy, Coupling, ReferencePoint, Set,
+  DisplacementBC, Job, openOdb / historyRegions / frame.description) use
+  valid names and arguments.
+- regression-tests/abaqus_mock.py: allowlist of Abaqus API names; any other
+  attribute raises AttributeError, as in Abaqus (rotateInstance is now
+  rejected). T20: 36/36 pass. The four scripts were regenerated and run on
+  the stand-in API.
