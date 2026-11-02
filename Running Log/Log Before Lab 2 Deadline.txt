@@ -62,3 +62,4 @@ Federico
   - The linear buckling analysis alone is wrong for tape-spring bending (136 N mm for both senses), as expected.
   - Details: BUCKLING_STUDY.md section 7, buckling_log.txt entry [20].
 - Plotted the Abaqus and OpenSees load paths together (resultsbaqus_vs_opensees.png). Before buckling the two programs give the same curves, so the models match. The differences are only in where each path reaches its peak or buckles.
+- The Abaqus scripts now also save the deformed shapes (the first buckling mode, and the Riks shapes at the peak and at the last increment) as small CSV files. A new plotting script draws them next to the OpenSees modes and shapes, and computes how similar the buckling modes are. That will show whether the different imperfection shapes explain the equal-sense difference. Tested with mock data; the scripts need one more run on the server.

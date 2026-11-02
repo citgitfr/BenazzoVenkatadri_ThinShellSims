@@ -10504,6 +10504,21 @@ def run_job(mdl, name):
     return name
 
 
+def write_shape(fr, path, header):
+    # shell-node coordinates (assembly = global, from the CAE mesh; ODB labels = CAE labels)
+    # and displacements U of one ODB frame -> CSV for plot_abaqus_shapes.py
+    xyz = dict(NODES)
+    with open(path, 'w') as f:
+        f.write('# %s\n' % header)
+        f.write('label,x,y,z,ux,uy,uz\n')
+        for v in fr.fieldOutputs['U'].values:
+            if v.instance is None or v.instance.name != 'SHELL-1' or v.nodeLabel not in xyz:
+                continue
+            c = xyz[v.nodeLabel]
+            f.write('%d,%.9g,%.9g,%.9g,%.6g,%.6g,%.6g\n' % ((v.nodeLabel,) + tuple(c) + tuple(v.data)))
+    log('   shape written: %s' % path)
+
+
 def eigenvalues(job, step):
     odb = openOdb(job + '.odb', readOnly=True)
     out = []
@@ -10531,6 +10546,7 @@ if CTRL:
     riks_kw.update(nodeOn=ON, region=RIKS.rootAssembly.sets[CTRL], dof=R['control']['dof'],
                    maximumDisplacement=R['max_disp'])
 RIKS.StaticRiksStep(**riks_kw)
+RIKS.fieldOutputRequests['F-Output-1'].setValues(frequency=1)
 add_loads(RIKS, 'Riks', S, 'P')
 if MON:
     RIKS.HistoryOutputRequest(name='Monitor', createStepName='Riks', variables=('U', 'UR'),
@@ -10541,6 +10557,13 @@ log('Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude %g mm); sca
 # --- run ---
 run_job(LBA, JOB_LBA)
 lam = eigenvalues(JOB_LBA, 'Buckle')
+try:
+    o = openOdb(JOB_LBA + '.odb', readOnly=True)
+    fr1 = [fr for fr in o.steps['Buckle'].frames if re.search(r'Mode\s+1\s*:', fr.description)][0]
+    write_shape(fr1, NAME + '_shape_LBA_mode1.csv', 'LBA mode 1, %s' % fr1.description.strip())
+    o.close()
+except Exception as exc:
+    log('WARNING: LBA mode shape not written (%s)' % exc)
 log('\n=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S')
 for k, v in enumerate(lam):
     log('   mode %d: eigenvalue %.6g -> %.6g' % (k + 1, v, v * S))
@@ -10575,6 +10598,16 @@ st = odb.steps['Riks']
 lpf = [v for _, v in st.historyRegions['Assembly ASSEMBLY'].historyOutputs['LPF'].data]
 peak = max(lpf) * S
 kpk = lpf.index(max(lpf))
+try:
+    frs = st.frames
+    if len(frs) != len(lpf):
+        log('WARNING: %d Riks frames vs %d LPF points; shapes use the nearest frame' % (len(frs), len(lpf)))
+    for tag, k in (('peak', kpk), ('last', len(lpf) - 1)):
+        kf = min(k, len(frs) - 1)
+        write_shape(frs[kf], NAME + '_shape_RIKS_%s.csv' % tag,
+                    'RIKS %s: increment %d, load %.6g (LPF %.6g x S %g)' % (tag, k, lpf[k] * S, lpf[k], S))
+except Exception as exc:
+    log('WARNING: Riks shapes not written (%s)' % exc)
 log('   %d increments; peak LPF %.5g -> buckling strength %.6g (increment %d%s)'
     % (len(lpf) - 1, max(lpf), peak, kpk, ', LAST increment: check the path' if kpk == len(lpf) - 1 else ''))
 mon = []

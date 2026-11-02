@@ -193,6 +193,8 @@ drawn in an orthographic view at true proportions.
   - `tape_spring_bending.py`, `plot_tape_bending.py`: step 3.
   - `plot_verification.py`: the verification figures (`results/verify_*.png`).
   - `plot_abaqus_comparison.py`: Abaqus vs OpenSees paths (`results/abaqus_vs_opensees.png`).
+  - `plot_abaqus_shapes.py`: Abaqus vs OpenSees buckling modes and buckled shapes
+    (from the Abaqus shape CSVs; `results/abaqus_vs_opensees_{modes,shapes}.png`).
   - `buckled_shapes.py`: re-runs the method B paths keeping every nodal
     displacement (`run <case>`) and draws the buckled shapes (`plot`).
   - `results/`: `.json` / `.out` / `.npz` files and the figure.
@@ -261,6 +263,25 @@ What the overlay shows:
   mode 1).
 - **Equal sense:** Abaqus snaps at 151 N·mm. Both OpenSees runs follow the
   same line further, to 159 / 173 N·mm.
+
+**Deformed shapes (added 11/02, not yet run).** The scripts now also write
+three CSV files per case. Each holds the shell-node coordinates and
+displacements of one state:
+- `_shape_LBA_mode1.csv`: the first *BUCKLE mode;
+- `_shape_RIKS_peak.csv`: the Riks state at the peak load;
+- `_shape_RIKS_last.csv`: the Riks state at the last increment.
+
+The Riks step now writes field output at every increment, so frame k is
+load-factor point k. `plot_abaqus_shapes.py` draws two figures:
+- **Modes:** Abaqus mode 1 next to the OpenSees method A mode, unrolled,
+  with their correlation. This tests the imperfection-shape explanation of
+  the equal-sense gap.
+- **Shapes:** Abaqus Riks next to OpenSees method B, in 3D.
+
+The plotting was tested on mock CSVs built from the OpenSees data (sign
+flipped, rows shuffled, coordinate noise): it gave a correlation of 1.00
+and the right sign. The Abaqus side (the ODB frames) runs for the first
+time on the next server run.
 
 Findings:
 1. **Columns, bifurcation load.**

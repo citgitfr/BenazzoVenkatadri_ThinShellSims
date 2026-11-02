@@ -374,3 +374,28 @@ Units: N, mm, MPa. Times are wall-clock on the 2-core VM.
   line to 159 / 173.
 - Note: the OpenSees opposite-sense 2 mm run (394.9) used perfect geometry
   (amp 0); the 3 mm runs used 0.05 mm.
+
+[22] Deformed-shape export from Abaqus (11/02/26)
+- buckling_to_abaqus.py template:
+  - write_shape(frame, path, header) writes, for every SHELL-1 node, the
+    CAE assembly coordinates (labels shared with the ODB) and U.
+  - LBA: the frame whose description matches "Mode 1:" ->
+    <case>_shape_LBA_mode1.csv.
+  - Riks: F-Output-1 frequency = 1, so frame k matches LPF point k (a
+    warning is logged if the counts differ) -> <case>_shape_RIKS_peak.csv
+    and <case>_shape_RIKS_last.csv.
+  - Each export is in try/except: a failure only logs a WARNING and the
+    rest of the results are still written.
+- plot_abaqus_shapes.py:
+  - Rebuilds the structured grid from x and arc position (tolerance
+    0.05 mm).
+  - Modes figure: unrolled normal displacement, Abaqus LBA mode 1 vs
+    OpenSees method A mode. The sign is aligned and the correlation
+    printed, with OpenSees interpolated bilinearly to the Abaqus nodes.
+  - Shapes figure: 3D, Abaqus Riks (peak for bending, last for columns) vs
+    OpenSees B.
+- Tested on mock CSVs from the OpenSees data (sign flipped, rows shuffled,
+  1e-5 mm noise): correlation 1.00, sign corrected, grids rebuilt.
+- The four scripts were regenerated, run on the stand-in API (54/47 calls
+  up to the first job) and syntax-checked. The ODB part is not covered by
+  the stand-in.
