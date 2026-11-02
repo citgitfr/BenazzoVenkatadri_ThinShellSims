@@ -283,6 +283,40 @@ flipped, rows shuffled, coordinate noise): it gave a correlation of 1.00
 and the right sign. The Abaqus side (the ODB frames) runs for the first
 time on the next server run.
 
+**Deformed shapes (Abaqus run of 11/02, `plot_abaqus_shapes.py`):**
+
+![modes](results/abaqus_vs_opensees_modes.png)
+![curvature at the peak](results/abaqus_vs_opensees_curvature.png)
+![buckled shapes](results/abaqus_vs_opensees_shapes.png)
+
+- **Buckling modes.** For the two columns and the equal sense, Abaqus
+  mode 1 and the OpenSees method A mode correlate at 1.00. So the
+  equal-sense gap is **not** caused by different imperfection shapes.
+- **Opposite sense:** correlation 0.00, and the two imperfections differ:
+  - Abaqus *BUCKLE mode 1 has a negative eigenvalue: it is the
+    equal-sense twisting mode, and Abaqus used it as the imperfection.
+  - OpenSees used its (spurious) tip-flattening mode.
+
+  At the peak both give the same symmetric flattening at mid-length
+  (minimum κR 0.60 vs 0.59) and peaks within 3% (382 vs 395-404). The
+  opposite-sense peak is therefore a limit point that is insensitive to
+  the imperfection shape, consistent with the OpenSees perfect-geometry
+  run (394.9).
+- **Equal sense at the peak:** the same kind of deformation in both, with
+  minimum κR 0.95 (Abaqus) vs 0.94 (OpenSees). Two flattened zones near
+  x ≈ 30 and 170 mm sit on opposite edges and are joined across
+  mid-length, an antisymmetric twisting pattern. The Abaqus pattern is the
+  mirror image (s → b − s) of the OpenSees 0.05 mm one, i.e. the opposite
+  imperfection sign.
+  - Since shape and imperfection agree, the remaining 5-14% gap in moment
+    comes from the element or the mesh:
+    - S4R (reduced integration, hourglass control) at 2 mm in Abaqus;
+    - ASDShellQ4 at 3 mm in OpenSees, where going from 3 to 2 mm already
+      lowered the stall from 173 to 167.
+  - Next check: run the equal-sense script with `-- 2 S4` and `-- 1 S4R`.
+- **Columns:** the same modes. At L = 1200, Abaqus bows the opposite way
+  in z (imperfection sign).
+
 Findings:
 1. **Columns, bifurcation load.**
    - Abaqus LBA, NLB and the Riks Southwell estimate agree: 5.320 N and

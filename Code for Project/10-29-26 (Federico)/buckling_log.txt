@@ -399,3 +399,23 @@ Units: N, mm, MPa. Times are wall-clock on the 2-core VM.
 - The four scripts were regenerated, run on the stand-in API (54/47 calls
   up to the first job) and syntax-checked. The ODB part is not covered by
   the stand-in.
+
+[23] Abaqus deformed shapes compared (11/02/26)
+- The Abaqus run uploaded 12 CSVs; all were read (structured grids rebuilt).
+  Loads match the earlier results.txt.
+- results/abaqus_vs_opensees_modes.png: correlation of LBA mode 1 with the
+  OpenSees method A mode is 1.00 for col1200, col300 and equal sense, and
+  0.00 for opposite sense. There Abaqus mode 1 (eigenvalue -0.341) is the
+  reversed-moment twisting mode and was used as the Riks imperfection.
+- results/abaqus_vs_opensees_curvature.png (new figure): kappa R at the
+  peak, unrolled.
+  - Opposite sense: the same mid-length flattening; min 0.60 (Abaqus) vs
+    0.59 (OpenSees). The peak is insensitive to the imperfection shape.
+  - Equal sense: the same antisymmetric pattern, mirrored (imperfection
+    sign); min 0.95 vs 0.94.
+  - The equal-sense gap is therefore not the imperfection shape; candidates
+    are the element (S4R vs ASDShellQ4) and the mesh (2 vs 3 mm).
+- results/abaqus_vs_opensees_shapes.png: 3D Riks vs OpenSees B. At
+  L = 1200, Abaqus bows the other way in z (imperfection sign).
+- Proposed: equal-sense script with "-- 2 S4" (full integration) and
+  "-- 1 S4R" (finer mesh).

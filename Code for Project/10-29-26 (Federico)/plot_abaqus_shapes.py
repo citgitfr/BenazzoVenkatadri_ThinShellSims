@@ -8,6 +8,7 @@ modes (results/*modeA*.npz) and method B shapes (results/shape_*.npz).
   results/abaqus_vs_opensees_modes.png    LBA mode 1 vs method A mode, unrolled,
                                           colour = normal displacement; correlation
   results/abaqus_vs_opensees_shapes.png   Riks vs method B deformed shells (3D)
+  results/abaqus_vs_opensees_curvature.png  transverse curvature at the bending peaks, unrolled
 
     python plot_abaqus_shapes.py [abaqus_results_dir [output_dir]]
 """
@@ -188,6 +189,37 @@ def fig_shapes():
     print('saved abaqus_vs_opensees_shapes.png')
 
 
+def fig_curvature():
+    """Transverse curvature x R at the peak of the bending paths on the unrolled shell,
+    Abaqus vs OpenSees, same colour scale per row."""
+    rows = [('tape_opp_L200', 'opp', 'Opposite-sense bending', (0.0, 2.0)),
+            ('tape_eq_L200', 'eq05', 'Equal-sense bending', (0.9, 1.1)),
+            ('tape_eq_L200', 'eq', 'Equal-sense bending', (0.9, 1.1))]
+    fig, axes = plt.subplots(len(rows), 2, figsize=(13, 8.5), layout='constrained')
+    for ax2, (name, case, title, (lo, hi)) in zip(axes, rows):
+        a = read_abaqus(name, 'RIKS_peak')
+        Xo, Uo, h, k = bs.surface(case, None)
+        imp = {'opp': '0.05 mm', 'eq05': '0.05 mm', 'eq': '0.01 mm'}[case]
+        for ax, (X, U, lab) in zip(ax2, (
+                (a[0], a[1], f'Abaqus Riks peak, {a[2].split("load ")[1].split(" (")[0]} N mm (0.01 mm)'),
+                (Xo, Uo[k], f'OpenSees B peak, {abs(h[k, 1]):.1f} N mm ({imp})'))):
+            kap = bs.transverse_curvature(X + U)
+            im = ax.pcolormesh(X[0, :, 0], arc_s(X[:, 0, 1], X[:, 0, 2]), kap, cmap=KAP, vmin=lo, vmax=hi,
+                               shading='gouraud')
+            ax.set_title(f'{title}: {lab}; min {kap.min():.2f}', color=INK, fontsize=9, loc='left')
+            ax.set_xlabel('x from the clamped root [mm]', color=MUTED, fontsize=8)
+            ax.set_ylabel('arc s [mm]', color=MUTED, fontsize=8)
+            ax.tick_params(colors=MUTED, labelsize=7)
+        cb = fig.colorbar(im, ax=ax2, shrink=0.9, pad=0.01)
+        cb.set_label('curvature x R', color=MUTED, fontsize=8)
+        cb.ax.tick_params(colors=MUTED, labelsize=7)
+    fig.suptitle('Transverse curvature x R at the peak moment (1 = as made, < 1 = flattened), unrolled shell',
+                 color=INK, fontsize=10.5)
+    fig.savefig(OUT / 'abaqus_vs_opensees_curvature.png', dpi=150)
+    plt.close(fig)
+    print('saved abaqus_vs_opensees_curvature.png')
+
+
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         ABQ = Path(sys.argv[1])
@@ -195,3 +227,4 @@ if __name__ == '__main__':
         OUT = Path(sys.argv[2])
     fig_modes()
     fig_shapes()
+    fig_curvature()
