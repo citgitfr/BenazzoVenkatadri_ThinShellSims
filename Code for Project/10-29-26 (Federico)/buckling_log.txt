@@ -312,3 +312,19 @@ Units: N, mm, MPa. Times are wall-clock on the 2-core VM.
   Abaqus-like sum that rejects generators. It is used by T20 and by
   buckling_to_abaqus --mock; the pre-fix script now fails on the mock with
   the same message. T20 36/36; the four scripts were regenerated.
+
+[19] Fourth Abaqus error (11/02/26)
+- The model was built completely (BCs, loads, LBA and RIKS models). The
+  script stopped at the first job: mdb.Job(..., precision=DOUBLE_PRECISION)
+  -> "keyword error on precision". mdb.Job has no 'precision' argument
+  (explicitPrecision is for Abaqus/Explicit only; Standard runs in double
+  precision anyway).
+- Fix: removed the argument (abaqus-export template and run_job in
+  buckling_to_abaqus.py) and the unused DOUBLE_PRECISION import.
+- abaqus_mock: keyword-argument lists from the Abaqus Scripting Reference for
+  Job, StaticStep, StaticRiksStep, BuckleStep, HistoryOutputRequest,
+  ConcentratedForce, Moment, DisplacementBC and Coupling. An unknown keyword
+  raises "keyword error on <name>"; the pre-fix script now fails on the mock
+  with the same message. T20 36/36; the four scripts were regenerated.
+- Not covered by the mock: everything after the first job submission (the
+  NLB preload models and the reading of the ODB results).

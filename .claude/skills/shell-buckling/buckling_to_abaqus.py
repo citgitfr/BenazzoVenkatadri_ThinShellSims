@@ -147,7 +147,7 @@ def new_model(name):
 
 
 def run_job(mdl, name):
-    job = mdb.Job(name=name, model=mdl.name, type=ANALYSIS, precision=DOUBLE_PRECISION,
+    job = mdb.Job(name=name, model=mdl.name, type=ANALYSIS,
                   nodalOutputPrecision=SINGLE, memoryUnits=PERCENTAGE, memory=90)
     job.submit(consistencyChecking=OFF)
     job.waitForCompletion()

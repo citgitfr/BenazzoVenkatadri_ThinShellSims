@@ -28,7 +28,7 @@ sum, min, max, abs, round = builtins.sum, builtins.min, builtins.max, builtins.a
 
 from abaqus import mdb
 from abaqusConstants import (ANALYSIS, AXIS_1, AXIS_3, CARTESIAN, CENTROID, CLOCKWISE, COUNTERCLOCKWISE,
-                             DEFAULT, DEFORMABLE_BODY, DISCRETE, DOUBLE_PRECISION, FROM_SECTION, GRADIENT,
+                             DEFAULT, DEFORMABLE_BODY, DISCRETE, FROM_SECTION, GRADIENT,
                              KINEMATIC, LAMINA, MIDDLE_SURFACE, NO_IDEALIZATION, OFF, ON, PERCENTAGE, QUAD,
                              ROTATION_NONE, S4, S4R, SIMPSON, SINGLE, STACK_3, STANDARD, STRUCTURED,
                              SURFACE, SYSTEM, THREE_D, UNIFORM, UNSET, VECTOR, ISOTROPIC, FIXED,
@@ -10497,7 +10497,7 @@ def new_model(name):
 
 
 def run_job(mdl, name):
-    job = mdb.Job(name=name, model=mdl.name, type=ANALYSIS, precision=DOUBLE_PRECISION,
+    job = mdb.Job(name=name, model=mdl.name, type=ANALYSIS,
                   nodalOutputPrecision=SINGLE, memoryUnits=PERCENTAGE, memory=90)
     job.submit(consistencyChecking=OFF)
     job.waitForCompletion()

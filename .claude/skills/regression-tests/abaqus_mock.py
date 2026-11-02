@@ -31,6 +31,46 @@ KNOWN = {
 }
 
 
+# Keyword arguments accepted by the main constructors (Abaqus Scripting Reference);
+# an unknown keyword raises TypeError "keyword error on <name>", as in Abaqus.
+_STEP = {'name', 'previous', 'description', 'maintainAttributes'}
+KWARGS = {
+    'Job': {'name', 'model', 'description', 'type', 'queue', 'waitHours', 'waitMinutes', 'atTime', 'echoPrint',
+            'contactPrint', 'modelPrint', 'historyPrint', 'scratch', 'userSubroutine', 'numCpus', 'memoryUnits',
+            'memory', 'explicitPrecision', 'nodalOutputPrecision', 'parallelizationMethodExplicit', 'numDomains',
+            'activateLoadBalancing', 'multiprocessingMode', 'licenseType', 'getMemoryFromAnalysis',
+            'resultsFormat', 'numGPUs'},
+    'StaticStep': _STEP | {'timePeriod', 'nlgeom', 'stabilizationMethod', 'stabilizationMagnitude', 'adiabatic',
+                           'timeIncrementationMethod', 'maxNumInc', 'initialInc', 'minInc', 'maxInc',
+                           'matrixSolver', 'matrixStorage', 'amplitude', 'extrapolation', 'fullyPlastic', 'noStop',
+                           'useLongTermSolution', 'solutionTechnique', 'reformKernel', 'convertSDI',
+                           'adaptiveDampingRatio', 'continueDampingFactors'},
+    'StaticRiksStep': _STEP | {'nlgeom', 'adiabatic', 'maxLPF', 'nodeOn', 'maximumDisplacement', 'dof', 'region',
+                               'timeIncrementationMethod', 'maxNumInc', 'totalArcLength', 'initialArcInc',
+                               'minArcInc', 'maxArcInc', 'matrixStorage', 'extrapolation', 'fullyPlastic', 'noStop',
+                               'useLongTermSolution', 'convertSDI'},
+    'BuckleStep': _STEP | {'numEigen', 'eigensolver', 'minEigen', 'maxEigen', 'vectors', 'maxIterations',
+                           'blockSize', 'maxBlocks', 'matrixStorage'},
+    'HistoryOutputRequest': {'name', 'createStepName', 'region', 'variables', 'frequency', 'modes', 'timeInterval',
+                             'numIntervals', 'timeMarks', 'sectionPoints', 'rebar', 'filter', 'fasteners'},
+    'ConcentratedForce': {'name', 'createStepName', 'region', 'distributionType', 'field', 'cf1', 'cf2', 'cf3',
+                          'amplitude', 'follower', 'localCsys'},
+    'Moment': {'name', 'createStepName', 'region', 'distributionType', 'field', 'cm1', 'cm2', 'cm3', 'amplitude',
+               'follower', 'localCsys'},
+    'DisplacementBC': {'name', 'createStepName', 'region', 'fieldName', 'u1', 'u2', 'u3', 'ur1', 'ur2', 'ur3',
+                       'fixed', 'amplitude', 'distributionType', 'localCsys', 'buckleCase'},
+    'Coupling': {'name', 'surface', 'controlPoint', 'influenceRadius', 'couplingType', 'adjust', 'localCsys',
+                 'u1', 'u2', 'u3', 'ur1', 'ur2', 'ur3', 'weightingMethod'},
+}
+
+
+def check_kwargs(name, kw):
+    ok = KWARGS.get(name.split('.')[-1])
+    for k in kw:
+        if ok is not None and k not in ok:
+            raise TypeError('keyword error on %s' % k)
+
+
 class Rec:
     """Records attribute calls; returns new Rec objects."""
 
@@ -45,6 +85,7 @@ class Rec:
         return Rec(self._log, f'{self._name}.{item}')
 
     def __call__(self, *args, **kw):
+        check_kwargs(self._name, kw)
         self._log.append((self._name, args, kw))
         return Rec(self._log, self._name + '()')
 
@@ -160,6 +201,7 @@ def install(nodes_xyz, normal_of):
             return Model(name)
 
         def Job(self, **kw):
+            check_kwargs('Job', kw)
             raise StopAtJob()
 
     abaqus = types.ModuleType('abaqus')
