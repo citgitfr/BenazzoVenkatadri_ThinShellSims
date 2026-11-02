@@ -59,6 +59,10 @@ Writes `<name>.json` (A critical value, B peak and path) and `<name>.png`.
    load control + Southwell for bifurcations with stable post-buckling.
    Check the path end: a peak followed by a falling branch is a buckling
    strength; a path that stops while rising is only a lower bound - say so.
+   Southwell gives the bifurcation load, not the strength, and only on a
+   stable post-buckling path. The L = 300 tape column (flexural-torsional)
+   has a limit point at 0.81 x LBA in Abaqus Riks: load-control steps that
+   keep shrinking mean a peak is near.
 3. Mesh convergence (two element sizes) and an analytical check where one
    exists: `sb.section_properties(sb.section_points(section), t)`,
    `sb.column_buckling(props, E, G, L, K_flex, K_tors)`, `sb.arc_closed_form`;

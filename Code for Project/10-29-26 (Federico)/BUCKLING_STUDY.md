@@ -11,6 +11,7 @@
 | Can OpenSeesPy do an Abaqus `*BUCKLE` (K0 + λ Kg) analysis? | Not directly. There is no buckle step and no access to Kg. The tangent K_T is only available as a dense matrix (`printA` with `FullGeneral`). |
 | Can it do the "preload, then eigenvalue" check of Palmeri & Laurenzi (MDPI 2024) and Leclerc & Pellegrino (2020)? | Yes, mechanically. `eigen` after a static step gives the eigenvalues of the current K_T. But only **ShellNLDKGQ** has load-dependent (geometric) stiffness in its tangent, and that stiffness is **incomplete for curved shells**. It gives exact Euler loads for flat strips, +7% to +31% for global modes of a tape-spring column, and a spurious early crossing in opposite-sense bending. It does agree with path following, within 3%, for the equal-sense bifurcation on a 2 mm mesh. Treat it as an estimator and mode-shape generator, not as the answer. |
 | What gives the buckling strength reliably? | **Path following with ASDShellQ4 -corotational** (its nonlinear residual is complete; checked against thin-walled theory to within −2.2% / +0.6% / +3%), with an imperfection seeded from the method A mode. The peak of the load path is the buckling strength (Riks-type, as in Leclerc & Pellegrino 2020 and Bessa & Pellegrino 2018). For bifurcations with a stable post-buckling path, use a Southwell plot. |
+| Does Abaqus agree? (§7) | **Columns:** bifurcation loads within 2-3% of OpenSees method B. **Opposite-sense bending:** peak moment 382 vs 395 N·mm (−3%). **Equal-sense bending:** Abaqus is 5-14% lower than OpenSees (151 N·mm); not yet explained. **L = 300 column:** Abaqus finds a limit point at 0.81 of the bifurcation load, so a Southwell estimate is not the strength there. |
 | Recommended pipeline | (A) stability scan with ShellNLDKGQ → estimate + mode; (B) imperfect path with ASDShellQ4, imperfection = mode A × (0.1-0.2 t) → buckling strength; report both, plus mesh convergence. `boom_buckling.py case.json` does A + B. |
 
 ## 2. What the literature does (survey details in the log, entry [3])
@@ -191,6 +192,7 @@ drawn in an orthographic view at true proportions.
   - `verify_column_buckling.py`, `verify_column_path_B.py`: step 2.
   - `tape_spring_bending.py`, `plot_tape_bending.py`: step 3.
   - `plot_verification.py`: the verification figures (`results/verify_*.png`).
+  - `plot_abaqus_comparison.py`: Abaqus vs OpenSees paths (`results/abaqus_vs_opensees.png`).
   - `buckled_shapes.py`: re-runs the method B paths keeping every nodal
     displacement (`run <case>`) and draws the buckled shapes (`plot`).
   - `results/`: `.json` / `.out` / `.npz` files and the figure.
@@ -201,7 +203,7 @@ Run times on the 2-core VM:
 - Stability scan: 4-8 min.
 - 7-12k DOFs: about 15 min per run.
 
-## 7. Abaqus export (ToDo 8, ready to run)
+## 7. Abaqus cross-check (ToDo 8)
 
 `abaqus/` holds four case files and the generated scripts:
 - `tape_column_L1200.json`, `tape_column_L300.json`: fork ends, edge loads.
@@ -218,32 +220,102 @@ Each script reproduces the OpenSees model and runs three analyses:
 
 It prints every value against the embedded OpenSees and theory values.
 
-Expected outcome, if the OpenSees conclusions are right:
-- **Columns:** LBA, NLB and the Riks Southwell estimate are all close to
-  theory: 5.62 N and 16.41 N.
-- **Opposite sense:** the Riks peak is about 395-400 N·mm.
-- **Equal sense:** NLB and Riks give about 170 N·mm.
-- **LBA in bending:** expected to be well off, since it ignores the
-  flattening of the cross-section.
-
-The first Abaqus attempt (11/01) stopped while building the part. The
-abaqus-export skill drew every circular arc of the cross-section in the
-wrong direction (the complementary 254° arc), so no face was found at the
-tape mid-line. The skill is fixed, a regression check was added, and the
-scripts were regenerated (log entry [16]). A full Abaqus run is still
-pending. Only the model building ran here,
-on the stand-in API: steps, BCs, loads and couplings were created as
-expected for all four cases.
+Getting the scripts to run in Abaqus took four fixes to the export (log
+entries [16]-[19]):
+- arcs sketched in the wrong direction;
+- `rotateInstance` instead of `rotate`;
+- Abaqus's own `sum` shadowing Python's;
+- an invalid `mdb.Job` option.
 
 Run on the lab server:
 ```
 abaqus cae noGUI=abaqus_tape_opp_L200_buckling.py
 ```
-Then send back `<job>_results.txt`.
+The results files are in `abaqus/results/`.
+
+### Abaqus results (11/02/26; S4R, same meshes as the case files)
+
+All four scripts ran to the end. Loads are in N for the columns and N·mm
+for the moments.
+
+| Case | Abaqus LBA | Abaqus NLB (f = 0.5 / 0.8-0.9 / 0.95) | Abaqus Riks | OpenSees | Theory |
+|---|---|---|---|---|---|
+| Column L = 1200, flexural | 5.320 | 5.320 / 5.320 | still rising at 4.72 (d = 9.5 mm); Southwell 5.320 | B Southwell 5.497 (+3.3%); A 7.37 | 5.623 (Abaqus −5.4%) |
+| Column L = 300, flexural-torsional | 16.15 | 16.15 / 16.15 | **peak 13.03**, then falls; Southwell 14.09 (not valid on a falling path) | B Southwell 16.50 (+2.1% vs LBA); B path stopped at 12.55; A 17.61 | 16.41 (Abaqus LBA −1.6%) |
+| Equal-sense bending, L = 200 | 136.3 | 138.9 / 146.3 / 151.6 | **peak 151.4**, then snaps | A 172.3; B 167.2-173.3 (stall, 0.01 mm); B 159.2 (peak, 0.05 mm) | – |
+| Opposite-sense bending, L = 200 | −136.3 (no positive eigenvalue: NLB skipped) | – | **peak 382.4**, then falls | B 394.9 (2 mm, +3.3%), 402-404 (3 mm) | – |
+
+![Abaqus vs OpenSees](results/abaqus_vs_opensees.png)
+
+`plot_abaqus_comparison.py` overlays the paths:
+- **Columns:** load vs u_z at the Abaqus monitor point. The OpenSees value
+  is read at the same point from `results/shape_col*.npz`.
+- **Bending:** tip moment vs tip rotation.
+
+What the overlay shows:
+- **Before buckling the two programs agree.** In bending the moment-rotation
+  curves lie on top of each other, so stiffness and boundary conditions
+  match. The gaps come only from where each path peaks or bifurcates.
+- **L = 300 column:** the OpenSees path is stiffer. A likely reason is the
+  different imperfection shape (OpenSees method A mode vs Abaqus LBA
+  mode 1).
+- **Equal sense:** Abaqus snaps at 151 N·mm. Both OpenSees runs follow the
+  same line further, to 159 / 173 N·mm.
+
+Findings:
+1. **Columns, bifurcation load.**
+   - Abaqus LBA, NLB and the Riks Southwell estimate agree: 5.320 N and
+     16.15 N.
+   - Nonlinear preloading changes nothing, as expected for a linear
+     pre-buckling state. This also checks the NLB bookkeeping:
+     preload + perturbation = LBA.
+   - OpenSees method B (Southwell) is within +3.3% / +2.1% of Abaqus.
+   - Both shell models sit below thin-walled theory: −5.4% at L = 1200,
+     −1.6% at L = 300. A likely reason is cross-section distortion, which
+     the rigid-section theory leaves out; this is not verified.
+   - Method A (ShellNLDKGQ eigenvalues) is confirmed to be too high: +38%
+     and +9% vs Abaqus.
+2. **Column L = 300, strength of the imperfect column.**
+   - With the L/1000 imperfection, the Abaqus Riks path has a limit point
+     at 13.03 N (0.81 of LBA) and then falls. The flexural-torsional mode
+     is imperfection-sensitive.
+   - The OpenSees load-control path stopped at 12.55 N with shrinking
+     steps, short of that peak.
+   - Its Southwell value (16.50 N) estimates the **bifurcation** load,
+     not the strength.
+   - **Correction to §4:** for this column, the method B strength is the
+     peak of a displacement- or arc-length-controlled path, not the
+     Southwell value.
+3. **Opposite-sense bending.** The Abaqus Riks peak, 382.4 N·mm, is 3.1%
+   below OpenSees B on the same 2 mm mesh (394.9). This is the main check
+   of the OpenSees opposite-sense result, and it passes.
+   - LBA has no positive eigenvalue: the linear analysis sees only the
+     reversed (equal-sense) moment, at the same 136.3. This confirms that
+     LBA is useless for the opposite sense.
+4. **Equal-sense bending.** Abaqus gives 151.4 N·mm (Riks peak), with NLB
+   rising to the same value at f = 0.95.
+   - OpenSees is higher:
+     - method A: +14%;
+     - method B with 0.01 mm: +10 to +14% (where Newton stalls);
+     - method B with 0.05 mm: +5% (its peak).
+   - The cause is not yet established. The candidates:
+     - the imperfection shape: Abaqus uses its LBA mode 1, OpenSees the
+       method A mode at the critical state;
+     - S4R vs ASDShellQ4;
+     - the ASDShellQ4 stall overshooting the bifurcation.
+   - Running OpenSees B with the Abaqus mode as the imperfection would
+     separate them.
+5. **Post-snap Riks.** After the snaps in both bending cases, the Riks path
+   wanders into negative moments. The Southwell numbers printed for these
+   cases (600, 983) are meaningless. No steady fold moment can be read from
+   these paths.
 
 ## 8. Limitations and next steps
-1. **Abaqus check (ToDo 8).** Run the four scripts in `abaqus/`. This is
-   the decisive check of the 395-404 and ~170 N·mm values.
+1. **Abaqus check (ToDo 8).** Done, see §7. Remaining items:
+   - explain the 10% equal-sense gap: OpenSees B with the Abaqus
+     imperfection shape, or Abaqus with the OpenSees mode;
+   - re-run the L = 300 column in OpenSees under displacement or
+     arc-length control, to get its peak.
 2. **Equal-sense bending.** Get past the bifurcation. Options:
    - ArcLength or BFGS tuning;
    - larger imperfections;

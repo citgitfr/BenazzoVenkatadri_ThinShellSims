@@ -328,3 +328,49 @@ Units: N, mm, MPa. Times are wall-clock on the 2-core VM.
   with the same message. T20 36/36; the four scripts were regenerated.
 - Not covered by the mock: everything after the first job submission (the
   NLB preload models and the reading of the ODB results).
+
+[20] Abaqus results (11/02/26)
+- All four scripts ran to the end (S4R). The results files are in
+  abaqus/results/.
+- Column L = 1200:
+  - LBA 5.3197 N; NLB at f = 0.5 / 0.9: 5.3199 / 5.3200.
+  - Riks still rising at 4.72 N (d = 9.5 mm); Southwell 5.3200.
+  - Comparison: theory 5.6232 (-5.4%); OpenSees B Southwell 5.4973 (+3.3%).
+- Column L = 300:
+  - LBA 16.152 N; NLB 16.152 / 16.152.
+  - Riks peak 13.035 N at increment 135, then falling. Imperfection-
+    sensitive: 0.81 x LBA with L/1000.
+  - Comparison: theory 16.4066 (-1.6%); OpenSees B Southwell 16.4999
+    (+2.1%), a bifurcation estimate. The OpenSees load-control path stopped
+    at 12.55 N with shrinking steps, consistent with the peak.
+- Equal-sense bending:
+  - LBA 136.31 N mm; NLB 138.88 / 146.32 / 151.57 (f = 0.5 / 0.8 / 0.95).
+  - Riks peak 151.37 (increment 25), then a snap.
+  - OpenSees is higher: A 172.25, B 167.2-173.3 (stall), B 0.05 mm 159.2
+    (peak). Not yet explained (imperfection shape, S4R vs ASDShellQ4,
+    stall overshoot).
+- Opposite-sense bending:
+  - LBA eigenvalues all negative: the same 136.31 as the equal sense. No
+    positive eigenvalue, so NLB was skipped.
+  - Riks peak 382.43 N mm (increment 32), then falling. OpenSees B 394.87
+    on the same 2 mm mesh (+3.3%).
+- Post-snap Riks in both bending cases wanders to negative moments; the
+  Southwell values printed there (600, 983) are meaningless.
+- BUCKLING_STUDY.md: section 7 now has the results table and findings, plus
+  a bottom-line row. shell-buckling SKILL.md: Southwell is a bifurcation
+  estimate; watch for shrinking load-control steps (a limit point is near).
+
+[21] Abaqus vs OpenSees plot (11/02/26)
+- plot_abaqus_comparison.py -> results/abaqus_vs_opensees.png. It parses the
+  sampled Riks paths, LBA and NLB values from abaqus/results/*.txt.
+  - Columns: load vs u_z at the Abaqus monitor point; the OpenSees value is
+    read at the same node of the saved shapes.
+  - Bending: tip moment vs tip rotation.
+- Before buckling the curves coincide in bending (same stiffness and BCs).
+  The differences are where the paths peak or bifurcate.
+- L = 300 column: the OpenSees path is stiffer (different imperfection
+  shape).
+- Equal sense: Abaqus snaps at 151 N mm, OpenSees continues along the same
+  line to 159 / 173.
+- Note: the OpenSees opposite-sense 2 mm run (394.9) used perfect geometry
+  (amp 0); the 3 mm runs used 0.05 mm.
