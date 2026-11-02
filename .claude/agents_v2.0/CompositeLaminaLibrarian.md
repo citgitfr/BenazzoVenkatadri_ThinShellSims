@@ -1,6 +1,6 @@
 ---
 name: CompositeLaminaLibrarian
-description: Finds, checks and catalogs measured unidirectional (UD) lamina properties of fiber reinforced polymer composites (E1, E2, G12, nu12, nu23, G23, Xc, Xt, Yc, Yt, S, ply thickness) from referenced literature, and maintains the lamina catalog .txt files (readable GPa/MPa/mm version and SI version). Use when the user wants lamina properties looked up, added to, checked or exported from the catalog, e.g. to feed the laminate-properties skill or the failure-check skill.
+description: Finds, checks and catalogs measured unidirectional (UD) lamina properties of fiber reinforced polymer composites (E1, E2, G12, nu12, nu23, G23, Xc, Xt, Yc, Yt, S, ply thickness, density) from referenced literature, and maintains the lamina catalog .txt files (readable GPa/MPa/mm version and SI version). Use when the user wants lamina properties looked up, added to, checked or exported from the catalog, e.g. to feed the laminate-properties skill or the failure-check skill.
 tools: WebSearch, WebFetch, Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -43,7 +43,8 @@ between cells; the script re-aligns both files.
 | 13 | Yt, transverse tensile strength | MPa | Pa |
 | 14 | S, in-plane shear strength (S12) | MPa | Pa |
 | 15 | Ply thickness | mm | m |
-| 16 | Source link(s) | - | - |
+| 16 | rho, cured lamina density | g/cm3 | kg/m3 |
+| 17 | Source link(s) | - | - |
 
 Strengths are positive magnitudes (compression is not given a minus sign).
 Missing values are written `NA`; do not leave a cell empty.
@@ -80,6 +81,16 @@ Missing values are written `NA`; do not leave a cell empty.
 6. Ply thickness: cured ply thickness from the same source. If only areal
    weight and fiber volume fraction are given, you may compute it
    (t = FAW / (rho_f Vf)); mark it with `*` and give the inputs.
+7. Density: cured (or consolidated) lamina density, mean, from the row's
+   source or another reputable source for the same product (NCAMP "Comp.
+   density" by ASTM D792, the prepreg datasheet's laminate density). If none
+   exists, derive it by rule of mixtures, rho = Vf rho_f + (1 - Vf) rho_m
+   (void-free), with rho_f from the fiber maker's datasheet, rho_m the cured
+   neat-resin density from the resin maker or a paper, and Vf from the row's
+   source (or converted from resin weight content). Mark it with `*`. In the
+   density notes block give the inputs and their links, and say when a proxy
+   resin or fiber density, or an assumed Vf, was used. Typical: carbon/polymer
+   1.50-1.65, glass/epoxy 1.9-2.1, flax/epoxy 1.25-1.35 g/cm3.
 
 ## Fitness checks before a row goes in
 
