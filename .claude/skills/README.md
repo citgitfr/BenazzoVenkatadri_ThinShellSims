@@ -15,6 +15,7 @@ catalog (Pa, m) --> laminate-properties --> shell-mesh --> shell-bc-load --> res
 case JSON ------------------------------------------------------------------> abaqus-export (Abaqus/CAE script + OpenSees reference)
 laminate-properties / shell-mesh / shell-bc-load --emit-code pieces --> shell-assemble-run (ONE standalone OpenSeesPy script, run) --> results .npz
                                                                                    |
+                                                                                   +--> objective-constraints (mass; F_governing < 1 + user constraints -> g, feasible; JSON)
                                                                                    +--> opensees-to-abaqus (Abaqus/CAE script via abaqus-export, model checked vs the script)
 results .npz + Abaqus ODB (odb_extract.py --> <job>_odb.npz) --> OpenSeesAbaqusResultsComparator agent
    (.claude/verification/compare_results.py: outputs only, no model-building code; plots + comparison tables)
@@ -31,6 +32,7 @@ results .npz + Abaqus ODB (odb_extract.py --> <job>_odb.npz) --> OpenSeesAbaqusR
 | shell-assemble-run | new: joins the `--emit-code` pieces of laminate-properties, shell-mesh and shell-bc-load into one continuous OpenSeesPy script and runs it |
 | opensees-to-abaqus | OpenSeesPyToAbaqusPythonGenerator agent (11/4/26): assembled OpenSeesPy script -> Abaqus/CAE script, model checked against the script's own ops calls |
 | regression-tests | the verification runs in the SUMMARY files and verify_mesh_bc_load.py |
+| objective-constraints | new (11/4/26): objective/constraint calculator of the optimization loop; reads only the results .npz of the assembled script: mass (objective), governing Hashin F < 1 (via failure-check) and the user's constraints as formulas |
 | shell-buckling | new (10/29/26, ToDo 7-8): buckling load/moment and mode (ShellNLDKGQ tangent-eigenvalue scan) and buckling strength (ASDShellQ4 imperfect path); boom_buckling.py case runner |
 
 The v1 code in `Code for Project/` is left unchanged as the verified record.

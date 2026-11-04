@@ -57,6 +57,18 @@ and the Abaqus results to the OpenSeesAbaqusResultsComparator agent; do not
 give it the case, the scripts or your own conclusions (it must verify
 independently of the code that built the models), and report its findings.
 
+In an optimization (minimize mass subject to constraints), turn each of the
+user's constraints into a formula once, at the start, in a constraints JSON in
+the study folder (objective-constraints SKILL.md: quantity names, which one
+matches the user's words; ask if the wording is ambiguous), and after every
+run evaluate the design with the objective-constraints skill on ONLY the
+results .npz: `objective-constraints/objective_constraints.py <dir>/results/<case>.npz
+--constraints <dir>/constraints.json`. It always adds the no-failure
+constraint (governing Hashin F < 1) and returns the mass, each constraint's
+g and status and feasibility in `<case>_objcon.json`; use that to choose the
+next design. Quantities it cannot get from a static run (buckling load) come
+from the skill that computes them, passed with `--value NAME=VALUE`.
+
 ## 1. Collect the inputs (ask for what is missing; never invent values)
 1. **Material**: catalog ID (e.g. L024), or E1, E2, nu12, G12 [nu23] and, for a
    failure check, Xt, Xc, Yt, Yc, S; or isotropic E, nu (and yield stress).

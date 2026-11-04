@@ -1,0 +1,6 @@
+{"constraints": [
+ {"name": "tip deflection", "text": "the tip may not deflect more than L/50", "expr": "abs(tip_uz)", "op": "<=", "limit": "L/50", "units": "mm"},
+ {"name": "boom length", "text": "the boom is 500 mm long", "expr": "L", "op": "==", "limit": 500, "tol": 0.01, "units": "mm"},
+ {"name": "thickness", "text": "laminate no thicker than 0.5 mm", "expr": "h_max", "op": "<=", "limit": 0.5, "units": "mm"},
+ {"name": "tip stiffness", "text": "tip bending stiffness at least 1 N/mm", "expr": "abs(force_z) / abs(tip_uz)", "op": ">=", "limit": 1, "units": "N/mm"}
+]}
