@@ -74,7 +74,7 @@ for k, (kind, lbl) in enumerate((('agent', 'Agent (LLM)'), ('tool', 'Determinist
 # libraries and orchestrator
 box(34, 114, 136, 126, 'agent', 'Librarian agent',
     'searches the literature to populate tables of candidate materials, layups\nand geometric parameters')
-for x0, txt in ((31, 'Table of CFRP lamina\nstiffness and\nstrength properties'),
+for x0, txt in ((31, 'Table of CFRP lamina\nstiffness, strength,\ndensity and thickness'),
                 (68.5, 'Table of commonly\nused layups for\nCFRP booms'),
                 (106, 'Table of geometric\nparameters for each\nboom cross-section')):
     box(x0, 97, x0 + 33, 108.5, 'lib', text=txt)
@@ -113,25 +113,19 @@ ax.plot([59, 59], [16, 12.5], color='k', lw=1.8, zorder=1.5)
 arrow([(82, 12.5), (82, 70)], 'objective,\nconstraints,\nplots', (82, 21), ha='center', halo=True)
 
 # verification protocol
-box(94, 40, 125, 55, 'tool', text='OpenSeesPy-to-Abaqus\ntranslator: Abaqus Python\nscript + automatic model\n'
-    'check vs. the OpenSeesPy\nscript (mesh, plies, BCs,\nloads, step)', fs=FS - 1, new=True)
+box(94, 40, 125, 55, 'tool', text='OpenSeesPy-to-Abaqus\ntranslator to produce\nAbaqus Python script')
 arrow([(77, 47.5), (94, 47.5)], 'assembled\nscript', (88.5, 47.5), ha='center')
 arrow([(109.5, 70), (109.5, 55)], 'verify', (109.5, 62.5), ha='center')
 box(91, 21, 117, 32, 'human', text='Script moved to an\nAbaqus machine;\nuser checks set-up', fs=FS - 0.5)
 arrow([(104, 40), (104, 32)])
-box(109, 4, 144, 15, 'exec', text='Abaqus run, ODB output\nand ODB extraction to\nplain arrays', fs=FS - 0.5, new=True)
+box(109, 4, 144, 15, 'exec', text='Abaqus run, ODB output\nand ODB extraction to\nplain arrays', fs=FS - 0.5)
 arrow([(104, 21), (104, 9.5), (109, 9.5)])
 box(137, 21, 168, 32, 'human', text='ODB extract moved\nback to the workspace', fs=FS - 0.5)
 arrow([(144, 9.5), (152.5, 9.5), (152.5, 21)])
 
-# information barrier around the comparison agent
-ax.add_patch(FancyBboxPatch((125.5, 34), 44, 24, boxstyle='round,pad=0,rounding_size=1.2', lw=1.6, ls=(0, (5, 3)),
-                            ec='0.35', fc='none', zorder=1.2))
 box(127.5, 41, 167.5, 56.5, 'agent', 'Results comparison agent',
     'sees only the outputs of both runs;\ndraws both and compares displacements,\nstrains, curvatures, ply stresses,\n'
-    'section forces and load path', fs=FS - 1.5, new=True)
-ax.text(145, 37.5, 'outputs only: no model code,\nno Abaqus script', ha='center', va='center', fontsize=FS - 3,
-        style='italic', color='0.3')
+    'section forces and load path', fs=FS - 1.5)
 arrow([(160, 32), (160, 41)])
 arrow([(59, 35.5), (130, 35.5), (130, 41)], 'results', (91, 35.5), ha='center', halo=True)
 box(118, 60, 152, 67.5, 'human', text='User reads comparison,\nadjusts orchestrator', fs=FS - 0.5)
