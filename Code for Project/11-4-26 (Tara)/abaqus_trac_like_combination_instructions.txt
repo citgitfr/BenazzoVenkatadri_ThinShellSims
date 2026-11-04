@@ -1,0 +1,24 @@
+=== Abaqus verification of "trac_like_combination" ===
+
+ON THE MACHINE WITH ABAQUS
+  1. Copy this ONE file into an empty folder there:
+       abaqus_trac_like_combination.py
+  2. In that folder run:
+       abaqus cae noGUI=abaqus_trac_like_combination.py
+     (5 mm mesh, S4R, job "trac_like_combination_S4R_5mm". For another mesh / element, e.g.
+      abaqus cae noGUI=abaqus_trac_like_combination.py -- 2.5 S4
+      the job and every file name below become "trac_like_combination_S4_2p5mm".)
+  3. When it finishes, open trac_like_combination_S4R_5mm_results.txt and check that it does NOT say
+     "ODB extraction failed". If it does, copy .claude/verification/odb_extract.py
+     from the project into the same folder and run:
+       abaqus python odb_extract.py trac_like_combination_S4R_5mm.odb
+     Optional: open the model in Abaqus/CAE to check the set-up:
+       abaqus cae database=trac_like_combination_S4R_5mm.cae
+
+COPY BACK TO THIS MACHINE, into D:\Users\tvenkata\projects\ME295_project\Code for Project\11-4-26 (Tara)
+  trac_like_combination_S4R_5mm_odb.npz        REQUIRED: the Abaqus results as plain arrays
+  trac_like_combination_S4R_5mm_results.txt    recommended: run log and Abaqus vs embedded OpenSees values
+  not needed: trac_like_combination_S4R_5mm.odb / .cae / .dat / .msg / .sta (keep them there for inspection)
+
+THEN TELL CLAUDE (paste):
+  Run the OpenSeesAbaqusResultsComparator agent on D:\Users\tvenkata\projects\ME295_project\Code for Project\11-4-26 (Tara)\results\trac_like_combination.npz and D:\Users\tvenkata\projects\ME295_project\Code for Project\11-4-26 (Tara)\trac_like_combination_S4R_5mm_odb.npz

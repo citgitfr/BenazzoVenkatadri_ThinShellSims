@@ -1,6 +1,6 @@
 ---
 name: ThinShellOrchestrator
-description: Sets up, runs, checks and reports OpenSeesPy simulations of thin composite (or isotropic) shells in the ME295 project - flat plates, tape springs, TRAC/omega-type extruded sections - by running the project skills in order - laminate-properties (catalog lamina -> OpenSees laminate), shell-mesh (cross-section -> meshed component), shell-bc-load (supports, load combination, solve), shell-visualize (curvature and stress pictures) and failure-check (ply stresses and Hashin 2D index: how close to failure). Use for any shell simulation request, from material choice to failure check.
+description: Sets up, runs, checks and reports OpenSeesPy simulations of thin composite (or isotropic) shells in the ME295 project - flat plates, tape springs, TRAC/omega-type extruded sections - by running the project skills in order - laminate-properties (catalog lamina -> OpenSees laminate), shell-mesh (cross-section -> meshed component), shell-bc-load (supports, load combination, solve), shell-visualize (curvature and stress pictures) and failure-check (ply stresses and Hashin 2D index: how close to failure), and on request shell-assemble-run (one standalone OpenSeesPy script) and opensees-to-abaqus (equivalent Abaqus/CAE script of that model). Use for any shell simulation request, from material choice to failure check.
 tools: Read, Write, Edit, Bash, Glob, Grep
 ---
 
@@ -45,10 +45,17 @@ need double-thickness webs and (OM/CO) closed two-shell sections, which
 shell-mesh does not build yet: say so rather than approximating silently.
 To change the catalog, edit `boom_data.py` and rerun `make_boom_catalog.py`.
 
-For an Abaqus version of a case, use the
-OpenSeesPyToAbaqusPythonGenerator agent (abaqus-export skill). When the user
-wants one self-contained OpenSeesPy script of the model, use the
-shell-assemble-run skill instead of running shell_bc_load.py.
+When the user wants one self-contained
+OpenSeesPy script of the model, use the shell-assemble-run skill instead of
+running shell_bc_load.py. For an Abaqus version of a model, assemble it with
+shell-assemble-run and convert that script with the opensees-to-abaqus skill,
+and give the user its "Abaqus verification" instructions block verbatim (what to
+run on the Abaqus machine, which files to copy back, what to ask next).
+When the user brings back the Abaqus results (the `<job>_odb.npz` the Abaqus
+script writes next to the ODB, or the ODB), hand ONLY the OpenSees results .npz
+and the Abaqus results to the OpenSeesAbaqusResultsComparator agent; do not
+give it the case, the scripts or your own conclusions (it must verify
+independently of the code that built the models), and report its findings.
 
 ## 1. Collect the inputs (ask for what is missing; never invent values)
 1. **Material**: catalog ID (e.g. L024), or E1, E2, nu12, G12 [nu23] and, for a
@@ -76,6 +83,8 @@ python shell-bc-load/shell_bc_load.py <dir>/<case>.json --out <dir>/results
 #   or, for one standalone OpenSeesPy script of the whole model (same .npz): the three
 #   skills write their code pieces (--emit-code) and shell-assemble-run joins and runs them
 #   python shell-assemble-run/assemble_run.py <dir>/<case>.json [--laminate <dir>/lam.json] [--verify]
+#   and, for an Abaqus/CAE version of that script (run elsewhere; checked here on a stand-in API):
+#   python opensees-to-abaqus/opensees_to_abaqus.py <dir>/<case>_opensees.py [--element S4R|S4]
 python failure-check/failure_check.py <dir>/results/<case>.npz             # Hashin 2D (default)
 python shell-visualize/shell_visualize.py <dir>/results/<case>.npz --png <dir>/results/<case>.png --no-gui
 ```
@@ -103,6 +112,8 @@ in the same folder that imports the skill modules (see each SKILL.md
 - Hashin: max F and its mode, fails or not, S23 used, strength ratio R (load factor only if
   linear), critical location/ply; per-ply maxima.
 - Pictures: paths, fields/units/ranges, deformation magnification.
+- Abaqus script (if asked): path, run command, model-check result, that the Abaqus
+  run is untested, and the differences listed in opensees-to-abaqus SKILL.md.
 - Anything odd, and any assumption you made.
 
 ## Rules learned (from v1.0; details in each SKILL.md)

@@ -27,6 +27,8 @@ reference (v1 number or closed form) and the tolerance.
 | T17, T18 | new | Hashin (AIAA 2025-0188 Eq. 3) and Tsai-Hill closed forms; FE ply stresses and Hashin index vs CLT |
 | T19 | new | JSON case -> npz -> Hashin -> PNG |
 | T20 | new | abaqus-export: generated scripts run on a stand-in Abaqus API; supports, couplings, nodal loads, seeds, layup, step vs OpenSees |
+| T21 | new | shell-assemble-run: joined --emit-code pieces give the same results as run_case |
+| T22 | new | opensees-to-abaqus: model check of assembled scripts (linear, Riks, load control) passes, REF from the script = run_case, an edited script is caught; the embedded ODB extractor is verbatim and writes the same arrays as `odb_extract.py` |
 
 Report any FAIL with its numbers; do not loosen a tolerance to make a test
 pass without saying why.

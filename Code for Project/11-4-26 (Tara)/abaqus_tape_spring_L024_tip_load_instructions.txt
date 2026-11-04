@@ -1,0 +1,24 @@
+=== Abaqus verification of "tape_spring_L024_tip_load" ===
+
+ON THE MACHINE WITH ABAQUS
+  1. Copy this ONE file into an empty folder there:
+       abaqus_tape_spring_L024_tip_load.py
+  2. In that folder run:
+       abaqus cae noGUI=abaqus_tape_spring_L024_tip_load.py
+     (5 mm mesh, S4R, job "tape_spring_L024_tip_load_S4R_5mm". For another mesh / element, e.g.
+      abaqus cae noGUI=abaqus_tape_spring_L024_tip_load.py -- 2.5 S4
+      the job and every file name below become "tape_spring_L024_tip_load_S4_2p5mm".)
+  3. When it finishes, open tape_spring_L024_tip_load_S4R_5mm_results.txt and check that it does NOT say
+     "ODB extraction failed". If it does, copy .claude/verification/odb_extract.py
+     from the project into the same folder and run:
+       abaqus python odb_extract.py tape_spring_L024_tip_load_S4R_5mm.odb
+     Optional: open the model in Abaqus/CAE to check the set-up:
+       abaqus cae database=tape_spring_L024_tip_load_S4R_5mm.cae
+
+COPY BACK TO THIS MACHINE, into D:\Users\tvenkata\projects\ME295_project\Code for Project\11-4-26 (Tara)
+  tape_spring_L024_tip_load_S4R_5mm_odb.npz        REQUIRED: the Abaqus results as plain arrays
+  tape_spring_L024_tip_load_S4R_5mm_results.txt    recommended: run log and Abaqus vs embedded OpenSees values
+  not needed: tape_spring_L024_tip_load_S4R_5mm.odb / .cae / .dat / .msg / .sta (keep them there for inspection)
+
+THEN TELL CLAUDE (paste):
+  Run the OpenSeesAbaqusResultsComparator agent on D:\Users\tvenkata\projects\ME295_project\Code for Project\11-4-26 (Tara)\results\tape_spring_L024_tip_load.npz and D:\Users\tvenkata\projects\ME295_project\Code for Project\11-4-26 (Tara)\tape_spring_L024_tip_load_S4R_5mm_odb.npz

@@ -753,6 +753,95 @@ def T21_assembled_script():
             ops.wipe()
 
 
+def T22_opensees_to_abaqus():
+    """opensees-to-abaqus: Abaqus script from an assembled OpenSeesPy script; model check and reference."""
+    import json
+    import tempfile
+    for d in ('shell-assemble-run', 'opensees-to-abaqus', 'abaqus-export'):
+        sys.path.insert(0, str(SKILLS / d))
+    import assemble_run as ar
+    import case_to_abaqus as c2a
+    import opensees_to_abaqus as o2a
+    ex = SKILLS / 'shell-bc-load' / 'examples'
+    t20 = dict(T20_CASE, name='trac_like_load_control', analysis={'type': 'load_control', 'n_steps': 2})
+    cases = [json.loads((ex / 'tape_spring_L024_tip_load.json').read_text()), T20_CASE, t20]
+    with tempfile.TemporaryDirectory() as tmp:
+        for case in cases:
+            src, out = Path(tmp) / f'{case["name"]}_opensees.py', Path(tmp) / f'abaqus_{case["name"]}.py'
+            with redirect_stdout(io.StringIO()):
+                ar.join(ar.write_pieces(case, Path(tmp) / f'{case["name"]}_code'), src)
+                ops.wipe()
+                info = o2a.read_script(src)
+                os_m = o2a.opensees_model(*o2a.record_model(src))
+                ref = None
+                if case['analysis']['type'] == 'linear':          # reference from the script's own run
+                    ref, _, _ = o2a.reference(src, info)
+                _, M, _ = c2a.write_script(info['CASE'], info['LAMINATE'], out, 'S4R', ref, 'T22')
+                rows = o2a.check_model(os_m, out, M, info['CASE'], info['LAMINATE'])
+            job_line = [l for l in out.read_text(encoding='utf-8').splitlines() if l.startswith('JOB = ')][0]
+            for el, size in (('S4R', M['size']), ('S4', M['size'] / 2)):
+                job = eval(job_line[6:], {'ELEM': el, 'SIZE': float(size)})
+                check(f'{case["name"]}: instructions job name = the script\'s JOB ({job})',
+                      float(o2a.job_name(case['name'], el, size) == job), 1, 0, True)
+            fails = [r[0] for r in rows if not r[1]]
+            check(f'{case["name"]}: model check passes ({len(rows)} checks{"; FAIL: " + fails[0] if fails else ""})',
+                  len(fails), 0, 0, True)
+            if ref is not None:
+                with redirect_stdout(io.StringIO()):
+                    want = c2a.opensees_reference(case)
+                for k in ('report_disp', 'max_u', 'top_ply_stress'):
+                    a, b = np.atleast_1d(ref[k]), np.atleast_1d(want[k])
+                    check(f'{case["name"]}: REF {k} from the script = from run_case', np.abs(a - b).max() / np.abs(b).max(), 0, 1e-9, True)
+                embedded_extractor(out, src.parent / 'results' / f'{case["name"]}.npz', Path(tmp), case['name'])
+            if case is T20_CASE:                                # a hand-edited script must fail
+                text = src.read_text(encoding='utf-8')
+                src.write_text(text.replace('CONTROL_NODE, CONTROL_DOF, STEP = ', 'CONTROL_NODE, CONTROL_DOF, STEP = 1 + ', 1),
+                               encoding='utf-8')
+                with redirect_stdout(io.StringIO()):
+                    rows = o2a.check_model(o2a.opensees_model(*o2a.record_model(src)), out, M, info['CASE'], info['LAMINATE'])
+                check(f'{case["name"]}: edited control node is caught', sum(not r[1] for r in rows), 1, 0, True)
+            ops.wipe()
+
+
+def embedded_extractor(script, npz, tmp, name):
+    """The ODB extractor embedded in a generated Abaqus script is the verification tool
+    verbatim, and on a stand-in ODB (from npz) writes the same arrays as the tool run alone."""
+    import ast
+    import runpy
+    ver = SKILLS.parent / 'verification'
+    sys.path.insert(0, str(ver))
+    import odb_mock
+    src = [n.value.value for n in ast.parse(Path(script).read_text(encoding='utf-8')).body
+           if isinstance(n, ast.Assign) and getattr(n.targets[0], 'id', '') == 'ODB_EXTRACT']
+    check(f'{name}: embedded ODB extractor = .claude/verification/odb_extract.py',
+          float(src == [(ver / 'odb_extract.py').read_text(encoding='utf-8')]), 1, 0, True)
+    if not src:
+        return
+    files = []
+    for k in range(2):
+        odb_mock.install(odb_mock.make_odb(npz))
+        out = Path(tmp) / f'{name}_odb_{k}.npz'
+        with redirect_stdout(io.StringIO()):
+            if k == 0:                                   # as the generated script does it
+                ns = {'__name__': 'odb_extract'}
+                exec(compile(src[0], 'odb_extract.py', 'exec'), ns)
+                ns['extract']('job.odb', str(out))
+            else:                                        # the tool on its own
+                argv, sys.argv = sys.argv, ['odb_extract.py', 'job.odb', str(out)]
+                try:
+                    runpy.run_path(str(ver / 'odb_extract.py'), run_name='__main__')
+                finally:
+                    sys.argv = argv
+        files.append(np.load(out))
+    for m in ('odbAccess', 'abaqusConstants'):
+        sys.modules.pop(m, None)
+    a, b = files
+    same = set(a.files) == set(b.files) and all(np.array_equal(a[k], b[k], equal_nan=a[k].dtype.kind == 'f')
+                                                for k in a.files)
+    check(f'{name}: embedded extraction writes the same arrays as odb_extract.py ({len(a.files)} arrays)',
+          float(same), 1, 0, True)
+
+
 def abaqus_mock_P(g):
     return (g[1], g[2], g[0])
 
@@ -765,7 +854,8 @@ TESTS = [T01_poisson_convention, T02_ply_rotation, T03_hand_check, T04_90_0, T05
          T07_merged_vs_per_ply_large_deflection, T08_smoke_strip, T09_al_plate_1mm, T10_flat_linear_5mm,
          T11_large_deflection_10mm, T12_large_deflection_5mm, T13_curved_strip, T14_pure_moment,
          T15_tip_load_laminate, T16_orientation_on_curved_facets, T17_failure_unit, T18_failure_vs_clt,
-         T19_case_file_and_viewer, T20_abaqus_export, T21_assembled_script]
+         T19_case_file_and_viewer, T20_abaqus_export, T21_assembled_script,
+         T22_opensees_to_abaqus]
 SLOW = {'T09', 'T12'}
 
 

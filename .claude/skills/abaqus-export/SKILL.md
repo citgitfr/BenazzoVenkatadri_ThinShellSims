@@ -5,7 +5,9 @@ description: Writes an Abaqus/CAE Python script (run elsewhere with `abaqus cae 
 
 # abaqus-export
 
-Script: `case_to_abaqus.py` (this folder). Abaqus is **not installed** on the
+Script: `case_to_abaqus.py` (this folder). For an assembled OpenSeesPy script
+(shell-assemble-run) use the opensees-to-abaqus skill, which calls
+`case_to_abaqus.write_script(case, laminate, out, element, ref, source)`. Abaqus is **not installed** on the
 project VM: the generated script can be checked here (compile, and a run
 against a stand-in Abaqus API in regression test T20), but the Abaqus run
 itself is untested until someone runs it.
@@ -24,6 +26,13 @@ abaqus cae noGUI=abaqus_<name>.py [-- <size> <S4R|S4>]      # on a machine with 
   into `<job>_results.txt`.
 - Output default: `abaqus_<name>.py` next to the case file. Regenerate
   rather than hand-editing the inputs block.
+
+- After the job the script writes `<job>_odb.npz`: the ODB as plain arrays,
+  by a verbatim copy of `.claude/verification/odb_extract.py` embedded at
+  generation time (read from that file, so regenerate after changing it). It
+  runs before the script's own comparison; if it fails, `<job>_results.txt`
+  gives the `abaqus python odb_extract.py <job>.odb` command to run instead.
+  Regression T22 checks the copy is verbatim and writes the same arrays.
 
 ## Translation
 | OpenSees (v2.0 skills) | Abaqus |
