@@ -40,8 +40,13 @@ Usage (Python; the domain lives in this process):
     sm.build_model(mesh, lam, corotational=True)       # nodes, materials, sections, elements
 CLI (mesh summary only):
     python shell_mesh.py --L 1000 --arc 50 100 --size 5
+CLI, this skill's piece of a complete OpenSeesPy script (nodes and elements;
+the elements use SECTIONS from the laminate-properties piece; joined by the
+shell-assemble-run skill):
+    python shell_mesh.py --case case.json --emit-code mesh_code.py
 """
 import argparse
+import json
 import math
 import sys
 from dataclasses import dataclass, field
@@ -282,6 +287,68 @@ def build_model(mesh, laminate, element='ASDShellQ4', corotational=False, mat_ta
     return create_elements(mesh, sections, element, opts, eas=eas)
 
 
+def write_code(mesh, path, element='ASDShellQ4', corotational=False, eas=None, extra_options=(), geometry=None):
+    """This skill's piece of a complete OpenSeesPy script: the nodes, and the
+    elements on every facet built at run time from SECTIONS (laminate-properties
+    piece) exactly as build_model / create_elements do. Provides FACETS,
+    FRAMES and MESH for the shell-bc-load piece. geometry: the case-file
+    geometry dict (checked by the shell-bc-load piece)."""
+    import laminate_properties as lp
+    opts = (*extra_options, '-corotational') if corotational else tuple(extra_options)
+    nodes = [(mesh.node_tag(i, j), *mesh.coords(i, j)) for j in range(mesh.ny + 1) for i in range(mesh.nx + 1)]
+    meta = dict(summary=mesh.summary(), nx=mesh.nx, ny=mesh.ny, L=mesh.L, b=mesh.b, element=element,
+                n_nodes=len(nodes), geometry=geometry)
+    lines = [lp.PIECE_MARK.format('mesh', 'shell-mesh'),
+             f'# {mesh.summary()}',
+             f'# {element}{" corotational" if corotational else ""}: one element per facet and entry of SECTIONS',
+             '# provides: FACETS [(first element, elements, ply angle of the first, 4 node tags)], FRAMES, MESH',
+             '# needs:    SECTIONS (laminate piece)',
+             f'MESH = {json.loads(json.dumps(meta, default=lp._plain))!r}',
+             '', '# --- nodes: tag, x (along the extrusion), y, z (cross-section) ---']
+    lines += lp.code_table('node', nodes)
+    lines += ['', '# --- facets: 4 node tags, counter-clockwise about the facet normal ---', 'QUADS = [']
+    lines += [f'    {q!r},' for _, _, q in mesh.quads()]
+    lines += [']', '', f'ELEMENT, OPTIONS, EAS = {element!r}, {opts!r}, {eas!r}', ELEMENT_CODE]
+    Path(path).write_text('\n'.join(lines), encoding='utf-8')
+
+
+ELEMENT_CODE = '''
+
+def facet_frame(p1, p2, p3, p4):
+    # e1 (along the x edges), e2, n of a facet; n = (n1->n3) x (n2->n4)
+    n = np.cross(p3 - p1, p4 - p2)
+    n /= np.linalg.norm(n)
+    e1 = (p2 - p1) + (p3 - p4)
+    e1 -= n * (e1 @ n)
+    e1 /= np.linalg.norm(e1)
+    return e1, np.cross(n, e1), n
+
+
+# --- elements: one per entry of SECTIONS on every facet (coincident for several ply
+# angles, '-noeas' then required); '-local' = fibre direction of that angle in the facet frame ---
+coincident = len(SECTIONS) > 1
+if coincident and ELEMENT != 'ASDShellQ4':
+    raise ValueError('multi-angle laminates need ASDShellQ4 (coincident per-angle elements)')
+oriented = coincident or any(th != 0.0 for _, th in SECTIONS)
+eas = (not coincident) if EAS is None else EAS
+opts = (*OPTIONS, '-noeas') if ELEMENT == 'ASDShellQ4' and not eas else OPTIONS
+FACETS, FRAMES, tag = [], [], 1
+for quad in QUADS:
+    e1, e2, n = facet_frame(*[np.array(ops.nodeCoord(k)) for k in quad])
+    FRAMES.append((e1, e2, n))
+    FACETS.append((tag, len(SECTIONS), SECTIONS[0][1], *quad))
+    for sec, th in SECTIONS:
+        if oriented:
+            c, s = math.cos(math.radians(th)), math.sin(math.radians(th))
+            ax = [round(float(v), 15) + 0.0 for v in c * e1 + s * e2]
+            ops.element(ELEMENT, tag, *quad, sec, *opts, '-local', *ax)
+        else:
+            ops.element(ELEMENT, tag, *quad, sec, *opts)
+        tag += 1
+FRAMES = np.array(FRAMES)
+'''
+
+
 def build_from_spec(spec):
     """Mesh from a case dict: {'L':.., 'section': {...}, 'size':..}."""
     return ShellMesh(spec['L'], CrossSection.from_spec(spec['section']), spec['size'],
@@ -300,12 +367,26 @@ def arc_section_inertia(R, b, t, n=200001):
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split('\n\n')[0])
-    ap.add_argument('--L', type=float, required=True)
-    g = ap.add_mutually_exclusive_group(required=True)
+    ap.add_argument('--L', type=float)
+    g = ap.add_mutually_exclusive_group()
     g.add_argument('--flat', type=float, metavar='B')
     g.add_argument('--arc', type=float, nargs=2, metavar=('R', 'B'))
-    ap.add_argument('--size', type=float, required=True)
+    ap.add_argument('--size', type=float)
+    ap.add_argument('--case', help='case JSON (geometry and element entries) instead of --L/--flat/--arc/--size')
+    ap.add_argument('--emit-code', metavar='FILE', help='write the nodes/elements piece of a complete OpenSeesPy '
+                                                       'script (joined by shell-assemble-run)')
     a = ap.parse_args()
+    if a.case:
+        case = json.loads(Path(a.case).read_text())
+        mesh, el = build_from_spec(case['geometry']), case.get('element', {})
+        print(mesh.summary())
+        if a.emit_code:
+            write_code(mesh, a.emit_code, el.get('type', 'ASDShellQ4'), el.get('corotational', False),
+                       el.get('eas'), geometry=case['geometry'])
+            print(f'mesh piece of the OpenSeesPy script written to {a.emit_code}')
+        return
+    if a.L is None or a.size is None or (a.flat is None and a.arc is None):
+        ap.error('give --case, or --L, --flat B or --arc R B, and --size')
     sec = CrossSection.flat(a.flat) if a.flat else CrossSection.arc(*a.arc)
     mesh = ShellMesh(a.L, sec, a.size)
     print(mesh.summary())

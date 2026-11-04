@@ -721,6 +721,30 @@ def T20_abaqus_export():
             ops.wipe()
 
 
+def T21_assembled_script():
+    """shell-assemble-run: the --emit-code pieces of the three skills, joined, give the same results as run_case."""
+    import json
+    import tempfile
+    sys.path.insert(0, str(SKILLS / 'shell-assemble-run'))
+    import assemble_run as ar
+    ex = SKILLS / 'shell-bc-load' / 'examples'
+    t20 = dict(T20_CASE, name='trac_like_load_control', analysis={'type': 'load_control', 'n_steps': 2})
+    cases = [json.loads((ex / 'tape_spring_L024_tip_load.json').read_text()), t20]
+    with tempfile.TemporaryDirectory() as tmp:
+        for case in cases:
+            script, npz = Path(tmp) / f'{case["name"]}_opensees.py', Path(tmp) / f'{case["name"]}.npz'
+            with redirect_stdout(io.StringIO()):
+                ar.join(ar.write_pieces(case, Path(tmp) / f'{case["name"]}_code'), script)
+                ops.wipe()
+            r = ar.subprocess.run([sys.executable, str(script), str(npz)], capture_output=True, text=True)
+            check(f'{case["name"]}: assembled script runs (exit code)', r.returncode, 0, 0, True)
+            if r.returncode == 0:
+                diff = ar.compare(npz, case)
+                for k in ('disp', 'strains', 'history', 'frames'):
+                    check(f'{case["name"]}: {k} script = run_case (rel. max diff)', diff[k], 0, 1e-9, True)
+            ops.wipe()
+
+
 def abaqus_mock_P(g):
     return (g[1], g[2], g[0])
 
@@ -733,7 +757,7 @@ TESTS = [T01_poisson_convention, T02_ply_rotation, T03_hand_check, T04_90_0, T05
          T07_merged_vs_per_ply_large_deflection, T08_smoke_strip, T09_al_plate_1mm, T10_flat_linear_5mm,
          T11_large_deflection_10mm, T12_large_deflection_5mm, T13_curved_strip, T14_pure_moment,
          T15_tip_load_laminate, T16_orientation_on_curved_facets, T17_failure_unit, T18_failure_vs_clt,
-         T19_case_file_and_viewer, T20_abaqus_export]
+         T19_case_file_and_viewer, T20_abaqus_export, T21_assembled_script]
 SLOW = {'T09', 'T12'}
 
 

@@ -27,6 +27,13 @@ section types `flat {b}`, `arc {R, b}`, `segments {segments: [["line", l], ["arc
 
 CLI (summary only): `python shell_mesh.py --L 1000 --arc 50 100 --size 5`.
 
+Code piece for a complete OpenSeesPy script (joined by shell-assemble-run):
+`python shell_mesh.py --case case.json --emit-code mesh_code.py` (geometry and
+element entries of the case) or `sm.write_code(mesh, path, element, corotational, eas, geometry=...)`.
+It writes the nodes and the facet table, and builds the elements at run time
+from `SECTIONS` of the laminate-properties piece exactly as `build_model`
+(same `-local` vectors, `-noeas` rule); it provides `FACETS`, `FRAMES`, `MESH`.
+
 ## Geometry conventions
 - Extrusion along x from 0 to L. Cross-section parametrized by arc length s.
 - `arc(R, b)`: symmetric about y = 0, z = R (1 - cos(phi)); R > 0 = centre of

@@ -22,7 +22,9 @@ Material data: `.claude/memory.material_property_catalog/UD_lamina_catalog_SI.tx
 (read by laminate-properties; list it with `laminate_properties.py --list-catalog`).
 To add or check catalog materials, use the CompositeLaminaLibrarian agent
 (literature work), not this one. For an Abaqus version of a case, use the
-OpenSeesPyToAbaqusPythonGenerator agent (abaqus-export skill).
+OpenSeesPyToAbaqusPythonGenerator agent (abaqus-export skill). When the user
+wants one self-contained OpenSeesPy script of the model, use the
+shell-assemble-run skill instead of running shell_bc_load.py.
 
 ## 1. Collect the inputs (ask for what is missing; never invent values)
 1. **Material**: catalog ID (e.g. L024), or E1, E2, nu12, G12 [nu23] and, for a
@@ -47,6 +49,9 @@ Write a case file in a new dated folder `Code for Project/MM-DD-YY (Name)/`
 ```
 python laminate-properties/laminate_properties.py <material/layup args> --check --save-json <dir>/lam.json
 python shell-bc-load/shell_bc_load.py <dir>/<case>.json --out <dir>/results
+#   or, for one standalone OpenSeesPy script of the whole model (same .npz): the three
+#   skills write their code pieces (--emit-code) and shell-assemble-run joins and runs them
+#   python shell-assemble-run/assemble_run.py <dir>/<case>.json [--laminate <dir>/lam.json] [--verify]
 python failure-check/failure_check.py <dir>/results/<case>.npz             # Hashin 2D (default)
 python shell-visualize/shell_visualize.py <dir>/results/<case>.npz --png <dir>/results/<case>.png --no-gui
 ```

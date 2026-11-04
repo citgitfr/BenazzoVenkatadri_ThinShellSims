@@ -30,6 +30,12 @@ this skill -> results file):
   python shell_bc_load.py case.json [--out DIR] [--no-vtp]
 See SKILL.md for the case format.
 
+This skill's piece of a complete OpenSeesPy script (supports, rigid ends,
+loads, the solution and the results file; it uses FACETS / FRAMES / MESH of
+the shell-mesh piece and LAMINATE of the laminate-properties piece; joined
+by the shell-assemble-run skill):
+  python shell_bc_load.py case.json --emit-code bc_code.py
+
 Units: N, mm, MPa.
 """
 import argparse
@@ -356,12 +362,202 @@ def run_case(case, out_dir=None, verbose=True):
     return mesh, res
 
 
+# --- code piece for a complete OpenSeesPy script ------------------------------------------------
+
+BC_HEADINGS = {'node': 'rigid end master node at the edge centroid',
+               'rigidLink': 'rigid end fixture: master node tied to every edge node',
+               'fix': 'supports: ux uy uz rx ry rz, 1 = fixed',
+               'timeSeries': 'load pattern', 'pattern': 'load pattern',
+               'load': 'nodal loads (consistent shares), reference level = load factor 1'}
+
+LINEAR_CODE = '''
+# --- analysis: linear static at load factor 1 (linear_solve) ---
+t0 = time.perf_counter()
+ops.system('UmfPack')
+ops.numberer('RCM')
+ops.constraints('Transformation')     # handles the rigid links
+ops.integrator('LoadControl', 1.0)
+ops.algorithm('Linear')
+ops.analysis('Static')
+if ops.analyze(1) != 0:
+    raise RuntimeError('linear analysis failed')
+ops.reactions()                       # re-forms element forces (strains read zero otherwise)
+history = np.array([[0.0], [1.0]])
+'''
+
+DISPLACEMENT_CONTROL_CODE = '''
+# --- analysis: displacement control (displacement_control) ---
+# each step moves CONTROL_NODE by STEP in CONTROL_DOF; OpenSees finds the load
+# factor; steps are halved (up to MAX_CUTS times) on non-convergence
+CONTROL_NODE, CONTROL_DOF, STEP = @NODE@, @DOF@, @STEP@
+N_STEPS, MAX_LOAD_FACTOR, TOL, MAX_CUTS = @N_STEPS@, @MAX_LF@, @TOL@, 6
+t0 = time.perf_counter()
+ops.system('UmfPack')
+ops.numberer('RCM')
+ops.constraints('Transformation')
+ops.test('RelativeNormDispIncr', TOL, 40)
+ops.algorithm('Newton')
+history = [[0.0, 0.0, 0]]             # [load factor, control displacement, iterations]
+k = 0
+while (N_STEPS is None or k < N_STEPS) and not (MAX_LOAD_FACTOR is not None and abs(history[-1][0]) >= MAX_LOAD_FACTOR):
+    du = STEP
+    for _ in range(MAX_CUTS + 1):
+        ops.integrator('DisplacementControl', CONTROL_NODE, CONTROL_DOF, du)
+        ops.analysis('Static')
+        if ops.analyze(1) == 0:
+            break
+        du /= 2
+    else:
+        print(f'  stopped: no convergence beyond load factor {history[-1][0]:.4g}')
+        break
+    history.append([ops.getLoadFactor(1), ops.nodeDisp(CONTROL_NODE, CONTROL_DOF), ops.testIter()])
+    k += 1
+    print(f'  step {k:3d}: load factor {history[-1][0]:.5g}, {history[-1][-1]} iterations', flush=True)
+ops.reactions()
+history = np.array(history)
+'''
+
+LOAD_CONTROL_CODE = '''
+# --- analysis: load control (load_control) ---
+N_STEPS, MAX_LOAD_FACTOR, TOL, MAX_CUTS = @N_STEPS@, @MAX_LF@, @TOL@, 6
+t0 = time.perf_counter()
+ops.system('UmfPack')
+ops.numberer('RCM')
+ops.constraints('Transformation')
+ops.test('RelativeNormDispIncr', TOL, 40)
+ops.algorithm('Newton')
+history = [[0.0, 0]]                  # [load factor, iterations]
+lam, dl = 0.0, MAX_LOAD_FACTOR / N_STEPS
+while lam < MAX_LOAD_FACTOR - 1e-12:
+    d = min(dl, MAX_LOAD_FACTOR - lam)
+    for _ in range(MAX_CUTS + 1):
+        ops.integrator('LoadControl', d)
+        ops.analysis('Static')
+        if ops.analyze(1) == 0:
+            break
+        d /= 2
+    else:
+        print(f'  stopped: no convergence beyond load factor {lam:.4g}')
+        break
+    lam = ops.getLoadFactor(1)
+    history.append([lam, ops.testIter()])
+    print(f'  load factor {lam:.5g}, {ops.testIter()} iterations', flush=True)
+ops.reactions()
+history = np.array(history)
+'''
+
+RESULTS_CODE = '''
+print(f"{MESH['summary']}\\n{len(ops.getEleTags())} elements, {6 * len(ops.getNodeTags())} DOFs; "
+      f"{ANALYSIS} solved in {time.perf_counter() - t0:.1f} s")
+
+
+# --- results file (collect_results; read by shell-visualize and failure-check) ---
+def strain_rotation(theta_deg):
+    # [eps_1, eps_2, gam_12] = T [eps_x, eps_y, gam_xy] (laminate-properties)
+    c, s = math.cos(math.radians(theta_deg)), math.sin(math.radians(theta_deg))
+    return np.array([[c * c, s * s, c * s], [s * s, c * c, -c * s], [-2 * c * s, 2 * c * s, c * c - s * s]])
+
+
+def facet_strains():
+    # (facets, Gauss points, 8) [eps_xx eps_yy gam_xy k_xx k_yy k_xy gam_xz gam_yz] in the
+    # facet frame, CLT curvature sign (OpenSees reports -k); first element of each facet
+    out = []
+    for first, _, th, *_ in FACETS:
+        s = np.reshape(ops.eleResponse(first, 'strains'), (-1, 8)).copy()
+        s[:, 3:6] *= -1.0
+        if th != 0.0:
+            T = strain_rotation(-th)           # element (ply) axes -> facet axes
+            s[:, 0:3] = s[:, 0:3] @ T.T
+            s[:, 3:6] = s[:, 3:6] @ T.T
+            c, sn = math.cos(math.radians(th)), math.sin(math.radians(th))
+            g1, g2 = s[:, 6].copy(), s[:, 7].copy()
+            s[:, 6], s[:, 7] = c * g1 - sn * g2, sn * g1 + c * g2
+        out.append(s)
+    return np.array(out)
+
+
+tags = ops.getNodeTags()
+index = {t: k for k, t in enumerate(tags)}
+fixed = np.zeros(len(tags), dtype=np.int8)
+fixed[[index[n] for n in ops.getFixedNodes()]] = 1
+meta = dict(title=NAME, summary=MESH['summary'], nx=MESH['nx'], ny=MESH['ny'], L=MESH['L'], b=MESH['b'],
+            element=MESH['element'], rigid=RIGID, case=CASE)
+results = dict(points=np.array([ops.nodeCoord(t) for t in tags]), node_tags=np.array(tags),
+               disp=np.array([(ops.nodeDisp(t) + [0.0] * 6)[:6] for t in tags]), fixed=fixed,
+               faces=np.array([[index[n] for n in f[3:]] for f in FACETS]), frames=FRAMES,
+               strains=facet_strains(), history=history, laminate=LAMINATE, meta=json.dumps(meta))
+out = Path(sys.argv[1]) if len(sys.argv) > 1 else Path(__file__).resolve().parent / 'results' / f'{NAME}.npz'
+out.parent.mkdir(parents=True, exist_ok=True)
+np.savez_compressed(out, **results)
+print(f'saved {out}')
+print(f'report node {REPORT_NODE}: u = {np.round(ops.nodeDisp(REPORT_NODE), 6).tolist()}')
+print(f"max |u| = {np.linalg.norm(results['disp'][:, :3], axis=1).max():.6g} mm")
+'''
+
+
+def analysis_code(case, mesh):
+    an = case.get('analysis', {'type': 'linear'})
+    if an['type'] == 'linear':
+        return LINEAR_CODE
+    if an['type'] == 'displacement_control':
+        return (DISPLACEMENT_CONTROL_CODE.replace('@NODE@', repr(resolve_node(mesh, an['node'])))
+                .replace('@DOF@', repr(an.get('dof', 3))).replace('@STEP@', repr(an['step']))
+                .replace('@N_STEPS@', repr(an.get('n_steps'))).replace('@MAX_LF@', repr(an.get('max_load_factor')))
+                .replace('@TOL@', repr(an.get('tol', 1e-6))))
+    if an['type'] == 'load_control':
+        return (LOAD_CONTROL_CODE.replace('@N_STEPS@', repr(an.get('n_steps', 10)))
+                .replace('@MAX_LF@', repr(an.get('max_load_factor', 1.0))).replace('@TOL@', repr(an.get('tol', 1e-6))))
+    raise ValueError(f'unknown analysis {an["type"]!r} (linear | displacement_control | load_control)')
+
+
+def write_code(case, path):
+    """This skill's piece of a complete OpenSeesPy script: the supports,
+    rigid ends and loads of the case (the calls apply_supports / apply_loads
+    make, recorded on the case's mesh nodes), the solution as in
+    linear_solve / displacement_control / load_control, and the results file
+    as collect_results. Needs FACETS, FRAMES, MESH (shell-mesh piece) and
+    LAMINATE (laminate-properties piece)."""
+    mesh = sm.build_from_spec(case['geometry'])
+    sm.create_nodes(mesh)                                  # node coordinates only: rigid ends, edge shares, pressure
+    with lp.record_ops(('node', 'rigidLink', 'fix', 'timeSeries', 'pattern', 'load')) as calls:
+        apply_supports(mesh, case.get('supports', []))
+        apply_loads(mesh, case.get('loads', []))
+    an = case.get('analysis', {'type': 'linear'})['type']
+    geometry = json.loads(json.dumps(case['geometry']))
+    count = {}
+    for n, _ in calls:
+        count[n] = count.get(n, 0) + 1
+    lines = [lp.PIECE_MARK.format('supports, loads and solution', 'shell-bc-load'),
+             f'# {count.get("fix", 0)} fixed nodes, {len(getattr(mesh, "rigid", {}))} rigid end(s), '
+             f'{count.get("load", 0)} nodal loads; {an} analysis; results .npz',
+             '# provides: the solved model and the results file (argument 1, default results/<NAME>.npz)',
+             '# needs:    FACETS, FRAMES, MESH (mesh piece), LAMINATE (laminate piece)',
+             f'NAME = {case.get("name", "case")!r}',
+             f'ANALYSIS = {an!r}',
+             f'GEOMETRY = {geometry!r}',
+             f'CASE = {json.loads(json.dumps(case))!r}',
+             f'RIGID = {getattr(mesh, "rigid", {})!r}',
+             f'REPORT_NODE = {resolve_node(mesh, case.get("report_node", "tip"))!r}',
+             f"if MESH['geometry'] != GEOMETRY or MESH['n_nodes'] != {(mesh.nx + 1) * (mesh.ny + 1)}:",
+             "    raise ValueError('the mesh piece was written for another geometry than this supports/loads piece')"]
+    lines += lp.ops_code(calls, BC_HEADINGS)
+    text = '\n'.join(lines) + '\n' + analysis_code(case, mesh) + RESULTS_CODE
+    ops.wipe()
+    Path(path).write_text(text, encoding='utf-8')
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('case', help='case JSON file')
     ap.add_argument('--out', default=None, help='output folder (default: next to the case file)')
+    ap.add_argument('--emit-code', metavar='FILE', help='only write the supports/loads/solution piece of a complete '
+                                                       'OpenSeesPy script (joined by shell-assemble-run)')
     a = ap.parse_args()
     case = json.loads(Path(a.case).read_text())
+    if a.emit_code:
+        write_code(case, a.emit_code)
+        print(f'supports/loads/solution piece of the OpenSeesPy script written to {a.emit_code}')
+        return
     out = Path(a.out) if a.out else Path(a.case).parent
     mesh, res = run_case(case, out)
     tip = resolve_node(mesh, case.get('report_node', 'tip'))

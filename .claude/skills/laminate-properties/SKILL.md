@@ -31,6 +31,12 @@ python laminate_properties.py --E1 135000 --E2 10000 --nu12 0.3 --G12 5000 [--nu
   Anything bigger is a definition error: do not present it as verified.
 - `--save-json` writes the laminate (materials incl. strengths, plies, n_sub,
   merge) for the other skills and case files (`{"laminate": {"json": "lam.json"}}`).
+- `--emit-code FILE` writes this skill's piece of a complete OpenSeesPy
+  script: the material and LayeredShell section calls, `SECTIONS` [(tag,
+  angle)] and `LAMINATE` (JSON). `--json lam.json --emit-code FILE` does it
+  for a saved laminate. The shell-assemble-run skill joins it with the
+  shell-mesh and shell-bc-load pieces. (`--emit` is different: one facet with
+  its elements, for inspection.)
 
 ## Python
 
