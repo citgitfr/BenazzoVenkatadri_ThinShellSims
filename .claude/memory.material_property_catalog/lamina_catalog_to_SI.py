@@ -25,6 +25,7 @@ UNITS = {
     "Xc_MPa": ("Xc_Pa", 1e6), "Xt_MPa": ("Xt_Pa", 1e6), "Yc_MPa": ("Yc_Pa", 1e6),
     "Yt_MPa": ("Yt_Pa", 1e6), "S12_MPa": ("S12_Pa", 1e6),
     "t_ply_mm": ("t_ply_m", 1e-3),
+    "rho_g/cm3": ("rho_kg/m3", 1e3),
 }
 
 
@@ -99,6 +100,11 @@ def check(row):
             warn.append("Xt <= Yt")
         if not s["Yc_MPa"] > s["Yt_MPa"]:
             warn.append("Yc <= Yt")
+    rho = g("rho_g/cm3")
+    if rho is None:
+        warn.append("no density")
+    elif not 1.1 < rho < 2.3:
+        warn.append(f"density {rho} g/cm3 outside 1.1-2.3")
     return ply_ok, th_ok, warn
 
 
@@ -114,7 +120,7 @@ def main():
 
     si_header = [UNITS[h][0] if h in UNITS else h for h in header]
     with open(dst, "w", encoding="utf-8") as f:
-        f.write("# UD lamina property catalog (SI units: Pa, m). GENERATED from\n")
+        f.write("# UD lamina property catalog (SI units: Pa, m, kg/m3). GENERATED from\n")
         f.write(f"# {os.path.basename(src)} by lamina_catalog_to_SI.py; edit the readable file, then rerun.\n")
         f.write("# Notes, estimate markers (*) and sources below are those of the readable file.\n")
         for c in comments[1:]:

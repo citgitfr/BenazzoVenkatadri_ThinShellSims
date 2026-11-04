@@ -1,0 +1,52 @@
+shell normal flipped on the face through [0.0, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 1.2 mm); scale S = 5.6
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+   mode 1: eigenvalue 0.94995 -> 5.31972
+   mode 2: eigenvalue 1.4454 -> 8.09424
+   mode 3: eigenvalue 1.7179 -> 9.62024
+   mode 4: eigenvalue 2.1483 -> 12.0305
+
+=== 2. NLB (nonlinear preload f x LBA, then *BUCKLE about the deformed state)
+   f = 0.50: preload 2.65986 + perturbation ['2.66', '5.434', '6.96', '9.37'] -> critical 5.31992
+   f = 0.90: preload 4.78775 + perturbation ['0.5323', '3.301', '4.823', '7.228'] -> critical 5.32001
+
+=== 3. RIKS with the LBA mode-1 imperfection (1.2 mm)
+   150 increments; peak LPF 0.84329 -> buckling strength 4.72243 (increment 150, LAST increment: check the path)
+   path (load, monitor U3):
+                0             0
+          1.27705       0.37885
+          2.05995      0.757763
+            2.589       1.13671
+          2.97044       1.51567
+          3.25849       1.89466
+          3.48371       2.27365
+          3.66463       2.65267
+          3.81314        3.0317
+          3.93724       3.41074
+          4.04248        3.7898
+          4.13286       4.16887
+           4.2113       4.54796
+          4.28001       4.92706
+           4.3407       5.30618
+          4.39469       5.68531
+          4.44302       6.06446
+          4.48653       6.44362
+           4.5259        6.8228
+          4.56169         7.202
+          4.59436       7.58121
+          4.62429       7.96044
+           4.6518       8.33968
+          4.67718       8.71894
+          4.70066       9.09822
+          4.72243       9.47752
+   Southwell estimate (stable post-buckling paths): 5.31996
+
+=== Comparison with OpenSees / theory (case load units)
+   reference thin-walled theory (flexural, fork ends) 5.6232
+   reference OpenSees A ShellNLDKGQ eigen (2.5 mm)    7.3663
+   reference OpenSees B ASDShellQ4 Southwell (5 mm)   5.4973
+   Abaqus LBA mode 1                                  5.31972   -5.4% vs thin-walled theory   -27.8% vs OpenSees A ShellNLDKGQ eigen   -3.2% vs OpenSees B ASDShellQ4 Southwell
+   Abaqus NLB f = 0.50                                5.31992   -5.4% vs thin-walled theory   -27.8% vs OpenSees A ShellNLDKGQ eigen   -3.2% vs OpenSees B ASDShellQ4 Southwell
+   Abaqus NLB f = 0.90                                5.32001   -5.4% vs thin-walled theory   -27.8% vs OpenSees A ShellNLDKGQ eigen   -3.2% vs OpenSees B ASDShellQ4 Southwell
+   Abaqus RIKS peak                                   4.72243   -16.0% vs thin-walled theory   -35.9% vs OpenSees A ShellNLDKGQ eigen   -14.1% vs OpenSees B ASDShellQ4 Southwell

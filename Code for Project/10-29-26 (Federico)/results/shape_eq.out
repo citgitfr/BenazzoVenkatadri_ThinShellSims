@@ -1,0 +1,123 @@
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+  step   1: param -0.005, load factor  20.2984, iters 7
+  step   2: param -0.01, load factor  40.5255, iters 9
+  step   3: param -0.015, load factor  60.614, iters 11
+  step   4: param -0.02, load factor  80.4905, iters 12
+  step   5: param -0.025, load factor  100.074, iters 15
+  step   6: param -0.03, load factor  119.27, iters 17
+  step   7: param -0.035, load factor  137.963, iters 24
+  step   8: param -0.04, load factor  155.966, iters 29
+  step   9: param -0.045, load factor  172.595, iters 90
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.183736 (max: 1e-08, Norm deltaR: 2.79479)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 156.647
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.155671 (max: 1e-08, Norm deltaR: 0.532816)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 179.205
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.0771705 (max: 1e-08, Norm deltaR: 0.275154)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 176.6
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.23176 (max: 1e-08, Norm deltaR: 0.134183)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 174.176
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.000253085 (max: 1e-08, Norm deltaR: 0.000638074)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.327
+OpenSees > analyze failed, returned: -3 error flag
+  step  10: param -0.045156, load factor  173.016, iters 70
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.0154037 (max: 1e-08, Norm deltaR: 0.173899)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 172.976
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 8.6589e-05 (max: 1e-08, Norm deltaR: 5.23444e-05)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.327
+OpenSees > analyze failed, returned: -3 error flag
+  step  11: param -0.045234, load factor  173.202, iters 82
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.166712 (max: 1e-08, Norm deltaR: 0.12826)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.104
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 2.2489e-05 (max: 1e-08, Norm deltaR: 0.000119746)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.327
+OpenSees > analyze failed, returned: -3 error flag
+  step  12: param -0.045273, load factor  173.279, iters 90
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.000836565 (max: 1e-08, Norm deltaR: 0.000510885)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.38
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 2.97996e-05 (max: 1e-08, Norm deltaR: 0.000633022)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.327
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 7.93493e-06 (max: 1e-08, Norm deltaR: 0.000274214)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.309
+OpenSees > analyze failed, returned: -3 error flag
+  step  13: param -0.045283, load factor  173.295, iters 70
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 1.2725e-06 (max: 1e-08, Norm deltaR: 0.00014367)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.32
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 2.45424e-06 (max: 1e-08, Norm deltaR: 3.46384e-05)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.309
+OpenSees > analyze failed, returned: -3 error flag
+  step  14: param -0.045288, load factor  173.303, iters 94
+  step  15: param -0.045298, load factor  173.315, iters 100
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.266137 (max: 1e-08, Norm deltaR: 2.41511)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 157.393
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.110128 (max: 1e-08, Norm deltaR: 1.37153)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 179.372
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.0627912 (max: 1e-08, Norm deltaR: 0.741102)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 176.008
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.139585 (max: 1e-08, Norm deltaR: 0.0680292)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 175.015
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.311196 (max: 1e-08, Norm deltaR: 1.98648)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 174.133
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.0407432 (max: 1e-08, Norm deltaR: 0.25398)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.193
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 0.00934331 (max: 1e-08, Norm deltaR: 0.00262992)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 173.378
+OpenSees > analyze failed, returned: -3 error flag
+  stopped: no convergence beyond load factor 173.32
+eq: 16 states, peak 173.3 at row 15, last param -0.0453

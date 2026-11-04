@@ -73,7 +73,7 @@ def section_pieces(sec):
         A = np.array([[2 * (pm[0] - p0[0]), 2 * (pm[1] - p0[1])], [2 * (p1[0] - p0[0]), 2 * (p1[1] - p0[1])]])
         rhs = np.array([pm @ pm - p0 @ p0, p1 @ p1 - p0 @ p0])
         ctr = np.linalg.solve(A, rhs)
-        out.append(('arc', p0.tolist(), p1.tolist(), ctr.tolist(), bool(cross < 0)))   # p0->pm->p1 turning left = CCW
+        out.append(('arc', p0.tolist(), p1.tolist(), ctr.tolist(), bool(cross > 0)))   # p0->pm->p1 turning left (cross > 0) = CCW
     return out
 
 
@@ -206,10 +206,17 @@ Usage (Abaqus command line, in an empty working folder):
 Output: <job>_results.txt (also printed), <job>.odb, <job>.cae
 """
 import sys
+try:
+    import builtins                     # Python 3 (Abaqus 2024+)
+except ImportError:
+    import __builtin__ as builtins      # Python 2
+# 'abaqus cae noGUI' runs the script in a namespace where some names are Abaqus
+# functions (sum rejects generators: "found 'generator', expecting a recognized type")
+sum, min, max, abs, round = builtins.sum, builtins.min, builtins.max, builtins.abs, builtins.round
 
 from abaqus import mdb
 from abaqusConstants import (ANALYSIS, AXIS_1, AXIS_3, CARTESIAN, CENTROID, CLOCKWISE, COUNTERCLOCKWISE,
-                             DEFAULT, DEFORMABLE_BODY, DISCRETE, DOUBLE_PRECISION, FROM_SECTION, GRADIENT,
+                             DEFAULT, DEFORMABLE_BODY, DISCRETE, FROM_SECTION, GRADIENT,
                              KINEMATIC, LAMINA, MIDDLE_SURFACE, NO_IDEALIZATION, OFF, ON, PERCENTAGE, QUAD,
                              ROTATION_NONE, S4, S4R, SIMPSON, SINGLE, STACK_3, STANDARD, STRUCTURED,
                              SURFACE, SYSTEM, THREE_D, UNIFORM, UNSET, VECTOR, ISOTROPIC, FIXED,
@@ -273,6 +280,8 @@ part.BaseShellExtrude(sketch=sk, depth=M['L'])     # extrusion along part Z = gl
 for mid, want in M['faces']:
     pm = P((M['L'] / 2, mid[0], mid[1]))
     face = part.faces.findAt((pm,))
+    if len(face) == 0:
+        raise RuntimeError('no shell face through %%s: the part geometry does not match the cross-section' %% (pm,))
     try:
         n = face[0].getNormal(point=pm)
     except TypeError:
@@ -336,9 +345,12 @@ part.generateMesh()
 
 asm = model.rootAssembly
 inst = asm.Instance(name='Shell-1', part=part, dependent=ON)
-asm.rotateInstance(instanceList=('Shell-1',), axisPoint=(0.0, 0.0, 0.0), axisDirection=(1.0, 1.0, 1.0),
-                   angle=120.0)                   # part X, Y, Z -> global y, z, x
+asm.rotate(instanceList=('Shell-1',), axisPoint=(0.0, 0.0, 0.0), axisDirection=(1.0, 1.0, 1.0),
+           angle=120.0)                           # part X, Y, Z -> global y, z, x
 NODES = [(nd.label, nd.coordinates) for nd in inst.nodes]   # assembly (= global) coordinates
+if abs(max(c[0] for _, c in NODES) - M['L']) > 1e-3 * M['L']:
+    raise RuntimeError('instance node coordinates are not along global x (max x = %%g, L = %%g)'
+                       %% (max(c[0] for _, c in NODES), M['L']))
 TOL = 1e-3 * SIZE
 
 
@@ -376,6 +388,11 @@ def nearest(p):
     if dist > TOL:
         log('note: node %%d used for point %%s is %%.3g mm away (mesh size differs from the case)' %% (lab, p, dist))
     return lab
+
+
+def components(prefix, v):
+    # nonzero components only (cf1/cm1... take floats, not UNSET)
+    return dict(('%%s%%d' %% (prefix, d + 1), float(x)) for d, x in enumerate(v) if x)
 
 
 rps = {}
@@ -418,11 +435,9 @@ for k, s in enumerate(M['supports']):
 
 def point_loads(name, reg, F, M_):
     if any(F):
-        model.ConcentratedForce(name=name + 'F', createStepName=STEP, region=reg,
-                                cf1=F[0] or UNSET, cf2=F[1] or UNSET, cf3=F[2] or UNSET)
+        model.ConcentratedForce(name=name + 'F', createStepName=STEP, region=reg, **components('cf', F))
     if any(M_):
-        model.Moment(name=name + 'M', createStepName=STEP, region=reg,
-                     cm1=M_[0] or UNSET, cm2=M_[1] or UNSET, cm3=M_[2] or UNSET)
+        model.Moment(name=name + 'M', createStepName=STEP, region=reg, **components('cm', M_))
 
 
 for k, ld in enumerate(M['loads']):
@@ -445,7 +460,7 @@ for k, ld in enumerate(M['loads']):
 
 model.fieldOutputRequests['F-Output-1'].setValues(variables=('S', 'SF', 'SM', 'U', 'UR', 'RF'), frequency=1)
 
-job = mdb.Job(name=JOB, model=model.name, type=ANALYSIS, precision=DOUBLE_PRECISION, nodalOutputPrecision=SINGLE,
+job = mdb.Job(name=JOB, model=model.name, type=ANALYSIS, nodalOutputPrecision=SINGLE,
               memoryUnits=PERCENTAGE, memory=90)
 job.submit(consistencyChecking=OFF)
 job.waitForCompletion()

@@ -1,0 +1,54 @@
+shell normal flipped on the face through [0.0, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0.01 mm); scale S = 170
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+   mode 1: eigenvalue 0.80184 -> 136.313
+   mode 2: eigenvalue 1.0821 -> 183.957
+   mode 3: eigenvalue 1.088 -> 184.96
+   mode 4: eigenvalue 1.1316 -> 192.372
+
+=== 2. NLB (nonlinear preload f x LBA, then *BUCKLE about the deformed state)
+   f = 0.50: preload 68.1564 + perturbation ['70.72', '111.7', '112.8', '120.5'] -> critical 138.875
+   f = 0.80: preload 109.05 + perturbation ['37.27', '67.29', '68.36', '75.68'] -> critical 146.319
+   f = 0.95: preload 129.497 + perturbation ['22.07', '44.89', '45.93', '52.21'] -> critical 151.572
+
+=== 3. RIKS with the LBA mode-1 imperfection (0.01 mm)
+   300 increments; peak LPF 0.89041 -> buckling strength 151.37 (increment 25)
+   path (load, monitor UR2):
+                0             0
+          86.8959    -0.0222623
+          151.336    -0.0401998
+          150.428    -0.0401079
+          136.635    -0.0357741
+          11.1688   -0.00282744
+         -115.589     0.0297169
+         -229.476     0.0621027
+         -320.057     0.0945705
+          -375.09      0.127427
+         -363.101      0.161375
+         -340.741      0.166678
+         -370.459      0.158003
+         -380.321      0.149405
+         -382.368      0.140935
+         -379.159      0.132556
+         -371.857      0.124248
+         -361.147      0.115992
+         -347.494       0.10778
+         -331.247     0.0996006
+         -312.681     0.0914482
+         -292.025     0.0833167
+         -269.478     0.0752011
+         -245.219     0.0670968
+         -219.412     0.0589997
+         -192.214     0.0509061
+   Southwell estimate (stable post-buckling paths): 983.074
+
+=== Comparison with OpenSees / theory (case load units)
+   reference OpenSees A ShellNLDKGQ scan (2 mm)       172.25
+   reference OpenSees B ASDShellQ4 stall (2 mm)       167.25
+   reference OpenSees B ASDShellQ4 stall (3 mm)       173.32
+   Abaqus LBA mode 1                                  136.313   -20.9% vs OpenSees A ShellNLDKGQ scan   -18.5% vs OpenSees B ASDShellQ4 stall   -21.4% vs OpenSees B ASDShellQ4 stall
+   Abaqus NLB f = 0.50                                138.875   -19.4% vs OpenSees A ShellNLDKGQ scan   -17.0% vs OpenSees B ASDShellQ4 stall   -19.9% vs OpenSees B ASDShellQ4 stall
+   Abaqus NLB f = 0.80                                146.319   -15.1% vs OpenSees A ShellNLDKGQ scan   -12.5% vs OpenSees B ASDShellQ4 stall   -15.6% vs OpenSees B ASDShellQ4 stall
+   Abaqus NLB f = 0.95                                151.572   -12.0% vs OpenSees A ShellNLDKGQ scan   -9.4% vs OpenSees B ASDShellQ4 stall   -12.5% vs OpenSees B ASDShellQ4 stall
+   Abaqus RIKS peak                                   151.37   -12.1% vs OpenSees A ShellNLDKGQ scan   -9.5% vs OpenSees B ASDShellQ4 stall   -12.7% vs OpenSees B ASDShellQ4 stall

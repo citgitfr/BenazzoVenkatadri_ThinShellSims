@@ -1,0 +1,46 @@
+shell normal flipped on the face through [0.0, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0.01 mm); scale S = 400
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+   mode 1: eigenvalue -0.34078 -> -136.312
+   mode 2: eigenvalue -0.45991 -> -183.964
+   mode 3: eigenvalue -0.4624 -> -184.96
+   mode 4: eigenvalue -0.48094 -> -192.376
+
+=== 3. RIKS with the LBA mode-1 imperfection (0.01 mm)
+   300 increments; peak LPF 0.95608 -> buckling strength 382.432 (increment 32)
+   path (load, monitor UR2):
+                0             0
+          195.332     0.0518147
+          355.333      0.112285
+          378.846      0.151428
+          324.141      0.167699
+          370.349      0.158065
+          382.405      0.143164
+          376.644      0.129177
+            357.8      0.113812
+          329.064     0.0985873
+          292.388     0.0834529
+           249.15     0.0683738
+           200.47     0.0533222
+          147.356     0.0382734
+          90.8134     0.0232042
+          31.9356     0.0080907
+         -27.9879    -0.0070928
+         -87.3212     -0.022374
+         -143.523    -0.0377613
+         -145.914    -0.0391808
+         -129.117    -0.0362523
+         -110.953    -0.0356681
+         -99.4235    -0.0378628
+          -92.535    -0.0412344
+         -89.0652    -0.0447942
+         -87.0049    -0.0484307
+   Southwell estimate (stable post-buckling paths): 600.855
+
+=== Comparison with OpenSees / theory (case load units)
+   reference OpenSees A ShellNLDKGQ scan (3 mm, spurious) 311.48
+   reference OpenSees B ASDShellQ4 peak (2 mm)        394.87
+   reference OpenSees B ASDShellQ4 peak (3 mm)        402.14
+   Abaqus LBA mode 1                                  nan   +nan% vs OpenSees A ShellNLDKGQ scan   +nan% vs OpenSees B ASDShellQ4 peak   +nan% vs OpenSees B ASDShellQ4 peak
+   Abaqus RIKS peak                                   382.432   +22.8% vs OpenSees A ShellNLDKGQ scan   -3.1% vs OpenSees B ASDShellQ4 peak   -4.9% vs OpenSees B ASDShellQ4 peak
