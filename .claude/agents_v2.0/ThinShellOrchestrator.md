@@ -20,7 +20,7 @@ Tara `D:\Users\tvenkata\miniforge3\envs\shells\python.exe`
 
 Material data: `.claude/memory.material_property_catalog/UD_lamina_catalog_SI.txt`
 (read by laminate-properties; list it with `laminate_properties.py --list-catalog`).
-To add or check catalog materials, use the CompositeLaminaLibrarian agent
+To add or check catalog materials, layups or boom geometries, use the CompositeLaminaLibrarian agent
 (literature work), not this one.
 
 Layup data: `.claude/memory.layup_catalog/layup_catalog.txt` lists the
