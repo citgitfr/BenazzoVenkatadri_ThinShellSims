@@ -44,6 +44,17 @@ python shell_bc_load.py case.json [--out results_folder]      # -> <out>/<name>.
   vector +y (`[0, Mx*b, 0]`), on `x0` the opposite; on `yb` (normal +y) My is a
   moment vector **-x**.
 
+## Code piece for a complete OpenSeesPy script
+```
+python shell_bc_load.py case.json --emit-code bc_code.py      # or bc.write_code(case, path)
+```
+Writes the fixities, rigid ends and nodal loads of the case (the calls
+`apply_supports` / `apply_loads` make, exact), the analysis (as
+`linear_solve` / `displacement_control` / `load_control`) and the results
+.npz (as `collect_results`). Needs `FACETS`, `FRAMES`, `MESH` (shell-mesh
+piece) and `LAMINATE` (laminate-properties piece); refuses to run if the
+mesh piece is for another geometry. Joined and run by shell-assemble-run.
+
 ## Python (custom drivers)
 ```python
 import shell_bc_load as bc

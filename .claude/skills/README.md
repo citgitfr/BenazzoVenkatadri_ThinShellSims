@@ -12,6 +12,7 @@ catalog (Pa, m) --> laminate-properties --> shell-mesh --> shell-bc-load --> res
  or E1 E2 ...       (ply, layup, ABD,       (cross-section,  (supports, loads,                 |
                      OpenSees sections)      mesh, elements)  solve, strains)                  +--> failure-check (ply stresses, Hashin)
 case JSON ------------------------------------------------------------------> abaqus-export (Abaqus/CAE script + OpenSees reference)
+laminate-properties / shell-mesh / shell-bc-load --emit-code pieces --> shell-assemble-run (ONE standalone OpenSeesPy script, run) --> results .npz
 ```
 
 | Skill | Replaces (v1.0 agents / code) |
@@ -22,6 +23,7 @@ case JSON ------------------------------------------------------------------> ab
 | shell-visualize | FEResultVisualizer; fe_result_viewer.py, shell_viewer.py |
 | failure-check | new (ToDo items 11-12, Hashin 2D of AIAA 2025-0188); top_surface_stresses() variants |
 | abaqus-export | OpenSeesPyToAbaqusPythonGenerator's hand translation; abaqus_tip_load_laminate.py template |
+| shell-assemble-run | new: joins the `--emit-code` pieces of laminate-properties, shell-mesh and shell-bc-load into one continuous OpenSeesPy script and runs it |
 | regression-tests | the verification runs in the SUMMARY files and verify_mesh_bc_load.py |
 | shell-buckling | new (10/29/26, ToDo 7-8): buckling load/moment and mode (ShellNLDKGQ tangent-eigenvalue scan) and buckling strength (ASDShellQ4 imperfect path); boom_buckling.py case runner |
 

@@ -39,6 +39,13 @@ Usage:
   python laminate_properties.py --catalog L024 --layup "[0/90]s" [--thickness 0.08] --check
   python laminate_properties.py --E1 135000 --E2 10000 --nu12 0.3 --G12 5000 --angles 0 45 -45 90 --thickness 0.125 --check
   python laminate_properties.py ... --save-json laminate.json [--emit calls.py] [--n-sub 4] [--no-merge]
+  python laminate_properties.py --json laminate.json --emit-code laminate_code.py
+
+--emit-code writes this skill's piece of a complete OpenSeesPy script (the
+materials and LayeredShell sections, and SECTIONS / LAMINATE for the
+shell-mesh and shell-bc-load pieces); the shell-assemble-run skill joins the
+pieces. The helpers record_ops / ops_code (bottom of this module) are shared
+by the three skills for writing their pieces.
 """
 import argparse
 import json
@@ -427,6 +434,27 @@ class Laminate:
                 'import openseespy.opensees as ops', '']
         Path(path).write_text('\n'.join(head + calls) + '\n')
 
+    def write_code(self, path):
+        """This skill's piece of a complete OpenSeesPy script: the material
+        and section calls of define() and SECTIONS = [(sec_tag, theta)],
+        LAMINATE = this laminate as JSON (for the results file)."""
+        import openseespy.opensees as ops
+        ops.wipe()
+        ops.model('basic', '-ndm', 3, '-ndf', 6)
+        with record_ops(('nDMaterial', 'section')) as calls:
+            sections = self.define()
+        ops.wipe()
+        lines = [PIECE_MARK.format('laminate', 'laminate-properties'),
+                 f'# {self.describe()}' + (f', {self.materials[0].get("name", "")}' if self.kind != 'isotropic' else ''),
+                 f'# {len(sections)} section(s): one coincident ASDShellQ4 per facet and distinct ply angle',
+                 '# provides: SECTIONS [(section tag, ply angle from the facet x axis)], LAMINATE (JSON, results file)',
+                 "# needs:    a model with 6 DOFs per node: ops.model('basic', '-ndm', 3, '-ndf', 6)",
+                 f'LAMINATE = {json.dumps(self.to_dict(), default=_plain)!r}']
+        lines += ops_code(calls, {'nDMaterial': 'ply materials: ElasticOrthotropic -> PlaneStress -> PlateFromPlaneStress',
+                                  'section': 'shell sections, layers bottom (-z) to top (+z): material, thickness'})
+        lines += ['', f'SECTIONS = {[(int(t), float(th)) for t, th in sections]!r}']
+        Path(path).write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
     # I/O
     def describe(self):
         if self.kind == 'isotropic':
@@ -538,6 +566,9 @@ def main():
     ap.add_argument('--save-json', metavar='FILE', help='write the laminate definition (input for the other skills)')
     ap.add_argument('--save-abd', metavar='FILE', help='write the CLT (and, with --check, OpenSees) ABD as CSV')
     ap.add_argument('--emit', metavar='FILE', help='write the OpenSeesPy calls of one facet to FILE')
+    ap.add_argument('--json', metavar='FILE', help='use a laminate saved with --save-json (instead of --catalog / --E1 ..)')
+    ap.add_argument('--emit-code', metavar='FILE', help='write the materials/sections piece of a complete '
+                                                       'OpenSeesPy script (joined by shell-assemble-run)')
     a = ap.parse_args()
 
     if a.list_catalog:
@@ -549,6 +580,14 @@ def main():
         return
 
     notes = []
+    if a.json:
+        lam = Laminate.load(a.json)
+        if a.emit_code:
+            lam.write_code(a.emit_code)
+            print(f'{lam.describe()}: laminate piece of the OpenSeesPy script written to {a.emit_code}')
+        else:
+            print(f'{lam.describe()} ({a.json}); give --emit-code FILE, or use --catalog / --E1 .. for the full report')
+        return
     if a.catalog:
         mat, notes = catalog_material(a.catalog, rho=a.rho)
     else:
@@ -608,6 +647,87 @@ def main():
     if a.emit:
         lam.write_opensees_calls(a.emit)
         print(f'OpenSeesPy calls for one facet written to {a.emit}')
+    if a.emit_code:
+        lam.write_code(a.emit_code)
+        print(f'Laminate piece of the OpenSeesPy script written to {a.emit_code}')
+
+
+# --- writing OpenSeesPy code (shared by the laminate-properties, shell-mesh and shell-bc-load pieces) ---
+
+PIECE_MARK = '# === OpenSeesPy piece: {} (written by the {} skill) ==='
+MIN_TABLE = 4          # runs of at least this many same-form calls are written as a table + loop
+
+
+def _plain(a):
+    """numpy scalars -> Python numbers, so repr() is valid Python."""
+    if isinstance(a, np.integer):
+        return int(a)
+    if isinstance(a, np.floating):
+        return float(a)
+    return a
+
+
+class record_ops:
+    """with record_ops(('fix', 'load')) as calls: ... -> calls = [(name, args)]
+    of those OpenSees functions (still executed), arguments exact."""
+    def __init__(self, names):
+        import openseespy.opensees as ops
+        self.ops, self.names, self.calls = ops, names, []
+
+    def __enter__(self):
+        self.real = {n: getattr(self.ops, n) for n in self.names}
+        for n, fn in self.real.items():
+            setattr(self.ops, n, self._rec(n, fn))
+        return self.calls
+
+    def _rec(self, name, fn):
+        def call(*args):
+            self.calls.append((name, tuple(_plain(a) for a in args)))
+            return fn(*args)
+        return call
+
+    def __exit__(self, *exc):
+        for n, fn in self.real.items():
+            setattr(self.ops, n, fn)
+
+
+def code_table(name, rows):
+    """Calls ops.<name>(*row) for many rows as a table of the arguments
+    that change and a loop."""
+    rows = [tuple(_plain(a) for a in r) for r in rows]
+    var = [k for k in range(len(rows[0])) if any(r[k] != rows[0][k] for r in rows)]
+    if len(rows) < MIN_TABLE or not var:
+        return [f'ops.{name}({", ".join(repr(a) for a in r)})' for r in rows]
+    if var == list(range(var[0], len(rows[0]))):
+        args = [repr(a) for a in rows[0][:var[0]]] + ['*r']
+    else:
+        args = [f'r[{var.index(k)}]' if k in var else repr(a) for k, a in enumerate(rows[0])]
+    lines = ['for r in [']
+    lines += [f'    ({", ".join(repr(r[k]) for k in var)}{"," if len(var) == 1 else ""}),' for r in rows]
+    return lines + [']:', f'    ops.{name}({", ".join(args)})']
+
+
+def ops_code(calls, headings=None):
+    """Recorded calls as code, in order; consecutive calls of the same form
+    (same name, same strings in the same places) share a table. headings:
+    {name: comment} written when the call name changes."""
+    def form(name, args):
+        return name, tuple(a if isinstance(a, str) else '#' for a in args)
+    runs = []
+    for name, args in calls:
+        if runs and form(*runs[-1][0]) == form(name, args):
+            runs[-1].append((name, args))
+        else:
+            runs.append([(name, args)])
+    lines, last = [], None
+    for run in runs:
+        name = run[0][0]
+        head = (headings or {}).get(name)
+        if head and head != last:
+            lines += ['', f'# --- {head} ---']
+            last = head
+        lines += code_table(name, [a for _, a in run])
+    return lines
 
 
 if __name__ == '__main__':

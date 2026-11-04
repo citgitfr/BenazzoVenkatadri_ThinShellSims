@@ -108,7 +108,7 @@ T07_merged_vs_per_ply_large_deflection: Per-ply coincident elements vs merged sa
   [PASS] [30]4: load factor, merged (40 el.) vs per ply (160 el.)   got +3.69324e-13  ref +0  diff 3.69e-13 (tol 1e-08)
   [PASS] [30]4: tip ux and corner uz, merged vs per ply             got +8.91139e-15  ref +0  diff 8.91e-15 (tol 1e-08)
   (info) [30]4: at tip w = -60 mm (0.6 L): load factor 1.7279, tip ux -28.12 mm, corner w -62.35 mm (twist if != -60)
-  (16.8 s)
+  (17.3 s)
 
 T08_smoke_strip: Steel strip 1000 x 30 x 0.1 mm, ShellMITC4 100 x 3 (10-22 smoke_shell.py).
   [PASS] tip deflection, homogeneous [mm] (v1 6.643)                got +6.64313  ref +6.643  err 2.01e-05 (tol 1e-04)
@@ -140,7 +140,7 @@ T11_large_deflection_10mm: Al plate, ASDShellQ4 -corotational, displacement cont
   [PASS] 10 mm: v/L at alpha = 3 vs wide-plate elastica (5 mm: +0.4%) got +0.57527  ref +0.573568  err 2.97e-03 (tol 8e-03)
   [PASS] 10 mm: v/L at alpha = 5 vs wide-plate elastica (5 mm: +0.2%) got +0.692636  ref +0.692017  err 8.94e-04 (tol 6e-03)
   [PASS] mid-span top sigma_xx at alpha = 7.43 vs statics on deformed shape got +4.07689  ref +4.039  err 9.38e-03 (tol 1e-02)
-  (62.3 s)
+  (62.7 s)
 
 T12_large_deflection_5mm: skipped (slow; use --full)
 
@@ -157,7 +157,7 @@ T13_curved_strip: Arc R = 50 mm, b = 100 mm, Al t = 0.1, tip load 1 N through a 
   [PASS] mid-surface sigma_xx at x = 502.5, j = 0 vs M (z - z_c) / I got +13.3634  ref +13.4645  err 7.50e-03 (tol 1e-02)
   [PASS] mid-surface sigma_xx at x = 502.5, j = 10 vs M (z - z_c) / I got -8.0609  ref -8.06452  err 4.49e-04 (tol 1e-02)
   (info) load spread on the free arc edge instead: section-average tip w = -10.831 mm, +7.9% vs beam theory (v1 rule: ~8% too flexible)
-  (1.7 s)
+  (1.9 s)
 
 T14_pure_moment: Free [0_2/90_2]s plate 100 x 100 x 8 mm, Mx = 50 N mm/mm (plate_pure_moment_Mx.py).
   [PASS] CLT kx [1/mm] (v1 1.66605e-5)                              got +1.66605e-05  ref +1.66605e-05  err 1.45e-06 (tol 2e-06)
@@ -177,7 +177,7 @@ T14_pure_moment: Free [0_2/90_2]s plate 100 x 100 x 8 mm, Mx = 50 N mm/mm (plate
   [PASS] top sigma_xx [MPa] (v1 +5.3413)                            got +5.34132  ref +5.3413  err 3.65e-06 (tol 2e-05)
   [PASS] top sigma_xx vs CLT (Q11 kx + Q12 ky) h/2                  got +5.34132  ref +5.33828  err 5.70e-04 (tol 1e-03)
   [PASS] top sigma_xx uniform                                       got +1.56307e-14  ref +0  diff 1.56e-14 (tol 1e-09)
-  (0.3 s)
+  (0.4 s)
 
 T15_tip_load_laminate: [0_2/90_2]s cantilever 1000 x 100 x 8 mm, P = -5 N on the free edge,
   (info) 10 mm: 2000 elements (v1: 8000), solve 0.4 s
@@ -192,7 +192,7 @@ T15_tip_load_laminate: [0_2/90_2]s cantilever 1000 x 100 x 8 mm, P = -5 N on the
   [PASS] 10 mm: top sigma_xx(x = 500) vs beam                       got +2.64395  ref +2.64245  err 5.70e-04 (tol 1e-03)
   [PASS] 10 mm: top sigma_xx(x = 750) [MPa] vs v1                   got +1.30862  ref +1.3086  err 1.56e-05 (tol 2e-04)
   [PASS] 10 mm: top sigma_xx(x = 750) vs beam                       got +1.30862  ref +1.30788  err 5.68e-04 (tol 1e-03)
-  (info) 5 mm: 8000 elements (v1: 32000), solve 1.7 s
+  (info) 5 mm: 8000 elements (v1: 32000), solve 1.9 s
   [PASS] 5 mm: tip w mid-width [mm] (v1 -5.56274)                   got -5.56274  ref -5.56274  err 1.13e-07 (tol 2e-06)
   [PASS] 5 mm: tip w vs laminated beam b/d11 (v1 +0.16%)            got -5.56274  ref -5.55349  err 1.67e-03 (tol 3e-03)
   [PASS] 5 mm: w(x = 250) vs v1                                     got -0.479271  ref -0.47927  err 2.37e-06 (tol 2e-04)
@@ -204,7 +204,7 @@ T15_tip_load_laminate: [0_2/90_2]s cantilever 1000 x 100 x 8 mm, P = -5 N on the
   [PASS] 5 mm: top sigma_xx(x = 500) vs beam                        got +2.65731  ref +2.65579  err 5.70e-04 (tol 1e-03)
   [PASS] 5 mm: top sigma_xx(x = 750) [MPa] vs v1                    got +1.32197  ref +1.322  err 1.98e-05 (tol 2e-04)
   [PASS] 5 mm: top sigma_xx(x = 750) vs beam                        got +1.32197  ref +1.32122  err 5.68e-04 (tol 1e-03)
-  (info) 2.5 mm: 32000 elements (v1: 128000), solve 7.3 s
+  (info) 2.5 mm: 32000 elements (v1: 128000), solve 7.7 s
   [PASS] 2.5 mm: tip w mid-width [mm] (v1 -5.56277)                 got -5.56277  ref -5.56277  err 4.22e-07 (tol 2e-06)
   [PASS] 2.5 mm: tip w vs laminated beam b/d11 (v1 +0.16%)          got -5.56277  ref -5.55349  err 1.67e-03 (tol 3e-03)
   [PASS] 2.5 mm: w(x = 250) vs v1                                   got -0.479277  ref -0.47928  err 6.12e-06 (tol 2e-04)
@@ -216,13 +216,13 @@ T15_tip_load_laminate: [0_2/90_2]s cantilever 1000 x 100 x 8 mm, P = -5 N on the
   [PASS] 2.5 mm: top sigma_xx(x = 500) vs beam                      got +2.66398  ref +2.66246  err 5.70e-04 (tol 1e-03)
   [PASS] 2.5 mm: top sigma_xx(x = 750) [MPa] vs v1                  got +1.32865  ref +1.3287  err 3.72e-05 (tol 2e-04)
   [PASS] 2.5 mm: top sigma_xx(x = 750) vs beam                      got +1.32865  ref +1.3279  err 5.68e-04 (tol 1e-03)
-  (15.5 s)
+  (17.0 s)
 
 T16_orientation_on_curved_facets: Per-facet '-local' on an arc: the fibre axis must lie in the facet at
   [PASS] per-facet axis: in-plane and at 45.000 deg from facet x (max error) got +7.10543e-15  ref +0  diff 7.11e-15 (tol 1e-09)
   (info) v1 global (cos, sin, 0) projected on the arc facets: ply angle off by up to 14.8 deg (at the arc edges, 57 deg from horizontal)
   [PASS] strain recovery runs on oriented curved facets (finite)    got +1  ref +1  diff 0.00e+00 (tol 0e+00)
-  (1.5 s)
+  (1.6 s)
 
 T17_failure_unit: Closed-form cases of the Hashin 2D (AIAA 2025-0188 Eq. 3) and Tsai-Hill indices.
   [PASS] Hashin F = 1 at s1 = Xt                                    got +1  ref +1  err 0.00e+00 (tol 1e-12)
@@ -262,14 +262,14 @@ T18_failure_vs_clt: L024 CFRP (catalog, all strengths) [0/±45/90]s plate under 
   [PASS] Nx = 20 N/mm + Mx = 1 + My = -0.5 N mm/mm: max Hashin F, FE (all facets) vs CLT got +0.0103312  ref +0.0103302  err 1.02e-04 (tol 4e-03)
   [PASS] Nx = 20 N/mm + Mx = 1 + My = -0.5 N mm/mm: critical ply/position FE = CLT (ply 8, top) got +1  ref +1  diff 0.00e+00 (tol 0e+00)
   (info) Nx = 20 N/mm + Mx = 1 + My = -0.5 N mm/mm: max Hashin F 0.01033 (fibre tension), R = 9.838 -> failure at 9.838 x this load (linear)
-  (0.3 s)
+  (0.4 s)
 
 T19_case_file_and_viewer: Example case files run end to end (JSON -> npz -> Hashin -> PNG).
   [PASS] plate_tip_load_laminate.json: tip w [mm] (v1 10 mm -5.56263) got -5.56263  ref -5.56263  err 6.23e-07 (tol 2e-06)
   [PASS] results file round trip (strains)                          got +0  ref +0  diff 0.00e+00 (tol 1e-15)
   [PASS] tape spring: hashin_max field present and finite           got +1  ref +1  diff 0.00e+00 (tol 0e+00)
   [PASS] tape spring: PNG written                                   got +1  ref +1  diff 0.00e+00 (tol 0e+00)
-  (5.2 s)
+  (7.9 s)
 
 T20_abaqus_export: abaqus-export: run the generated Abaqus scripts on a stand-in Abaqus API
   [PASS] plate_tip_load_laminate: script runs up to the job         got +1  ref +1  diff 0.00e+00 (tol 0e+00)
@@ -306,6 +306,19 @@ T20_abaqus_export: abaqus-export: run the generated Abaqus scripts on a stand-in
   [PASS] trac_like_combination: Abaqus pressure = -p x factor (acts along -n) got -2e-05  ref -2e-05  err 0.00e+00 (tol 1e-12)
   [PASS] trac_like_combination (normals flipped): script runs up to the job got +1  ref +1  diff 0.00e+00 (tol 0e+00)
   [PASS] trac_like_combination (normals flipped): faces flipped to the OpenSees normal got +3  ref +3  diff 0.00e+00 (tol 0e+00)
-  (126.8 s)
+  (145.0 s)
 
-238 checks, 238 passed, 0 failed (232 s)
+T21_assembled_script: shell-assemble-run: the --emit-code pieces of the three skills, joined, give the same results as run_case.
+  [PASS] tape_spring_L024_tip_load: assembled script runs (exit code) got +0  ref +0  diff 0.00e+00 (tol 0e+00)
+  [PASS] tape_spring_L024_tip_load: disp script = run_case (rel. max diff) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  [PASS] tape_spring_L024_tip_load: strains script = run_case (rel. max diff) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  [PASS] tape_spring_L024_tip_load: history script = run_case (rel. max diff) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  [PASS] tape_spring_L024_tip_load: frames script = run_case (rel. max diff) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  [PASS] trac_like_load_control: assembled script runs (exit code)  got +0  ref +0  diff 0.00e+00 (tol 0e+00)
+  [PASS] trac_like_load_control: disp script = run_case (rel. max diff) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  [PASS] trac_like_load_control: strains script = run_case (rel. max diff) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  [PASS] trac_like_load_control: history script = run_case (rel. max diff) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  [PASS] trac_like_load_control: frames script = run_case (rel. max diff) got +0  ref +0  diff 0.00e+00 (tol 1e-09)
+  (9.0 s)
+
+248 checks, 248 passed, 0 failed (264 s)
