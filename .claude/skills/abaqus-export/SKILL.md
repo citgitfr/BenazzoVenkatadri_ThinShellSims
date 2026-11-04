@@ -5,7 +5,9 @@ description: Writes an Abaqus/CAE Python script (run elsewhere with `abaqus cae 
 
 # abaqus-export
 
-Script: `case_to_abaqus.py` (this folder). Abaqus is **not installed** on the
+Script: `case_to_abaqus.py` (this folder). For an assembled OpenSeesPy script
+(shell-assemble-run) use the opensees-to-abaqus skill, which calls
+`case_to_abaqus.write_script(case, laminate, out, element, ref, source)`. Abaqus is **not installed** on the
 project VM: the generated script can be checked here (compile, and a run
 against a stand-in Abaqus API in regression test T20), but the Abaqus run
 itself is untested until someone runs it.

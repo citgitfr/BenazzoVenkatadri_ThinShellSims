@@ -232,3 +232,67 @@ Issues / limits:
 24. Tara's 10-26 SUMMARY.txt results (pure moment kx +0.06%, ky +0.3%,
     sigma_top 5.34 MPa; tip load -5.563 mm, +0.17%) are the cases of
     regression tests T14/T15, which pass.
+
+## 11/4/26: OpenSeesPyToAbaqusPythonGenerator agent -> opensees-to-abaqus skill
+
+The agent is replaced by a skill the orchestrator runs:
+`.claude/skills/opensees-to-abaqus/opensees_to_abaqus.py`. Input: the one
+standalone OpenSeesPy script written by shell-assemble-run (not the case
+JSON). It reads the script's `NAME`, `CASE` and `LAMINATE` literals, writes
+the Abaqus script through abaqus-export (`case_to_abaqus.generate` split into
+`generate` + `write_script`, which takes the laminate directly; output of
+`generate` unchanged apart from the header's source line), takes the OpenSees
+reference from the script's own results .npz, and checks the Abaqus model
+against the OpenSeesPy one: the script is executed up to `ops.analyze` with
+its ops calls recorded, the Abaqus script on the stand-in API, and nodes,
+seeds, normals, ply angles (from the elements' `-local` axes), layer
+materials and thicknesses, fixities, rigid ends, nodal loads (pressure lumps
+vs Abaqus Pressure), step and control, report node are compared.
+
+- Tested on the four assembled scripts of `Code for Project/11-4-26 (Tara)/`
+  (laminated plate, tape spring with rigid end, TRAC-like Riks and load control:
+  13/13 checks each) and an isotropic plate with pressure, point support and
+  moment (11/11). Five edited copies (ply angle, one load, fixities, reversed
+  facet normals, control DOF) each failed the check that should catch them.
+  REF from the script = REF from `run_case` (identical); the plate's Abaqus
+  script equals `case_to_abaqus.py` from the case JSON apart from the header.
+- New regression T22; T20-T22: 53/53 pass.
+- Removed `agents/OpenSeesPyToAbaqusPythonGenerator.md` and its
+  `agents_v2.0/` copy (v1 kept in `agents_v1.0/`). Both ThinShellOrchestrator
+  copies now point to shell-assemble-run + opensees-to-abaqus (`agents/` also
+  picked up the shell-assemble-run lines that were only in `agents_v2.0/`).
+- Still true: the Abaqus run itself is untested on this VM (issue 20).
+
+## 11/4/26: independent results verification (OpenSeesAbaqusResultsComparator agent)
+
+New agent `agents/OpenSeesAbaqusResultsComparator.md` (copy in `agents_v2.0/`)
+with its own tools in `.claude/verification/` (deliberately not a skill folder,
+and importing nothing from `.claude/skills/`):
+- `odb_extract.py` (run with `abaqus python` where Abaqus is installed; an ODB
+  cannot be read without Abaqus): nodes, elements, U/UR of every frame,
+  reference points, LPF, centroid S/E/SE/SK/SF/SM per section point -> `<job>_odb.npz`.
+- `compare_results.py`: OpenSees results .npz vs that extract. Finds the
+  Abaqus axis order, pairs nodes/elements/reference points by position,
+  recovers OpenSees ply stresses and N, M from the saved strains and laminate
+  (own CLT code), and reports peaks, value at the same point, rel. RMS and
+  least-squares scale per component with verdicts (flags sign and factor-2
+  convention differences); PNGs: deformed shapes, fields on the unrolled mesh
+  (OpenSees | Abaqus | difference), parity, along x, load path.
+- `odb_mock.py` + `test_verification.py`: stand-in odbAccess built from
+  OpenSees results (part axes, other labels, 3 section points per ply from
+  failure-check, N/M from laminate-properties ABD). 5 result files x 5 cases:
+  exact copies PASS every row; displacements x1.05, kxy x2, kxx sign flip and
+  S11 x0.9 are each reported. 25/25.
+- The agent has no Skill tool and is told not to open the skills, code pieces,
+  OpenSeesPy or Abaqus scripts or case files (instruction-level: Claude Code
+  has no per-agent read restriction short of project-wide permissions). A test
+  run on a planted S11 x0.9 extract stayed within its inputs, flagged the 8
+  S11 rows, and noticed the extract was synthetic and inconsistent (S11 off
+  while SF/SM agree).
+- case_to_abaqus.py now also requests E and SE (section strains and
+  curvatures) in the field output, so new ODBs carry what the comparison
+  needs; the four 11-4-26 Abaqus scripts were regenerated (13/13 checks each).
+- Revised system diagram: `Code for Project/11-4-26 (Tara)/system_diagram.py`
+  -> `system_diagram_verification.png` (Lab 2 Fig. 1 with the verifier agent
+  split into the opensees-to-abaqus translator and the results-comparison agent).
+
