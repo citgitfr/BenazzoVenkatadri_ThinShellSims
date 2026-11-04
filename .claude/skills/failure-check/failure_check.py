@@ -31,11 +31,34 @@ of F_mc). It is a load factor only for a linear analysis.
 Tsai-Hill (--criterion tsai-hill): FI = (s1/X)^2 - s1 s2/X^2 + (s2/Y)^2 + (t12/S)^2,
 X = Xt or Xc and Y = Yt or Yc by the stress sign.
 
+Flange and web facets: the web of a TRAC (OM/CO: the bonded tabs) is two
+flange laminates bonded on top of each other, so web facets are checked with
+the doubled layup (z from the bond plane, -h..+h). Default 'mirror' stack:
+identical tapes bonded face to face, the lower tape turned over (flange
+plies in reverse order with negated angles under the flange plies);
+--web-stack repeat stacks the plies twice as listed. Web facets are the
+facets whose section arc length s (mid-strip) lies in a web range, from
+--web S0 S1, else the case geometry "web": [[s0, s1], ...], else, for a
+TRAC/OM/CO catalog boom (--boom ID or geometry "boom": ID), the 'line'
+segments of a 'segments' section whose length is the catalog web width w.
+shell-mesh gives every facet the single laminate, so the FE web is half as
+stiff as the real one: web stresses are the doubled layup on those strains.
+
+Coiling check (only if the simulation gives F < 1): flattening a flange of
+radius r is the curvature change k = [0, 1/r, 0] (transverse, k_xx = k_xy = 0
+held) with free membrane (N = 0): eps0 = -A^-1 B k from the flange ABD. The
+ply stresses and the criterion are evaluated for both signs of k (which face
+is concave is not known in the facet frame) and the larger F is kept. r =
+smallest arc radius of the cross-section: --flatten-radius, else the
+catalog boom row (R_A, R_B), else the arcs of the case section. If the
+coiling F is above the simulation F it is reported as the governing F.
+
 Usage:
   python failure_check.py results.npz [--criterion hashin|tsai-hill] [--S23 ..]
           [--at gauss|centroid] [--top 10] [--csv f.csv]
           [--Xt .. --Xc .. --Yt .. --Yc .. --S ..]   (override / supply strengths, MPa)
           [--yield SY]                               (isotropic: X = Y = sy, S = sy/sqrt3)
+          [--boom ID] [--web S0 S1 ..] [--web-stack mirror|repeat] [--flatten-radius r]
 Units: N, mm, MPa.
 """
 import argparse
@@ -53,6 +76,8 @@ import laminate_properties as lp   # noqa: E402
 STRENGTHS = lp.STRENGTHS
 Z_POINTS = ('bottom', 'middle', 'top')
 MODES = ('fibre tension', 'fibre compression', 'matrix tension', 'matrix compression')
+BOOM_CATALOG = _SKILLS.parent / 'memory.boom_geometry_catalog'
+WEB_TYPES = ('TRAC', 'OM', 'CO')
 
 
 def hashin_modes(s1, s2, t12, Xt, Xc, Yt, Yc, S, S23=None):
@@ -162,23 +187,146 @@ def surface_fields(strains, lam):
     return f
 
 
-def report(res, lam, F, mode, R, sig12, z, at, criterion, top=10):
-    """Text summary: worst points, per-ply maxima."""
+# --- flange / web --------------------------------------------------------------------
+
+def boom_row(bid):
+    """Row of the boom geometry catalog (boom_data.GEOMETRIES) with this ID."""
+    sys.path.insert(0, str(BOOM_CATALOG))
+    from boom_data import GEOMETRIES
+    for g in GEOMETRIES:
+        if g['id'] == bid.upper():
+            return g
+    raise ValueError(f'boom {bid!r} is not in {BOOM_CATALOG / "boom_geometry_catalog.txt"}')
+
+
+def doubled_laminate(lam, stack='mirror'):
+    """Web laminate: a second flange laminate bonded under this one (z from
+    the bond plane). 'mirror' = identical tape turned over (plies reversed,
+    angles negated); 'repeat' = the plies twice as listed."""
+    below = ([dict(q, theta=-q['theta'] + 0.0) for q in reversed(lam.plies)] if stack == 'mirror'
+             else lam.plies)
+    return lp.Laminate(lam.materials, [dict(theta=q['theta'], t=q['t'], mat=q['mat']) for q in below + lam.plies],
+                       kind=lam.kind, name=f'web of {lam.name}'.strip())
+
+
+def strip_stations(res):
+    """Section arc length s at the middle of every facet strip j (from the
+    undeformed nodes of the first column of facets)."""
+    nx, ny = res['meta']['nx'], res['meta']['ny']
+    faces, pts = res['faces'], res['points']
+    nodes = [faces[j * nx, 0] for j in range(ny)] + [faces[(ny - 1) * nx, 3]]
+    s = np.concatenate([[0.0], np.cumsum(np.linalg.norm(np.diff(pts[nodes], axis=0), axis=1))])
+    return (s[:-1] + s[1:]) / 2
+
+
+def web_ranges(geom, boom=None, given=None):
+    """Arc-length ranges [(s0, s1), ...] of the webs and where they came from."""
+    if given:
+        return [tuple(r) for r in given], 'given with --web'
+    if geom.get('web'):
+        return [tuple(r) for r in geom['web']], 'case file geometry "web"'
+    if boom is None or boom['type'] not in WEB_TYPES:
+        return [], 'no web (' + (f'{boom["id"]} is a {boom["type"]}' if boom else 'no catalog boom given') + ')'
+    sec, w = geom.get('section', {}), boom['w']
+    out, s = [], 0.0
+    for seg in sec.get('segments', []) if sec.get('type') == 'segments' else []:
+        ln = 0.0 if seg[0] == 'kink' else seg[1] if seg[0] == 'line' else seg[2]
+        if seg[0] == 'line' and abs(ln - w) <= max(0.01 * w, 0.05):
+            out.append((s, s + ln))
+        s += ln
+    if not out:
+        return [], (f'WARNING: {boom["id"]} is a {boom["type"]} with {w:g} mm webs, but no web was found in the '
+                    'mesh (give --web S0 S1 or geometry "web"); every facet is checked as flange')
+    return out, f'line segments of the section with the {boom["id"]} web width w = {w:g} mm'
+
+
+def web_mask(res, ranges):
+    """Per facet: True if its strip's mid arc length lies in a web range."""
+    s = strip_stations(res)
+    strip = np.zeros(len(s), bool)
+    for s0, s1 in ranges:
+        strip |= (s >= min(s0, s1)) & (s <= max(s0, s1))
+    return strip[np.arange(len(res['faces'])) // res['meta']['nx']]
+
+
+def case_geometry(res):
+    return (res['meta'].get('case') or {}).get('geometry') or {}
+
+
+def facet_groups(res, lam, boom=None, web=None, stack='mirror'):
+    """Flange and web facets of a results file. boom: catalog ID (default: case
+    geometry "boom"); web: [(s0, s1), ...] (default: from the case / boom).
+    Returns groups [(label, laminate, facet indices)], web mask, boom row, note."""
+    geom = case_geometry(res)
+    bid = boom or geom.get('boom')
+    row = boom_row(bid) if bid else None
+    ranges, src = web_ranges(geom, row, web)
+    mask = web_mask(res, ranges) if ranges else np.zeros(len(res['faces']), bool)
+    note = (f'web facets: {mask.sum()} of {len(mask)} ({src}'
+            f'{"; s = " + ", ".join(f"{s0:g}..{s1:g}" for s0, s1 in ranges) + " mm" if ranges else ""})')
+    groups = [('flange', lam, np.flatnonzero(~mask))]
+    if mask.any():
+        groups.append(('web', doubled_laminate(lam, stack), np.flatnonzero(mask)))
+    return groups, mask, row, note
+
+
+def tape_ply(n, p, stack='mirror'):
+    """Flange ply index of ply p of the doubled (web) laminate of an n-ply flange."""
+    return p - n if p >= n else n - 1 - p if stack == 'mirror' else p
+
+
+# --- coiling (flattening) check ------------------------------------------------------
+
+def flatten_radius(geom, boom=None, given=None):
+    """Smallest arc radius of the cross-section [mm] and where it came from (None if no arc)."""
+    if given:
+        return given, 'given with --flatten-radius'
+    if boom is not None:
+        R = [abs(r) for r, _ in boom['A'] + boom.get('B', [])]
+        return min(R), f'smallest arc radius of catalog boom {boom["id"]}'
+    sec = geom.get('section', {})
+    R = ([sec['R']] if sec.get('type') == 'arc' else
+         [s[1] for s in sec.get('segments', []) if s[0] == 'arc'] if sec.get('type') == 'segments' else [])
+    if R:
+        return min(abs(r) for r in R), 'smallest arc radius of the case cross-section'
+    return None, 'no arc radius (no --boom / --flatten-radius and the section has no arcs)'
+
+
+def coiling_check(lam, r, overrides=None, criterion='hashin', S23=None):
+    """Flatten a flange of radius r: k = +-[0, 1/r, 0], N = 0 (eps0 = -A^-1 B k).
+    Returns the failure_index tuple of the sign with the larger F, the sign and (eps0, k)."""
+    k = np.array([0.0, 1.0 / r, 0.0])
+    K = lam.abd()
+    e0 = -np.linalg.solve(K[:3, :3], K[:3, 3:] @ k)
+    best = None
+    for sign in (1, -1):
+        E = np.zeros((1, 1, 8))
+        E[0, 0, :3], E[0, 0, 3:6] = sign * e0, sign * k
+        out = failure_index(E, lam, overrides, 'gauss', criterion, S23)
+        if best is None or out[0].max() > best[0][0].max():
+            best = out, sign, (sign * e0, sign * k)
+    return best
+
+
+def report(res, lam, F, mode, R, sig12, z, at, criterion, top=10, facets=None, label=''):
+    """Text summary: worst points, per-ply maxima. facets: model facet index
+    of each row of F (default all facets); label names the group."""
     meta = res['meta']
     nx = meta['nx']
     pts, faces = res['points'], res['faces']
     nf = F.shape[0]
+    facets = np.arange(nf) if facets is None else np.asarray(facets)
     name = 'Hashin 2D' if criterion == 'hashin' else 'Tsai-Hill'
     md = lambda m: MODES[m] if m >= 0 else '-'
-    lines = [f'{name} check: {meta.get("title", "")}  [{lam.describe()}], {nf} facets, '
+    lines = [f'{name} check{f" ({label})" if label else ""}: {meta.get("title", "")}  [{lam.describe()}], {nf} facets, '
              f'{"Gauss points" if at == "gauss" else "facet centroids"}, 3 points through each ply']
     lines.append(f'{"rank":>4} {"F":>9} {"R":>8} {"facet":>6} {"x":>8} {"y":>8} {"z":>8} {"ply":>3} {"theta":>6} '
                  f'{"at":>6} {"s1":>10} {"s2":>10} {"t12":>10}  mode')
     for r, idx in enumerate(np.argsort(F, axis=None)[::-1][:top], 1):
         f, g, p, iz = np.unravel_index(idx, F.shape)
-        c = pts[faces[f]].mean(axis=0)
+        c = pts[faces[facets[f]]].mean(axis=0)
         s1, s2, t12 = sig12[f, g, p, iz]
-        lines.append(f'{r:>4} {F[f, g, p, iz]:>9.4g} {R[f, g, p, iz]:>8.4g} {f:>6} {c[0]:>8.4g} {c[1]:>8.4g} '
+        lines.append(f'{r:>4} {F[f, g, p, iz]:>9.4g} {R[f, g, p, iz]:>8.4g} {facets[f]:>6} {c[0]:>8.4g} {c[1]:>8.4g} '
                      f'{c[2]:>8.4g} {p + 1:>3} {lam.plies[p]["theta"]:>6g} {Z_POINTS[iz]:>6} {s1:>10.4g} '
                      f'{s2:>10.4g} {t12:>10.4g}  {md(mode[f, g, p, iz])}')
     lines.append('Per ply (max over the model):')
@@ -189,12 +337,28 @@ def report(res, lam, F, mode, R, sig12, z, at, criterion, top=10):
                      f'max |s1| {np.abs(sig12[:, :, p, :, 0]).max():.4g}, max |s2| {np.abs(sig12[:, :, p, :, 1]).max():.4g}, '
                      f'max |t12| {np.abs(sig12[:, :, p, :, 2]).max():.4g} MPa')
     f, g, p, iz = np.unravel_index(F.argmax(), F.shape)
-    Fmax = F.max()
-    lines.append(f'MAX F = {Fmax:.4g} -> {"FAILS (F >= 1)" if Fmax >= 1 else "no failure predicted"}'
-                 f'{"" if criterion != "hashin" else f" ({md(mode[f, g, p, iz])})"}; '
-                 f'min strength ratio R = {R.min():.4g} (at the max F point: {R[f, g, p, iz]:.4g}; facet {f}, '
+    Fmax, f = F.max(), facets[f]
+    lines.append(f'{f"{label}: " if label else ""}MAX F = {Fmax:.4g} -> {"FAILS (F >= 1)" if Fmax >= 1 else "no failure predicted"}'
+                 f'{"" if criterion != "hashin" else f" ({md(mode.flat[F.argmax()])})"}; '
+                 f'min strength ratio R = {R.min():.4g} (at the max F point: {R.flat[F.argmax()]:.4g}; facet {f}, '
                  f'i = {f % nx}, j = {f // nx}, ply {p + 1}, {Z_POINTS[iz]})')
     return '\n'.join(lines)
+
+
+def coiling_report(lam, r, src, out, criterion):
+    """Text summary of the flattening check."""
+    (F, mode, R, sig12, _, z), sign, (e0, k) = out
+    md = lambda m: MODES[m] if m >= 0 else '-'
+    _, _, p, iz = np.unravel_index(F.argmax(), F.shape)
+    s1, s2, t12 = sig12[0, 0, p, iz]
+    return '\n'.join([
+        f'Coiling check: flange [{lam.describe()}] flattened from r = {r:g} mm ({src}): '
+        f'k = {sign * 1 / r:+.5g} 1/mm transverse (k_xx = k_xy = 0, N = 0), eps0 = [{", ".join(f"{e:.3g}" for e in e0)}]',
+        f'  max F = {F.max():.4g}{"" if criterion != "hashin" else f" ({md(mode.flat[F.argmax()])})"}, '
+        f'R = {R.flat[F.argmax()]:.4g}, ply {p + 1} ({lam.plies[p]["theta"]:g} deg), {Z_POINTS[iz]}: '
+        f's1 {s1:.4g}, s2 {s2:.4g}, t12 {t12:.4g} MPa']
+        + [f'  ply {q + 1:>2} ({lam.plies[q]["theta"]:>6g} deg, z {z[q, 0]:+.4g}..{z[q, 2]:+.4g}): max F {F[0, 0, q].max():.4g}'
+           for q in range(len(lam.plies))])
 
 
 def main():
@@ -210,6 +374,13 @@ def main():
     for k in STRENGTHS:
         ap.add_argument(f'--{k}', type=float, help=f'{k} [MPa] (overrides the laminate)')
     ap.add_argument('--yield', dest='sy', type=float, help='isotropic: X = Y = sy, S = sy/sqrt(3)')
+    ap.add_argument('--boom', help='boom geometry catalog ID of the model (default: case geometry "boom")')
+    ap.add_argument('--web', type=float, nargs=2, action='append', metavar=('S0', 'S1'),
+                    help='web range of section arc length s [mm] (repeat for several webs)')
+    ap.add_argument('--web-stack', choices=('mirror', 'repeat'), default='mirror',
+                    help='web = flange laminate bonded on a turned-over copy (mirror) or on itself (repeat)')
+    ap.add_argument('--flatten-radius', type=float, help='flange radius for the coiling check [mm] '
+                                                         '(default: smallest arc radius of the boom)')
     a = ap.parse_args()
 
     import shell_bc_load as bc
@@ -218,17 +389,54 @@ def main():
     ov = {k: getattr(a, k) for k in STRENGTHS}
     if a.sy:
         ov = dict(Xt=a.sy, Xc=a.sy, Yt=a.sy, Yc=a.sy, S=a.sy / math.sqrt(3))
-    F, mode, R, sig12, _, z = failure_index(res['strains'], lam, ov, a.at, a.criterion, a.S23)
     if a.criterion == 'hashin':
         print(f'S23 = {"Yc/2 (default)" if a.S23 is None else f"{a.S23:g} MPa"}')
-    print(report(res, lam, F, mode, R, sig12, z, a.at, a.criterion, a.top))
-    if a.csv:
+
+    # flange and web facets
+    groups, web, boom, note = facet_groups(res, lam, a.boom, a.web, a.web_stack)
+    if boom:
+        print(f'boom {boom["id"]} ({boom["type"]})')
+    print(note)
+    if web.any():
+        print(f'web laminate ({a.web_stack}): [{groups[1][1].describe()}]; NOTE the FE model has the single '
+              'laminate in the web, so web strains come from a web half as stiff as the doubled one')
+    nf = len(res['faces'])
+    Fmax_f, ply_f, mode_f = np.zeros(nf), np.zeros(nf, int), np.full(nf, -1)
+    F_sim = 0.0
+    for label, gl, idx in groups:
+        if not len(idx):
+            continue
+        F, mode, R, sig12, _, z = failure_index(res['strains'][idx], gl, ov, a.at, a.criterion, a.S23)
+        print(report(res, gl, F, mode, R, sig12, z, a.at, a.criterion, a.top, idx, label if web.any() else ''))
         Ff = F.reshape(F.shape[0], -1)
         k = Ff.argmax(axis=1)
-        ply = np.unravel_index(k, F.shape[1:])[1] + 1
-        np.savetxt(a.csv, np.column_stack([np.arange(len(k)), Ff.max(axis=1), ply, mode.reshape(len(k), -1)[np.arange(len(k)), k]]),
-                   delimiter=',', header='facet,max_F,critical_ply,mode(0 ft,1 fc,2 mt,3 mc,-1 n/a)', comments='',
-                   fmt=['%d', '%.6g', '%d', '%d'])
+        Fmax_f[idx], ply_f[idx] = Ff.max(axis=1), np.unravel_index(k, F.shape[1:])[1] + 1
+        mode_f[idx] = mode.reshape(len(k), -1)[np.arange(len(k)), k]
+        F_sim = max(F_sim, F.max())
+    if web.any():
+        print(f'SIMULATION MAX F = {F_sim:.4g} -> {"FAILS (F >= 1)" if F_sim >= 1 else "no failure predicted"} '
+              f'(in the {"web" if Fmax_f[web].max() >= Fmax_f[~web].max(initial=0) else "flange"})')
+
+    # coiling: flatten the flange
+    F_gov, gov = F_sim, 'simulation'
+    if F_sim >= 1:
+        print('Coiling check not run: the simulation already fails')
+    else:
+        r, rsrc = flatten_radius(case_geometry(res), boom, a.flatten_radius)
+        if r is None:
+            print(f'Coiling check not run: {rsrc}')
+        else:
+            out = coiling_check(lam, r, ov, a.criterion, a.S23)
+            print(coiling_report(lam, r, rsrc, out, a.criterion))
+            F_coil = out[0][0].max()
+            if F_coil > F_sim:
+                F_gov, gov = F_coil, 'coiling (flattening the flange)'
+    print(f'GOVERNING F = {F_gov:.4g} from the {gov} -> {"FAILS (F >= 1)" if F_gov >= 1 else "no failure predicted"}')
+
+    if a.csv:
+        np.savetxt(a.csv, np.column_stack([np.arange(nf), Fmax_f, ply_f, mode_f, web]),
+                   delimiter=',', header='facet,max_F,critical_ply,mode(0 ft,1 fc,2 mt,3 mc,-1 n/a),web', comments='',
+                   fmt=['%d', '%.6g', '%d', '%d', '%d'])
         print(f'saved {a.csv}')
 
 

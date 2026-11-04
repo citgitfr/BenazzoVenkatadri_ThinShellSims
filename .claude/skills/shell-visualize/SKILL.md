@@ -13,6 +13,7 @@ python shell_visualize.py results/case.npz --list                       # fields
 python shell_visualize.py results/case.npz --png results/case.png --no-gui
        [--curvature k_xx|k_yy|k_xy|k_1|k_2|k_absmax] [--stress sigma_xx_top|...|hashin_max|hashin_ply3|hashin_mode|hashin_R]
        [--field F (one panel)] [--scale S | --target T] [--view iso|xy|xz|yz] [--undeformed] [--title ..]
+       [--boom ID] [--web S0 S1 ..] [--web-stack mirror|repeat]   # web facets, as in failure-check
 ```
 Default panels: `k_xx` and `hashin_max` (if the laminate has all five strengths)
 or `sigma_xx_top`. A `.vtp` with all fields is written next to the .npz.
@@ -22,7 +23,8 @@ k_absmax` [1/mm, change from the initial shape, CLT sign: k_xx > 0 = top
 (+n side) in tension], `eps_xx eps_yy gam_xy`, `sigma_{xx,yy}_{top,bottom}
 tau_xy_{top,bottom} von_Mises_top` [MPa, facet frame x along the extrusion],
 `hashin_max`, `hashin_ply<k>`, `hashin_mode` (0 fibre tension, 1 fibre
-compression, 2 matrix tension, 3 matrix compression), `hashin_R` (strength ratio).
+compression, 2 matrix tension, 3 matrix compression), `hashin_R` (strength ratio), `web` (1 on web facets: their stresses and
+Hashin use the doubled layup; `hashin_ply<k>` there = max over ply k of both tapes).
 
 ## Steps
 1. Make the PNG offscreen (`--no-gui`), then **Read the PNG** and check it:

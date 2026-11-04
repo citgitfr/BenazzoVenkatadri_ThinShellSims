@@ -21,6 +21,10 @@ y = across the section; CLT signs):
               hashin_ply<k>, hashin_mode (0 fibre tension, 1 fibre compression,
               2 matrix tension, 3 matrix compression), hashin_R (min strength ratio)
               (only if the laminate has all five strengths)
+  web:        1 on web facets (TRAC / OM / CO webs, found as in failure-check:
+              --boom ID or case geometry "boom", --web S0 S1); their stresses
+              and Hashin use the doubled layup, hashin_ply<k> = max over ply k
+              of both bonded tapes
 Diverging fields get a symmetric coolwarm scale (white = 0), one-signed
 fields viridis.
 
@@ -28,6 +32,7 @@ Usage:
   python shell_visualize.py results.npz [--curvature k_xx] [--stress sigma_xx_top]
          [--field F (single panel)] [--scale S | --target T] [--view iso|xy|xz|yz]
          [--png out.png] [--no-gui] [--undeformed] [--title TEXT] [--list] [--vtp out.vtp]
+         [--boom ID] [--web S0 S1 ..] [--web-stack mirror|repeat]
 Window: drag rotate, shift+drag pan, wheel zoom, r reset, x/y/z axis views, q quit.
 """
 import argparse
@@ -55,8 +60,10 @@ POINT_FIELDS = ('ux', 'uy', 'uz', 'rx', 'ry', 'rz', '|u|')
 UNITS = {'k': '1/mm', 'sigma': 'MPa', 'tau': 'MPa', 'von': 'MPa', 'hashin': '-', 'eps': '-', 'gam': '-'}
 
 
-def fields(res):
-    """All cell fields of a results dict (see module docstring)."""
+def fields(res, boom=None, web=None, web_stack='mirror'):
+    """All cell fields of a results dict (see module docstring). Web facets
+    (failure-check: boom / web ranges) use the doubled layup; hashin_ply<k>
+    there is the max over ply k of both bonded tapes."""
     E = res['strains'].mean(axis=1)          # facet centroid
     kx, ky, kxy = E[:, 3], E[:, 4], E[:, 5]
     m, r = (kx + ky) / 2, np.sqrt(((kx - ky) / 2)**2 + (kxy / 2)**2)
@@ -65,21 +72,33 @@ def fields(res):
     if res['laminate'] is None:
         return f
     lam = lp.Laminate.from_dict(res['laminate'])
-    f.update(fc.surface_fields(res['strains'], lam))
+    groups, is_web, _, note = fc.facet_groups(res, lam, boom, web, web_stack)
+    print(note)
+    nf, n = len(E), len(lam.plies)
+    for _, gl, idx in groups:
+        for name, v in fc.surface_fields(res['strains'][idx], gl).items():
+            f.setdefault(name, np.zeros(nf))[idx] = v
+    if is_web.any():
+        f['web'] = is_web.astype(float)
     if lam.has_strengths():
-        F, mode, R = fc.failure_index(res['strains'], lam)[:3]
-        Ff = F.reshape(len(F), -1)
-        k = Ff.argmax(axis=1)
-        f['hashin_max'] = Ff.max(axis=1)
-        f['hashin_mode'] = mode.reshape(len(F), -1)[np.arange(len(F)), k].astype(float)
-        f['hashin_R'] = R.reshape(len(F), -1).min(axis=1)
-        if len(lam.plies) > 1:
-            for p in range(len(lam.plies)):
-                f[f'hashin_ply{p + 1}'] = F[:, :, p].max(axis=(1, 2))
+        for k in ('hashin_max', 'hashin_mode', 'hashin_R') + tuple(f'hashin_ply{p + 1}' for p in range(n) if n > 1):
+            f[k] = np.zeros(nf)
+        for _, gl, idx in groups:
+            F, mode, R = fc.failure_index(res['strains'][idx], gl)[:3]
+            Ff = F.reshape(len(F), -1)
+            k = Ff.argmax(axis=1)
+            f['hashin_max'][idx] = Ff.max(axis=1)
+            f['hashin_mode'][idx] = mode.reshape(len(F), -1)[np.arange(len(F)), k]
+            f['hashin_R'][idx] = R.reshape(len(F), -1).min(axis=1)
+            if n > 1:
+                for p in range(len(gl.plies)):
+                    q = fc.tape_ply(n, p, web_stack) if len(gl.plies) > n else p
+                    key = f'hashin_ply{q + 1}'
+                    f[key][idx] = np.maximum(f[key][idx], F[:, :, p].max(axis=(1, 2)))
     return f
 
 
-def to_polydata(res):
+def to_polydata(res, boom=None, web=None, web_stack='mirror'):
     faces = np.hstack([np.full((len(res['faces']), 1), 4), res['faces']]).ravel()
     mesh = pv.PolyData(np.asarray(res['points'], float), faces)
     u = res['disp']
@@ -87,7 +106,7 @@ def to_polydata(res):
         mesh.point_data[name] = u[:, k]
     mesh.point_data['|u|'] = np.linalg.norm(u[:, :3], axis=1)
     mesh.point_data['fixed'] = res['fixed']
-    for name, v in fields(res).items():
+    for name, v in fields(res, boom, web, web_stack).items():
         mesh.cell_data[name] = v
     mesh.field_data['title'] = [res['meta'].get('title') or 'OpenSees shell model']
     return mesh
@@ -176,10 +195,14 @@ def main():
     ap.add_argument('--title')
     ap.add_argument('--list', action='store_true')
     ap.add_argument('--vtp', help='write the mesh with all fields (default: next to the results)')
+    ap.add_argument('--boom', help='boom geometry catalog ID, for the web facets (default: case geometry "boom")')
+    ap.add_argument('--web', type=float, nargs=2, action='append', metavar=('S0', 'S1'),
+                    help='web range of section arc length s [mm] (repeat for several webs)')
+    ap.add_argument('--web-stack', choices=('mirror', 'repeat'), default='mirror')
     a = ap.parse_args()
 
     res = bc.load_results(a.results)
-    mesh = to_polydata(res)
+    mesh = to_polydata(res, a.boom, a.web, a.web_stack)
     vtp = a.vtp or str(Path(a.results).with_suffix('.vtp'))
     mesh.save(vtp)
     print(f'saved {vtp}: {mesh.n_cells} facets, {mesh.n_points} nodes')

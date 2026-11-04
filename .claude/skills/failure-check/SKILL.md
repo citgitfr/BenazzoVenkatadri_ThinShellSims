@@ -13,7 +13,14 @@ python failure_check.py results/case.npz [--criterion hashin|tsai-hill] [--S23 .
        [--Xt .. --Xc .. --Yt .. --Yc .. --S ..]     # supply/override strengths [MPa]
        [--yield SY]                                 # isotropic shell: X = Y = sy, S = sy/sqrt3
        [--laminate lam.json]                        # if not the one stored in the results
+       [--boom R011]                                # catalog boom (default: case geometry "boom")
+       [--web S0 S1 ...]                            # web range(s) of section arc length s [mm]
+       [--web-stack mirror|repeat] [--flatten-radius r]
 ```
+Inputs are the per-facet generalized strains (membrane strains and
+curvatures at the Gauss points) stored in the .npz, the laminate (layup,
+ply stiffness and the five ply strengths Xt Xc Yt Yc S from the catalog;
+`--yield` only for isotropic shells), and optionally the boom catalog ID.
 
 ## Method
 - Generalized strains (eps0, k) per facet and Gauss point (facet frame, CLT
@@ -40,10 +47,37 @@ python failure_check.py results/case.npz [--criterion hashin|tsai-hill] [--S23 .
 - `--at gauss` (default) checks the 4 Gauss points of each element;
   `centroid` averages them first (what the stress plots use).
 
+## Flange and web
+- TRAC webs (OM/CO bonded tabs) are two flange laminates bonded together:
+  web facets are checked with the **doubled layup** (z from the bond plane).
+  `mirror` (default): identical tapes bonded face to face, the lower one
+  turned over (plies reversed, angles negated), e.g. [45/-45/-45/45] ->
+  [-45/45/45/-45/45/-45/-45/45]; `repeat`: the plies twice as listed.
+- Web facets = facet strips whose mid arc length s is in a web range:
+  `--web S0 S1`, else case `"geometry": {..., "web": [[s0, s1]]}`, else for a
+  TRAC/OM/CO catalog boom (`--boom` or `"geometry": {..., "boom": "R011"}`)
+  the `line` segments of a `segments` section whose length is the catalog
+  web width w. A TRAC/OM/CO boom with no web found prints a WARNING and is
+  checked all as flange. TS and booms without an ID: all flange.
+- shell-mesh puts the single laminate on every facet (no double-thickness
+  web yet), so the FE web is too compliant and its curvatures too large:
+  web F from such a model is conservative. Say so when reporting it.
+
+## Coiling check
+Run only when the simulation gives F < 1. The flange is flattened from the
+smallest arc radius r (`--flatten-radius`, else min of R_A, R_B of the
+catalog boom, else the arcs of the case section): k = [0, 1/r, 0] with
+k_xx = k_xy = 0 held and N = 0, so eps0 = -A^-1 B k from the flange ABD
+(0 for symmetric layups). Both signs of k are checked (which face is
+concave is unknown in the facet frame) and the larger F is kept. Longitudinal
+coiling about a hub is not included. The last line, `GOVERNING F`, is the
+larger of the simulation F and the coiling F, and says which one it is.
+
 ## Report back
 Max F, its mode and "fails / no failure predicted", the minimum R, the
 critical facet (x, y, z), ply, angle and through-thickness position with s1,
-s2, t12; the per-ply maxima; S23 used. Catalog strengths are mean RTD values
+s2, t12; the per-ply maxima; S23 used; the web facets and web layup (if
+any); the coiling F, r used and governing F. Catalog strengths are mean RTD values
 (not allowables); missing strengths (NA) make the check impossible: say
 which and ask, do not invent them. The max often sits at clamp corners,
 where stresses are mesh dependent: check with a second mesh or look at the
