@@ -57,10 +57,28 @@ abaqus cae noGUI=abaqus_<name>.py [-- <size> <S4R|S4>]          # on a machine w
   hand-edited or the pieces disagree: regenerate it with shell-assemble-run.
 - Not translated (FAIL): `equalDOF`, `sp`, `eleLoad`, more than one load pattern,
   sections other than LayeredShell / ElasticMembranePlateSection.
+- Instructions for the user (every successful run): the script prints an
+  "=== Abaqus verification of ... ===" block and writes the same text to
+  `abaqus_<name>_instructions.txt` next to the Abaqus script. It names, with
+  the actual job name `<name>_<element>_<size>mm` (`.` -> `p`):
+  - **on the Abaqus machine**: copy only `abaqus_<name>.py` into an empty
+    folder; run `abaqus cae noGUI=abaqus_<name>.py` (other mesh/element:
+    `... -- <size> <S4R|S4>`, which changes the job name); check that
+    `<job>_results.txt` does not say "ODB extraction failed" (fallback:
+    `abaqus python odb_extract.py <job>.odb` with the file from
+    `.claude/verification/`); optionally `abaqus cae database=<job>.cae`;
+  - **copy back** into the OpenSeesPy script's folder: `<job>_odb.npz`
+    (required; the ODB as plain arrays, written by the embedded copy of
+    `odb_extract.py`) and `<job>_results.txt` (recommended); the `.odb`/`.cae`
+    are not needed here;
+  - **then ask Claude**: the exact sentence that runs the
+    OpenSeesAbaqusResultsComparator agent on the OpenSees results .npz and
+    `<job>_odb.npz`.
 
 ## Report back
-- the Abaqus script path and the commands (`abaqus cae noGUI=abaqus_<name>.py`,
-  `... -- <size> <S4R|S4>`), outputs `<job>_results.txt`, `.odb`, `.cae`;
+- **the instructions block, verbatim** (from the output or
+  `abaqus_<name>_instructions.txt`), every time the skill is run: it is how the
+  user knows what to run, what to bring back and what to ask for;
 - the model in a short list (geometry, plies bottom to top, element, mesh,
   BCs, loads, step) and the OpenSees reference values it embeds;
 - the model-check lines (n/n pass) and that the Abaqus run is untested;

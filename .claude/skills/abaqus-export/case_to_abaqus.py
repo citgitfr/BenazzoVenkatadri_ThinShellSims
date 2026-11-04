@@ -203,7 +203,8 @@ Units: N, mm, MPa, t/mm^3 (Abaqus has no units; these are the case units).
 Usage (Abaqus command line, in an empty working folder):
   abaqus cae noGUI=%(script)s                 # %(size)g mm, %(element)s
   abaqus cae noGUI=%(script)s -- 5 S4         # element size [mm] and element type
-Output: <job>_results.txt (also printed), <job>.odb, <job>.cae
+Output: <job>_results.txt (also printed), <job>.odb, <job>.cae, and <job>_odb.npz
+(the ODB results as plain arrays, for the OpenSees vs Abaqus results comparison)
 """
 import sys
 try:
@@ -466,6 +467,17 @@ job.submit(consistencyChecking=OFF)
 job.waitForCompletion()
 mdb.saveAs(pathName=JOB + '.cae')
 
+# --- Plain-array copy of the ODB for the OpenSees vs Abaqus results comparison ---
+# (verbatim copy of .claude/verification/odb_extract.py; bring <job>_odb.npz back with the
+# results). Done before the comparison below, so a failure there does not stop it.
+ODB_EXTRACT = %(extractor)s
+try:
+    _ns = {'__name__': 'odb_extract'}
+    exec(compile(ODB_EXTRACT, 'odb_extract.py', 'exec'), _ns)
+    log(_ns['extract'](JOB + '.odb', JOB + '_odb.npz'))
+except Exception as exc:
+    log('ODB extraction failed (%%s); on this machine run: abaqus python odb_extract.py %%s.odb' %% (exc, JOB))
+
 # --- Results ---
 odb = openOdb(JOB + '.odb', readOnly=True)
 step = odb.steps[STEP]
@@ -563,9 +575,20 @@ def write_script(case, lam, out, element='S4R', ref=None, source='a shell-bc-loa
         'OpenSees reference: ' + ('embedded (REF)' if reference else 'NOT embedded (--no-reference)')])
     text = ABAQUS % dict(name=name, source=source, summary=summary, script=out.name,
                          size=mesh.size, element=element, job=name.replace('-', '_')[:30],
-                         model=_literal(model), ref=_literal(ref))
+                         model=_literal(model), ref=_literal(ref), extractor=_extractor())
     out.write_text(text, encoding='utf-8')
     return out, model, ref
+
+
+ODB_EXTRACTOR = _SKILLS.parent / 'verification' / 'odb_extract.py'
+
+
+def _extractor():
+    """Source of the results-comparison ODB extractor as a raw string literal."""
+    src = ODB_EXTRACTOR.read_text(encoding='utf-8')
+    if "'''" in src or src.rstrip().endswith('\\') or not src.isascii():
+        raise SystemExit(f'{ODB_EXTRACTOR}: cannot be embedded as a raw string (\'\'\', trailing \\ or non-ASCII)')
+    return "r'''" + src + "'''"
 
 
 def _literal(obj):

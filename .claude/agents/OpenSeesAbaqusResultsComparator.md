@@ -35,8 +35,12 @@ Python here: conda env `shells` (Federico
 `D:\Users\tvenkata\miniforge3\envs\shells\python.exe`). Units: N, mm, MPa.
 
 ## 1. Get the Abaqus results out of the ODB
-An ODB can only be opened by Abaqus' own Python. Check whether this machine
-has Abaqus (`where abaqus` / `which abaqus`).
+An ODB can only be opened by Abaqus' own Python. Abaqus runs of the project's
+translated models normally write `<job>_odb.npz` themselves (with a copy of
+`odb_extract.py`) next to `<job>.odb`: ask the user for that file first. Only
+if there is none (another Abaqus model, or the extraction failed, which the
+run's `<job>_results.txt` says), check whether this machine has Abaqus
+(`where abaqus` / `which abaqus`).
 - If it does: `abaqus python .claude/verification/odb_extract.py <job>.odb <job>_odb.npz [--step NAME]`.
 - If not (the project VM has no Abaqus): ask the user to run that same
   command on the Abaqus machine, in the folder with the ODB, and to bring back

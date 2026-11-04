@@ -459,20 +459,66 @@ def main():
               + (f', {len(ref["history"])} history rows' if ref['history'] else ''))
     else:
         print('  OpenSees reference: NOT embedded (--no-reference)')
+    guide = out.with_name(out.stem + '_instructions.txt')
     if a.no_check:
         print('model check: skipped (--no-check)')
-        return
-    rows = check_model(os_m, out, M, case, lam)
-    print(f'model check: {src.name} (recorded OpenSees calls) vs {out.name} (stand-in Abaqus API)')
-    for label, ok, detail in rows:
-        tag = '      ' if label.startswith('note') else ('[PASS]' if ok else '[FAIL]')
-        print(f'  {tag} {label}' + (f'  ({detail})' if detail else ''))
-    n_fail = sum(not ok for _, ok, _ in rows)
-    print(f'{len(rows) - n_fail}/{len(rows)} checks pass' if not n_fail else
-          f'{n_fail} check(s) FAIL: the Abaqus script is not the same model; do not use it')
+    else:
+        rows = check_model(os_m, out, M, case, lam)
+        print(f'model check: {src.name} (recorded OpenSees calls) vs {out.name} (stand-in Abaqus API)')
+        for label, ok, detail in rows:
+            tag = '      ' if label.startswith('note') else ('[PASS]' if ok else '[FAIL]')
+            print(f'  {tag} {label}' + (f'  ({detail})' if detail else ''))
+        n_fail = sum(not ok for _, ok, _ in rows)
+        print(f'{len(rows) - n_fail}/{len(rows)} checks pass' if not n_fail else
+              f'{n_fail} check(s) FAIL: the Abaqus script is not the same model; do not use it')
+        if n_fail:
+            guide.unlink(missing_ok=True)
+            raise SystemExit(1)
     print('Abaqus run itself: untested here (Abaqus is not installed on this VM)')
-    if n_fail:
-        raise SystemExit(1)
+    text = instructions(out, info['NAME'], a.element, M['size'], npz or src.parent / 'results' / f'{info["NAME"]}.npz',
+                        src, checked=not a.no_check)
+    guide.write_text(text, encoding='utf-8')
+    print(f'\n{text}\n(also in {guide})')
+
+
+def job_name(name, element, size):
+    """The job name the generated Abaqus script uses (JOB in case_to_abaqus.ABAQUS)."""
+    return ('%s_%s_%gmm' % (name.replace('-', '_')[:30], element, size)).replace('.', 'p')
+
+
+def instructions(script, name, element, size, npz, src, checked=True):
+    """What the user runs on the Abaqus machine, what comes back, and what to ask Claude."""
+    job, here = job_name(name, element, size), Path(script).parent
+    other = job_name(name, 'S4' if element == 'S4R' else 'S4R', size / 2)
+    lines = [
+        f'=== Abaqus verification of "{name}" ===' + ('' if checked else '   (model check SKIPPED: --no-check)'),
+        '',
+        'ON THE MACHINE WITH ABAQUS',
+        f'  1. Copy this ONE file into an empty folder there:',
+        f'       {Path(script).name}',
+        f'  2. In that folder run:',
+        f'       abaqus cae noGUI={Path(script).name}',
+        f'     ({size:g} mm mesh, {element}, job "{job}". For another mesh / element, e.g.',
+        f'      abaqus cae noGUI={Path(script).name} -- {size / 2:g} {"S4" if element == "S4R" else "S4R"}',
+        f'      the job and every file name below become "{other}".)',
+        f'  3. When it finishes, open {job}_results.txt and check that it does NOT say',
+        '     "ODB extraction failed". If it does, copy .claude/verification/odb_extract.py',
+        '     from the project into the same folder and run:',
+        f'       abaqus python odb_extract.py {job}.odb',
+        '     Optional: open the model in Abaqus/CAE to check the set-up:',
+        f'       abaqus cae database={job}.cae',
+        '',
+        f'COPY BACK TO THIS MACHINE, into {here}',
+        f'  {job}_odb.npz        REQUIRED: the Abaqus results as plain arrays',
+        f'  {job}_results.txt    recommended: run log and Abaqus vs embedded OpenSees values',
+        f'  not needed: {job}.odb / .cae / .dat / .msg / .sta (keep them there for inspection)',
+        '',
+        'THEN TELL CLAUDE (paste):',
+        f'  Run the OpenSeesAbaqusResultsComparator agent on {npz} and {here / (job + "_odb.npz")}',
+    ]
+    if not Path(npz).exists():
+        lines += ['', f'(The OpenSees results file does not exist yet: run  python {src.name}  in {src.parent} first.)']
+    return '\n'.join(lines)
 
 
 if __name__ == '__main__':

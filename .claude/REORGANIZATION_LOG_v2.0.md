@@ -296,3 +296,23 @@ and importing nothing from `.claude/skills/`):
   -> `system_diagram_verification.png` (Lab 2 Fig. 1 with the verifier agent
   split into the opensees-to-abaqus translator and the results-comparison agent).
 
+## 11/4/26: ODB extraction inside the generated Abaqus scripts
+
+Scripts from abaqus-export / opensees-to-abaqus now carry a verbatim copy of
+`.claude/verification/odb_extract.py` (refactored: `extract(path, out, step,
+instance)` + the unchanged command line) and call it right after the job,
+before their own comparison, writing `<job>_odb.npz` next to the ODB. The user
+brings that file back instead of running `abaqus python odb_extract.py`
+(still the fallback, printed in `<job>_results.txt` if extraction fails). The
+comparator agent is unchanged in what it sees: the same extractor, the same
+file. Checked: T22 (embedded copy = the file; on the stand-in ODB it writes
+the same 18 arrays as the tool alone), the inserted block run on the stand-in
+for success and for a missing ODB, the four 11-4-26 scripts regenerated
+(13/13 model checks each, py_compile). The Abaqus run itself is still untested.
+- opensees-to-abaqus now prints, and writes to `abaqus_<name>_instructions.txt`,
+  the exact steps for the user: copy only `abaqus_<name>.py` to the Abaqus
+  machine, `abaqus cae noGUI=abaqus_<name>.py`, check the extraction line in
+  `<job>_results.txt` (fallback command), copy back `<job>_odb.npz` (required)
+  and `<job>_results.txt`, and the sentence to ask Claude to run the comparator.
+  Job/file names are computed as the Abaqus script does (`job_name`).
+

@@ -48,9 +48,11 @@ To change the catalog, edit `boom_data.py` and rerun `make_boom_catalog.py`.
 When the user wants one self-contained
 OpenSeesPy script of the model, use the shell-assemble-run skill instead of
 running shell_bc_load.py. For an Abaqus version of a model, assemble it with
-shell-assemble-run and convert that script with the opensees-to-abaqus skill.
-When the user brings back the Abaqus results (ODB, or the `<job>_odb.npz` from
-`.claude/verification/odb_extract.py`), hand ONLY the OpenSees results .npz
+shell-assemble-run and convert that script with the opensees-to-abaqus skill,
+and give the user its "Abaqus verification" instructions block verbatim (what to
+run on the Abaqus machine, which files to copy back, what to ask next).
+When the user brings back the Abaqus results (the `<job>_odb.npz` the Abaqus
+script writes next to the ODB, or the ODB), hand ONLY the OpenSees results .npz
 and the Abaqus results to the OpenSeesAbaqusResultsComparator agent; do not
 give it the case, the scripts or your own conclusions (it must verify
 independently of the code that built the models), and report its findings.

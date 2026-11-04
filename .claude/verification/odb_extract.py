@@ -5,6 +5,10 @@ run this where Abaqus is installed (Python 2.7 or 3, numpy ships with Abaqus):
 
   abaqus python odb_extract.py <job>.odb [<job>_odb.npz] [--step NAME] [--instance NAME]
 
+Scripts written by the opensees-to-abaqus skill (abaqus-export) carry a
+verbatim copy of this file and call extract() after the job, so their run
+already leaves <job>_odb.npz next to the ODB.
+
 Written (final frame of the step unless stated):
   node_labels, node_xyz        instance nodes (ODB coordinates, as stored)
   elem_labels, elem_conn       instance shell elements (4 node labels; 3-node: last repeated)
@@ -91,14 +95,15 @@ def element_field(fo, eindex):
 INSTANCE = [None]
 
 
-def main():
-    path, out, opt = parse(sys.argv[1:])
+def extract(path, out=None, step=None, instance=None):
+    """Write the .npz of ODB `path` (default <job>_odb.npz); returns a one-line summary."""
+    out = out or path[:-4] + '_odb.npz'
     odb = openOdb(path, readOnly=True)
     steps = list(odb.steps.keys())
-    step = odb.steps[opt.get('step', steps[-1])]
+    step = odb.steps[step or steps[-1]]
     names = [k for k in odb.rootAssembly.instances.keys() if k != 'ASSEMBLY']
-    INSTANCE[0] = opt.get('instance', names[0])
-    if len(names) > 1 and 'instance' not in opt:
+    INSTANCE[0] = instance or names[0]
+    if len(names) > 1 and not instance:
         print('several instances %s; using %s (--instance to choose)' % (names, INSTANCE[0]))
     inst = odb.rootAssembly.instances[INSTANCE[0]]
     labels = [nd.label for nd in inst.nodes]
@@ -158,8 +163,13 @@ def main():
     data['meta'] = np.array(json.dumps(meta))
     odb.close()
     np.savez_compressed(out, **data)
-    print('wrote %s: %d nodes, %d shell elements, %d assembly node(s), %d frame(s), fields %s'
-          % (out, len(labels), len(elabels), len(asm_labels), len(frames), sorted(meta['fields'])))
+    return ('wrote %s: %d nodes, %d shell elements, %d assembly node(s), %d frame(s), fields %s'
+            % (out, len(labels), len(elabels), len(asm_labels), len(frames), sorted(meta['fields'])))
+
+
+def main():
+    path, out, opt = parse(sys.argv[1:])
+    print(extract(path, out, opt.get('step'), opt.get('instance')))
 
 
 if __name__ == '__main__':
