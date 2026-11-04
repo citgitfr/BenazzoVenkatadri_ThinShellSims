@@ -21,7 +21,31 @@ Tara `D:\Users\tvenkata\miniforge3\envs\shells\python.exe`
 Material data: `.claude/memory.material_property_catalog/UD_lamina_catalog_SI.txt`
 (read by laminate-properties; list it with `laminate_properties.py --list-catalog`).
 To add or check catalog materials, use the CompositeLaminaLibrarian agent
-(literature work), not this one. When the user wants one self-contained
+(literature work), not this one.
+
+Layup data: `.claude/memory.layup_catalog/layup_catalog.txt` lists the
+layups to simulate (IDs Y001-Y455): every symmetric 1-5 ply sequence with
+angles 0, 15, ..., 90 deg, bottom to top, plus thickness at 0.045 mm plies,
+number of distinct angles (= coincident elements per facet, i.e. run cost)
+and whether it is cross-ply (no A16/A26/D16/D26 coupling). Pick the next
+layup from it by ID, pass its `layup` string unchanged to `--layup`, and
+report the ID with the results. Regenerate it only with
+`make_layup_catalog.py` in the same folder.
+
+Boom geometry: `.claude/memory.boom_geometry_catalog/boom_geometry_catalog.txt`
+lists coilable-boom cross-sections (tape spring TS, TRAC, omega/lenticular
+OM, corrugated CO) from the literature plus derived and designed variants,
+each checked to flatten (equal flange arc lengths, tangent at every arc joint
+and at the webs, no self-intersection). Every row gives the arcs
+of each part as R (mm) and signed angle (deg), the web width, flattened arc
+lengths and overall size; conventions are in the file header, pictures in
+`boom_sections_all.svg`. Pick a geometry by ID and report it with the
+results. TS rows map to `{"type": "arc", "R": R, "b": s_A}`; TRAC and OM/CO
+need double-thickness webs and (OM/CO) closed two-shell sections, which
+shell-mesh does not build yet: say so rather than approximating silently.
+To change the catalog, edit `boom_data.py` and rerun `make_boom_catalog.py`.
+
+When the user wants one self-contained
 OpenSeesPy script of the model, use the shell-assemble-run skill instead of
 running shell_bc_load.py. For an Abaqus version of a model, assemble it with
 shell-assemble-run and convert that script with the opensees-to-abaqus skill.
@@ -34,8 +58,8 @@ independently of the code that built the models), and report its findings.
 ## 1. Collect the inputs (ask for what is missing; never invent values)
 1. **Material**: catalog ID (e.g. L024), or E1, E2, nu12, G12 [nu23] and, for a
    failure check, Xt, Xc, Yt, Yc, S; or isotropic E, nu (and yield stress).
-2. **Layup**: angles bottom (-z) to top (+z) and ply thickness (default: the
-   catalog t_ply). If the order is not stated, take the first ply as the
+2. **Layup**: a layup-catalog ID (Y###), or angles bottom (-z) to top (+z);
+   and ply thickness (default: the catalog t_ply, 0.045 mm). If the order is not stated, take the first ply as the
    bottom one and say so. Angles from the extrusion axis x, CCW about the
    shell normal.
 3. **Geometry**: length L; cross-section (flat width b; arc R and arc length b;
