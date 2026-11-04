@@ -42,12 +42,13 @@ between cells; the script re-aligns both files.
 | 12 | Yc, transverse compressive strength | MPa | Pa |
 | 13 | Yt, transverse tensile strength | MPa | Pa |
 | 14 | S, in-plane shear strength (S12) | MPa | Pa |
-| 15 | Ply thickness | mm | m |
+| 15 | Ply thickness (0.045 for all rows, rule 7) | mm | m |
 | 16 | rho, cured lamina density | g/cm3 | kg/m3 |
 | 17 | Source link(s) | - | - |
 
 Strengths are positive magnitudes (compression is not given a minus sign).
-Missing values are written `NA`; do not leave a cell empty.
+Every cell holds a value: missing data is replaced by a `*` assumption
+(rule 6), never left empty or `NA`.
 
 ## Source rules
 
@@ -77,11 +78,21 @@ Missing values are written `NA`; do not leave a cell empty.
      also gets `*`.
    - If the source gives both nu23 and G23 and they do not satisfy the
      relation, keep the source values and note it.
-   Never estimate the other columns; write `NA` and say so.
-6. Ply thickness: cured ply thickness from the same source. If only areal
-   weight and fiber volume fraction are given, you may compute it
-   (t = FAW / (rho_f Vf)); mark it with `*` and give the inputs.
-7. Density: cured (or consolidated) lamina density, mean, from the row's
+6. **No NA cells** (user decision, 2026-11-04): if a source does not give a
+   value, fill it with a sensible assumption for that material, marked `*`,
+   and record the method in the "ASSUMED VALUES" notes block. In order of
+   preference: the measured value of the closest catalog row (same fiber
+   class and same polymer family; say which ID), then a scaling of such a
+   value (e.g. fiber-dominated Xt, Xc by the E1 ratio), then a standard
+   relation (S12 = sigma(+-45)/2, ASTM D3518) or a typical ratio for the
+   material class (Yc/Yt, Xc/Xt). Never present an assumption as measured.
+7. **Ply thickness** (user decision, 2026-11-04): every row uses
+   t_ply = 0.045 mm, the project's thin-ply thickness for deployable shells,
+   whatever the source thickness. Record the source's cured ply thickness in
+   the "Original ply thickness" list of the notes (`*` if computed as
+   FAW / (rho_f Vf), NA if not reported). Stiffness, strength and density stay
+   as measured at the source thickness.
+8. Density: cured (or consolidated) lamina density, mean, from the row's
    source or another reputable source for the same product (NCAMP "Comp.
    density" by ASTM D792, the prepreg datasheet's laminate density). If none
    exists, derive it by rule of mixtures, rho = Vf rho_f + (1 - Vf) rho_m
