@@ -46,7 +46,7 @@ between cells; the script re-aligns both files.
 | 12 | Yc, transverse compressive strength | MPa | Pa |
 | 13 | Yt, transverse tensile strength | MPa | Pa |
 | 14 | S, in-plane shear strength (S12) | MPa | Pa |
-| 15 | Ply thickness (0.045 for all rows, rule 7) | mm | m |
+| 15 | Ply thickness (0.035 for all rows, rule 7) | mm | m |
 | 16 | rho, cured lamina density | g/cm3 | kg/m3 |
 | 17 | Source link(s) | - | - |
 
@@ -90,8 +90,8 @@ Every cell holds a value: missing data is replaced by a `*` assumption
    value (e.g. fiber-dominated Xt, Xc by the E1 ratio), then a standard
    relation (S12 = sigma(+-45)/2, ASTM D3518) or a typical ratio for the
    material class (Yc/Yt, Xc/Xt). Never present an assumption as measured.
-7. **Ply thickness** (user decision, 2026-11-04): every row uses
-   t_ply = 0.045 mm, the project's thin-ply thickness for deployable shells,
+7. **Ply thickness** (user decision, 2026-11-05; was 0.045 mm): every row uses
+   t_ply = 0.035 mm, the project's thin-ply thickness for deployable shells,
    whatever the source thickness. Record the source's cured ply thickness in
    the "Original ply thickness" list of the notes (`*` if computed as
    FAW / (rho_f Vf), NA if not reported). Stiffness, strength and density stay
@@ -135,7 +135,7 @@ source.
 455 rows, Y001-Y455: every symmetric stacking sequence of 1-5 plies with
 angles 0, 15, ..., 90 deg (no negative angles, user decision 2026-11-04).
 Columns: ID, n_plies, layup (full sequence bottom to top, e.g. `[0/45/0]`,
-read unchanged by `laminate_properties.py --layup`), h_mm (n x 0.045 mm),
+read unchanged by `laminate_properties.py --layup`), h_mm (n x 0.035 mm),
 n_angles (distinct angles = coincident elements per facet, i.e. run cost),
 angles, cross_ply. To change the angle set, ply counts or t_ply, edit the
 constants at the top of the script and rerun it; keep T_PLY equal to the

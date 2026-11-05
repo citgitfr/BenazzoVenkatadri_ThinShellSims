@@ -18,7 +18,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(HERE, "layup_catalog.txt")
 ANGLES = tuple(range(0, 91, 15))
 N_PLIES = range(1, 6)
-T_PLY = 0.045  # mm, the t_ply of every row in the material catalog
+T_PLY = 0.035  # mm, the t_ply of every row in the material catalog
 SEP = "   "
 
 

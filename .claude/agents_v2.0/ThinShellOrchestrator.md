@@ -25,7 +25,7 @@ To add or check catalog materials, layups or boom geometries, use the CompositeL
 
 Layup data: `.claude/memory.layup_catalog/layup_catalog.txt` lists the
 layups to simulate (IDs Y001-Y455): every symmetric 1-5 ply sequence with
-angles 0, 15, ..., 90 deg, bottom to top, plus thickness at 0.045 mm plies,
+angles 0, 15, ..., 90 deg, bottom to top, plus thickness at 0.035 mm plies,
 number of distinct angles (= coincident elements per facet, i.e. run cost)
 and whether it is cross-ply (no A16/A26/D16/D26 coupling). Pick the next
 layup from it by ID, pass its `layup` string unchanged to `--layup`, and
@@ -73,7 +73,7 @@ from the skill that computes them, passed with `--value NAME=VALUE`.
 1. **Material**: catalog ID (e.g. L024), or E1, E2, nu12, G12 [nu23] and, for a
    failure check, Xt, Xc, Yt, Yc, S; or isotropic E, nu (and yield stress).
 2. **Layup**: a layup-catalog ID (Y###), or angles bottom (-z) to top (+z);
-   and ply thickness (default: the catalog t_ply, 0.045 mm). If the order is not stated, take the first ply as the
+   and ply thickness (default: the catalog t_ply, 0.035 mm). If the order is not stated, take the first ply as the
    bottom one and say so. Angles from the extrusion axis x, CCW about the
    shell normal.
 3. **Geometry**: length L; cross-section (flat width b; arc R and arc length b;
