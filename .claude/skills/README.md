@@ -35,5 +35,7 @@ results .npz + Abaqus ODB (odb_extract.py --> <job>_odb.npz) --> OpenSeesAbaqusR
 | objective-constraints | new (11/4/26): objective/constraint calculator of the optimization loop; reads only the results .npz of the assembled script: mass (objective), governing Hashin F < 1 (via failure-check) and the user's constraints as formulas |
 | shell-buckling | new (10/29/26, ToDo 7-8): buckling load/moment and mode (ShellNLDKGQ tangent-eigenvalue scan) and buckling strength (ASDShellQ4 imperfect path); boom_buckling.py case runner |
 
+| design-boom | new (11/5/26): entry point of the v3.0 optimization loop; the session becomes the ThinShellOrchestrator and follows `.claude/orchestrator/PROTOCOL.md` (study.py runs the skills above in order) |
+
 The v1 code in `Code for Project/` is left unchanged as the verified record.
 Python: conda env `shells` (openseespy 3.8). Units: N, mm, MPa.
