@@ -75,8 +75,7 @@ def rigid_end(mesh, edge, master_tag=None):
     weighted), tied to every edge node by a rigid beam link. Load or restrain
     the returned master node. Stored in mesh.rigid[edge]."""
     nodes = mesh.edge_nodes(edge)
-    w = np.ones(len(nodes))
-    w[[0, -1]] = 0.5
+    w = mesh.edge_weights(edge, 'centroid')          # end nodes half (every strip of a branched section)
     centroid = w @ np.array([ops.nodeCoord(n) for n in nodes]) / w.sum()
     master = master_tag or max(ops.getNodeTags()) + 1
     ops.node(master, *centroid)
@@ -107,16 +106,7 @@ def edge_load(mesh, edge, force, moment=(0.0, 0.0, 0.0), pattern_tag=1, scale=1.
     (done automatically when the edge spacing varies)."""
     nodes = mesh.edge_nodes(edge)
     _pattern(pattern_tag)
-    xyz = np.array([ops.nodeCoord(n) for n in nodes])
-    seg = np.linalg.norm(np.diff(xyz, axis=0), axis=1)
-    if np.ptp(seg) < 1e-9 * seg.max():
-        n = len(nodes) - 1
-        w = np.array([(0.5 if k in (0, n) else 1.0) / n for k in range(n + 1)])
-    else:
-        w = np.zeros(len(nodes))
-        w[:-1] += seg / 2
-        w[1:] += seg / 2
-        w /= w.sum()
+    w = mesh.edge_weights(edge)
     for k, node in enumerate(nodes):
         ops.load(node, *(scale * w[k] * f for f in force), *(scale * w[k] * m for m in moment))
 
@@ -304,7 +294,8 @@ def collect_results(mesh, history=None, title='', case=None):
     fixed[[index[n] for n in ops.getFixedNodes()]] = 1
     lam = getattr(mesh, 'laminate', None)
     meta = dict(title=title, summary=mesh.summary(), nx=mesh.nx, ny=mesh.ny, L=mesh.L, b=mesh.b,
-                element=getattr(mesh, 'element', ''), rigid=getattr(mesh, 'rigid', {}), case=case)
+                element=getattr(mesh, 'element', ''), rigid=getattr(mesh, 'rigid', {}), case=case,
+                **mesh.strip_meta())
     return dict(points=np.array([ops.nodeCoord(t) for t in tags]), node_tags=np.array(tags),
                 disp=np.array([(ops.nodeDisp(t) + [0.0] * 6)[:6] for t in tags]), fixed=fixed, faces=faces,
                 frames=mesh.frames, strains=facet_strains(mesh),
@@ -476,12 +467,14 @@ def facet_strains():
     return np.array(out)
 
 
+STRIP_KEYS = ('nstrips', 'strip_label', 'strip_s', 'web_stack', 'section_kind', 'boom')   # branched sections
 tags = ops.getNodeTags()
 index = {t: k for k, t in enumerate(tags)}
 fixed = np.zeros(len(tags), dtype=np.int8)
 fixed[[index[n] for n in ops.getFixedNodes()]] = 1
 meta = dict(title=NAME, summary=MESH['summary'], nx=MESH['nx'], ny=MESH['ny'], L=MESH['L'], b=MESH['b'],
-            element=MESH['element'], rigid=RIGID, case=CASE)
+            element=MESH['element'], rigid=RIGID, case=CASE,
+            **{k: MESH[k] for k in STRIP_KEYS if k in MESH})
 results = dict(points=np.array([ops.nodeCoord(t) for t in tags]), node_tags=np.array(tags),
                disp=np.array([(ops.nodeDisp(t) + [0.0] * 6)[:6] for t in tags]), fixed=fixed,
                faces=np.array([[index[n] for n in f[3:]] for f in FACETS]), frames=FRAMES,

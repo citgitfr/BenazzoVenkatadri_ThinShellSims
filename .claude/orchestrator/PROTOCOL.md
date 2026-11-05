@@ -141,13 +141,20 @@ TODO sections of `REPORT.md`, report to the user (section 7), and commit
 
 ## 4. What the tools cannot do (say so; never work around it silently)
 
-- **FE geometry: tape springs (TS) only.** shell-mesh builds open arc
-  chains. A TRAC (branched: two flanges bonded on a double-thickness web) and
-  OM/CO booms (closed two-shell sections with bonded tabs) are NOT built
-  faithfully, so `study.py choose` refuses them. The screen still ranks them
-  with closed-form estimates. If a TRAC/OM/CO looks clearly better, tell the
-  user: it needs a shell-mesh extension, which is a follow-up and not part of
-  this loop.
+- **FE geometry: TS, TRAC, OM and CO.** shell-mesh builds a catalog row
+  exactly (`"section": {"type": "boom", "id": ...}`): TRAC = web + two
+  flanges sharing the junction nodes, OM/CO = closed two-shell section with
+  two bonded tabs. Webs/tabs carry the doubled laminate (mirror stack, the
+  bond plane is the mid-surface; adhesive and the tapes' offset of +-h/2 are
+  not modelled) and failure-check / objective-constraints check them with it.
+  EI matches thin-walled beam theory within 0.5% (regression T23).
+  **Not built:** OM/CO rows whose two shells have different free chords
+  (M011, M012, M013, M023, M024, C012: bonding prestresses them);
+  `study.py choose` refuses them and the screen marks them not FE-supported.
+  The Abaqus scripts (static and buckling) give the webs their own doubled
+  `WebSection`; they were checked on a stand-in Abaqus API only, so the first
+  Abaqus verification of a TRAC/OM/CO design is also a check of the export:
+  say so in the report.
 - **Coiling:** F_hub treats the flange as flattened and bent to the hub
   radius (uniform curvature, no contact, no transition zone, no web/tab). It
   is exact CLT for that state and unconservative near the coil's transition

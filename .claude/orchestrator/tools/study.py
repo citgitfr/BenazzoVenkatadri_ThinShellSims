@@ -277,7 +277,7 @@ def cmd_init(a):
     if summary['materials_skipped']:
         print(f'materials skipped: {summary["materials_skipped"]}')
     if summary['screen_ok_fe'] == 0:
-        print('WARNING: no FE-supported (tape-spring) design passes the screening estimates. Tell the user which '
+        print('WARNING: no FE-supported design passes the screening estimates. Tell the user which '
               'requirement rejects them (rejections above) and ask whether to relax it; do not start the loop.')
     print('\nNEXT: ' + next_action(st))
 
@@ -388,6 +388,30 @@ def cmd_candidates(a):
 
 # --- choose ----------------------------------------------------------------------------
 
+def fe_section(g):
+    """shell-mesh section of a catalog row, smallest radius R and the
+    section's total mid-line length b [mm] (webs counted once; TS: the arc).
+    TS: {'type': 'arc'} (as before); TRAC / OM / CO: {'type': 'boom', 'id'}
+    (branched section with the doubled web / tab laminate)."""
+    if g['type'] == 'TS':
+        R, th = g['A'][0]
+        b = R * math.radians(th)
+        return {'type': 'arc', 'R': R, 'b': round(b, 6)}, R, b
+    sys.path.insert(0, str(CLAUDE / 'skills' / 'shell-mesh'))
+    import shell_mesh as sm  # noqa: E402
+    sec = sm.boom_section(g)                     # raises for OM/CO shells with different free chords
+    return {'type': 'boom', 'id': g['id']}, min(abs(R) for R, _ in g['A'] + (g.get('B') or [])), sec.b
+
+
+def branched_mesh_size(g, b):
+    """Element size of a TRAC / OM / CO model [mm]: about 24 elements across the whole section
+    (b = total mid-line length), at least 6 across the shortest flange / shell and 2 across a web / tab,
+    at most 5 mm, at least 0.5 mm."""
+    flange = min(sum(R * math.radians(abs(th)) for R, th in part) for part in (g['A'], g.get('B') or g['A']))
+    s = min(5.0, b / 24.0, flange / 6.0, g.get('w', 1e9) / 2.0)
+    return max(0.5, round(s, 1))
+
+
 def mesh_size(b, L):
     s = min(5.0, b / 8.0)
     return max(0.5, round(s, 1))
@@ -415,7 +439,7 @@ def cmd_choose(a):
             'coiling F >= 1 or a limit). Choose from study.py candidates')
     row = rows[key]
     if row['fe_supported'] != 'True':
-        die(f'{a.geometry} is a {row["type"]}: shell-mesh cannot build it faithfully (PROTOCOL.md section 4)')
+        die(f'{a.geometry} is a {row["type"]} that shell-mesh cannot build (OM/CO shells with different free chords; PROTOCOL.md section 4)')
     if not a.reason or len(a.reason) < 20:
         die('--reason must say why this material, geometry and layup (in that order), in a sentence or more')
     last = sd / 'screen' / 'last_candidates.json'
@@ -436,10 +460,9 @@ def cmd_choose(a):
     idir = iter_dir(sd, i)
     idir.mkdir(parents=True, exist_ok=True)
     g = next(x for x in GEOMETRIES if x['id'] == a.geometry)
-    R, th = g['A'][0]
-    b = R * math.radians(th)
+    section, R, b = fe_section(g)
     L = float(req['length_mm'])
-    size = mesh_size(b, L)
+    size = mesh_size(b, L) if g['type'] == 'TS' else branched_mesh_size(g, b)
     s = req['requirements'].get('bending_stiffness') or {'direction': 'z', 'sign': -1, 'load_N': 1.0}
     F = [0.0, 0.0, 0.0]
     F['xyz'.index(s['direction'])] = s['sign'] * reference_load(s, L)
@@ -448,15 +471,14 @@ def cmd_choose(a):
     layup_str = next(ln.split()[2] for ln in (CLAUDE / 'memory.layup_catalog' / 'layup_catalog.txt')
                      .read_text().splitlines() if ln.startswith(a.layup + ' '))
     case = {'name': name, 'laminate': {'json': 'lam.json'},
-            'geometry': {'L': L, 'section': {'type': 'arc', 'R': R, 'b': round(b, 6)}, 'size': size,
-                         'boom': a.geometry},
+            'geometry': {'L': L, 'section': section, 'size': size, 'boom': a.geometry},
             'element': {'type': 'ASDShellQ4', 'corotational': False},
             'supports': [{'rigid_end': 'x0', 'dofs': [1, 1, 1, 1, 1, 1]}, {'rigid_end': 'xL'}],
             'loads': [{'node': {'rigid': 'xL'}, 'force': F}],
             'analysis': {'type': 'linear'}, 'report_node': {'rigid': 'xL'}}
     jsave(idir / 'case.json', case)
     design = dict(iter=i, key=key, material=a.material, layup=a.layup, layup_str=layup_str, geometry=a.geometry,
-                  type=row['type'], R=R, b=b, L=L, size=size, name=name, reason=a.reason,
+                  type=row['type'], section=section, R=R, b=b, L=L, size=size, name=name, reason=a.reason,
                   override=a.override or '', screen_rank=int(row['rank']), h_mm=float(row['h_mm']),
                   k_est=_num(row['k_est_N_mm']), buckling_est=_num(row['buckling_est']),
                   Ex=float(row['Ex_MPa']), EIz=float(row['EIz_Nmm2']), EIy=float(row['EIy_Nmm2']), F_flat=float(row['F_flat']),
@@ -488,7 +510,7 @@ def reference_load(s, L):
 def buckling_case(d, bq):
     """boom_buckling.py case for the design (path range from the screening estimates)."""
     case = {'name': d['name'] + '_buck', 'laminate': {'json': 'lam.json'},
-            'geometry': {'L': d['L'], 'section': {'type': 'arc', 'R': d['R'], 'b': round(d['b'], 6)},
+            'geometry': {'L': d['L'], 'section': d.get('section') or {'type': 'arc', 'R': d['R'], 'b': round(d['b'], 6)},
                          'size': d['size']}}
     est = max(d.get('buckling_est_cal') or 0, bq['min_value'])   # range from the calibrated estimate
     if bq['load'] == 'bending':

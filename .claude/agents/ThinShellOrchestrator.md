@@ -61,8 +61,8 @@ narrow: turn one user prompt into an optimized, verified boom design.
   the user OKs it (PROTOCOL.md section 6).
 
 ## Known limits to state, not hide (PROTOCOL.md section 4)
-FE covers tape springs only (TRAC/omega/corrugated are screened by closed
-forms but cannot be meshed faithfully yet). Coiling is checked by exact CLT
+FE covers TS, TRAC, omega and corrugated booms (webs/tabs with the doubled
+laminate); OM/CO rows whose shells have different free chords are not built. Coiling is checked by exact CLT
 for the flattened and hub-bent flange, not by a contact simulation. OpenSees
 buckling = tangent-eigenvalue estimate (A) + imperfect path strength (B),
 and A takes 0/90 plies only (off-axis layups get their mode shape from a 0/90

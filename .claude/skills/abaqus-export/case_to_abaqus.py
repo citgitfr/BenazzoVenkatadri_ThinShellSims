@@ -63,8 +63,8 @@ def section_pieces(sec):
     """Cross-section pieces between breaks as ('line', p0, p1) or
     ('arc', p0, p1, centre, ccw) in (y, z)."""
     out = []
-    for a, c in zip(sec.breaks[:-1], sec.breaks[1:]):
-        p0, pm, p1 = (np.array(sec.point(s)) for s in (a, (a + c) / 2, c))
+    for a, c, k in sec.pieces:
+        p0, pm, p1 = (np.array(sec.point(s, k)) for s in (a, (a + c) / 2, c))
         cross = (pm[0] - p0[0]) * (p1[1] - p0[1]) - (pm[1] - p0[1]) * (p1[0] - p0[0])
         if abs(cross) < 1e-9 * (c - a)**2:
             out.append(('line', p0.tolist(), p1.tolist()))
@@ -83,16 +83,7 @@ def edge_nodes_and_weights(mesh, edge):
     tags = mesh.edge_nodes(edge)
     idx = {mesh.node_tag(i, j): (i, j) for j in range(mesh.ny + 1) for i in range(mesh.nx + 1)}
     xyz = np.array([mesh.coords(*idx[t]) for t in tags])
-    seg = np.linalg.norm(np.diff(xyz, axis=0), axis=1)
-    if np.ptp(seg) < 1e-9 * seg.max():
-        n = len(tags) - 1
-        w = np.array([(0.5 if k in (0, n) else 1.0) / n for k in range(n + 1)])
-    else:
-        w = np.zeros(len(tags))
-        w[:-1] += seg / 2
-        w[1:] += seg / 2
-        w /= w.sum()
-    return xyz, w
+    return xyz, mesh.edge_weights(edge)
 
 
 def node_point(mesh, ref):
@@ -115,25 +106,39 @@ def describe_model(case, mesh, lam):
     inside Abaqus, so the script also works at another element size."""
     sec = mesh.section
     pieces = section_pieces(sec)
-    faces, seeds = [], []
-    for a, c in zip(sec.breaks[:-1], sec.breaks[1:]):
-        p, q = np.array(sec.point((a + c) / 2 + 1e-6 * (c - a))), np.array(sec.point((a + c) / 2 - 1e-6 * (c - a)))
-        t = (p - q) / np.linalg.norm(p - q)
-        mid = list(sec.point((a + c) / 2))
+    faces, seeds, web_faces = [], [], []
+    for a, c, k in sec.pieces:
+        p, q = (np.array(sec.point((a + c) / 2 + d * (c - a), k)) for d in (1e-6, -1e-6))
+        t = (p - q) / np.linalg.norm(p - q) * (-1 if sec.flips[k] else 1)
+        mid = list(sec.point((a + c) / 2, k))
         faces.append([mid, [0.0, -t[1], t[0]]])          # facet normal = x cross section tangent
         seeds.append([mid, c - a])
-    samples = [[float(x)] + list(sec.point(x)) for x in np.linspace(0, sec.b, 2001)]
+        if sec.labels[k] == 'web':
+            web_faces.append(mid)
+    samples = [[float(o + x)] + list(br.point(x)) for o, br in zip(sec.offsets, sec.branches)
+               for x in np.linspace(0, br.b, max(2, round(2000 * br.b / sec.b)))]
     mats = [{k: m[k] for k in ('E1', 'E2', 'nu12', 'G12', 'G13', 'G23', 'rho')} for m in lam.materials]
+    web = sm.web_laminate(mesh, lam)
+    breaks = []
+    for a, c, k in sec.pieces:
+        for s in (a, c):
+            pt = list(sec.point(s, k))
+            if not any(math.dist(pt, q) < 1e-9 * max(1.0, sec.b) for q in breaks):
+                breaks.append(pt)
     d = dict(name=case.get('name', 'case'), L=mesh.L, b=mesh.b, size=mesh.size, pieces=pieces,
-             breaks=[list(sec.point(x)) for x in sec.breaks], faces=faces, seeds=seeds, samples=samples,
+             breaks=breaks, faces=faces, seeds=seeds, samples=samples,
+             ends=[list(mesh.coords(0, mesh._first)[1:]), list(mesh.coords(0, mesh._last)[1:])],
+             web_faces=web_faces, web_plies=[[q['theta'], q['t'], q['mat']] for q in web.plies] if web else [],
+             web_h=web.h if web else 0.0,
+             x_edge_w=[[*mesh.coords(0, j)[1:], float(w)] for j, w in enumerate(mesh.edge_weights('x0'))]
+             if len(sec.branches) > 1 else [],
              kind=lam.kind, materials=mats, plies=[[q['theta'], q['t'], q['mat']] for q in lam.plies],
              h=lam.h, analysis=dict(case.get('analysis', {'type': 'linear'})), supports=[], loads=[], rigid={})
     for item in case.get('supports', []) + case.get('loads', []):
         e = item.get('rigid_end') or (item['node'].get('rigid') if isinstance(item.get('node'), dict) else None)
         if e and e not in d['rigid']:
             xyz, _ = edge_nodes_and_weights(mesh, e)
-            w = np.ones(len(xyz))
-            w[[0, -1]] = 0.5
+            w = mesh.edge_weights(e, 'centroid')
             d['rigid'][e] = (w @ xyz / w.sum()).tolist()      # same centroid as shell_bc_load.rigid_end
     for s in case.get('supports', []):
         dofs = s.get('dofs', [1] * 6)
@@ -313,8 +318,35 @@ else:
                                 thicknessType=UNIFORM, poissonDefinition=DEFAULT, temperature=GRADIENT,
                                 integrationRule=SIMPSON, layup=layup)
 region = regionToolset.Region(faces=part.faces)
-part.SectionAssignment(region=region, sectionName='Section', offsetType=MIDDLE_SURFACE,
-                       thicknessAssignment=FROM_SECTION)
+def faces_at(mids):
+    # FaceArray of the faces through these section points (at x = L/2)
+    arr = part.faces.findAt((P((M['L'] / 2, mids[0][0], mids[0][1])),))
+    for y, z in mids[1:]:
+        arr = arr + part.faces.findAt((P((M['L'] / 2, y, z)),))
+    return arr
+
+
+if M['web_faces']:                               # bonded webs / tabs: the doubled laminate (bond plane = mid-surface)
+    if M['kind'] == 'isotropic':
+        model.HomogeneousShellSection(name='WebSection', preIntegrate=OFF, material='MAT0', thicknessType=UNIFORM,
+                                      thickness=M['web_h'], idealization=NO_IDEALIZATION,
+                                      poissonDefinition=DEFAULT, integrationRule=SIMPSON, numIntPts=5)
+    else:
+        model.CompositeShellSection(name='WebSection', preIntegrate=OFF, idealization=NO_IDEALIZATION,
+                                    symmetric=False, thicknessType=UNIFORM, poissonDefinition=DEFAULT,
+                                    temperature=GRADIENT, integrationRule=SIMPSON, layup=tuple(
+                                        section.SectionLayer(material='MAT%%d' %% m, thickness=t,
+                                                             orientAngle=float(a), numIntPts=3,
+                                                             plyName='webply%%d' %% (k + 1))
+                                        for k, (a, t, m) in enumerate(M['web_plies'])))
+    part.SectionAssignment(region=regionToolset.Region(faces=faces_at([f[0] for f in M['faces']
+                                                                       if f[0] not in M['web_faces']])),
+                           sectionName='Section', offsetType=MIDDLE_SURFACE, thicknessAssignment=FROM_SECTION)
+    part.SectionAssignment(region=regionToolset.Region(faces=faces_at(M['web_faces'])), sectionName='WebSection',
+                           offsetType=MIDDLE_SURFACE, thicknessAssignment=FROM_SECTION)
+else:
+    part.SectionAssignment(region=region, sectionName='Section', offsetType=MIDDLE_SURFACE,
+                           thicknessAssignment=FROM_SECTION)
 # Material axis 1 = extrusion direction (global x = part Z) on every facet, normal = shell normal
 try:
     part.MaterialOrientation(region=region, orientationType=DISCRETE, axis=AXIS_3,
@@ -366,9 +398,18 @@ def edge_nodes(edge):
         x0 = 0.0 if edge == 'x0' else M['L']
         sel = [(arc_s(c[1], c[2]), lab, c) for lab, c in NODES if abs(c[0] - x0) < TOL]
     else:
-        y0, z0 = M['breaks'][0] if edge == 'y0' else M['breaks'][-1]
+        y0, z0 = M['ends'][0] if edge == 'y0' else M['ends'][1]
         sel = [(c[0], lab, c) for lab, c in NODES if (c[1] - y0) ** 2 + (c[2] - z0) ** 2 < TOL ** 2]
     sel.sort()
+    if edge in ('x0', 'xL') and M['x_edge_w']:
+        # branched section: the shares of the case mesh (junctions collect several strips)
+        w = []
+        for _, lab, c in sel:
+            q = min(M['x_edge_w'], key=lambda r: (r[0] - c[1]) ** 2 + (r[1] - c[2]) ** 2)
+            if (q[0] - c[1]) ** 2 + (q[1] - c[2]) ** 2 > TOL ** 2 or len(sel) != len(M['x_edge_w']):
+                raise RuntimeError('branched section: run at the case element size (edge load shares)')
+            w.append(q[2])
+        return [lab for _, lab, _ in sel], w
     pts = [c for _, _, c in sel]
     seg = [sum((pts[i + 1][k] - pts[i][k]) ** 2 for k in range(3)) ** 0.5 for i in range(len(pts) - 1)]
     w = [0.0] * len(pts)

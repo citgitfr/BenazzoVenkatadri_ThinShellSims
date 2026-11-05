@@ -72,15 +72,21 @@ def build_shell(mesh, laminate, element='ShellNLDKGQ', imperfection=None, amplit
                     ops.setNodeCoord(n, k + 1, float(x[k]))
     sections = laminate.define(mat_tag, sec_tag)
     mesh.laminate, mesh.element = laminate, element
+    if mesh.has_web:                    # TRAC / OM / CO: doubled laminate on the web facets (shell-mesh)
+        mesh.web_laminate = sm.web_laminate(mesh, laminate)
+        sections = {'flange': sections, 'web': mesh.web_laminate.define(mat_tag + sm.WEB_TAG_OFFSET,
+                                                                         sec_tag + sm.WEB_TAG_OFFSET)}
     if element == 'ASDShellQ4':
         return sm.create_elements(mesh, sections, element, ('-corotational',))
     if element != 'ShellNLDKGQ':
         raise ValueError("element must be 'ShellNLDKGQ' or 'ASDShellQ4'")
+    secs = sections if isinstance(sections, dict) else {'flange': sections}
     tag, mesh.facets, frames = 1, [], []
-    for _, _, nodes in mesh.quads():
+    for _, j, nodes in mesh.quads():
+        S = secs[mesh.strips[j][2]]
         frames.append(mesh.facet_frame([np.array(ops.nodeCoord(k)) for k in nodes]))
-        mesh.facets.append((tag, len(sections), sections[0][1]))
-        for sec, th in sections:
+        mesh.facets.append((tag, len(S), S[0][1]))
+        for sec, th in S:
             q = round(th / 90.0)
             if abs(th - 90.0 * q) > 1e-9:
                 raise ValueError(f'ShellNLDKGQ takes 0/90 deg plies only (got {th:g}); use ASDShellQ4')
@@ -101,8 +107,7 @@ def rigid_end(mesh, edge, E, t, factor=1e3, master_tag=None, first_ele=None):
     moment with ASDShellQ4 (10/29/26 log). A node at the centroid itself is
     tied with equalDOF. Returns the master node (stored in mesh.rigid[edge])."""
     nodes = mesh.edge_nodes(edge)
-    w = np.ones(len(nodes))
-    w[[0, -1]] = 0.5
+    w = mesh.edge_weights(edge, 'centroid')
     X = np.array([ops.nodeCoord(n) for n in nodes])
     c = w @ X / w.sum()
     master = master_tag or max(ops.getNodeTags()) + 1

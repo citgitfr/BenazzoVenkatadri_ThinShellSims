@@ -56,8 +56,22 @@ import failure_check as fc            # noqa: E402
 
 MAT_CATALOG = CLAUDE / 'memory.material_property_catalog' / 'UD_lamina_catalog_SI.txt'
 LAYUP_CATALOG = CLAUDE / 'memory.layup_catalog' / 'layup_catalog.txt'
-FE_SUPPORTED = {'TS'}           # section types shell-mesh can build faithfully (see PROTOCOL.md)
+FE_SUPPORTED = {'TS', 'TRAC', 'OM', 'CO'}   # section types shell-mesh builds (see PROTOCOL.md section 4)
 STIFF_MARGIN, BUCK_MARGIN = 0.85, 0.5
+
+
+def fe_buildable(g):
+    """shell-mesh can build this row: type in FE_SUPPORTED and, for OM/CO, both shells with the
+    same free chord (different chords are prestressed by bonding, which is not modelled)."""
+    if g['type'] not in FE_SUPPORTED:
+        return False
+    if g['type'] in ('OM', 'CO'):
+        import shell_mesh as sm
+        try:
+            sm.boom_section(g)
+        except ValueError:
+            return False
+    return True
 
 
 # --- catalogs -----------------------------------------------------------------------
@@ -136,7 +150,7 @@ def geometries(req):
         radii = [abs(R) for R, _ in g['A'] + g.get('B', [])]
         y0, y1, z0, z1 = b['bbox']
         geo = dict(g=g, parts=parts, r_min=min(radii), width=y1 - y0, height=z1 - z0,
-                   s_total=sum(_len(p) * m for p, m in parts), fe_supported=g['type'] in FE_SUPPORTED,
+                   s_total=sum(_len(p) * m for p, m in parts), fe_supported=fe_buildable(g),
                    I1=section_inertia(parts, 1.0), props1=None)
         if g['type'] == 'TS':
             import shell_buckling as sb

@@ -41,8 +41,11 @@ facets whose section arc length s (mid-strip) lies in a web range, from
 --web S0 S1, else the case geometry "web": [[s0, s1], ...], else, for a
 TRAC/OM/CO catalog boom (--boom ID or geometry "boom": ID), the 'line'
 segments of a 'segments' section whose length is the catalog web width w.
-shell-mesh gives every facet the single laminate, so the FE web is half as
-stiff as the real one: web stresses are the doubled layup on those strains.
+A model of a catalog boom section (shell-mesh section {"type": "boom"}, or
+any branched section with 'web' branches) has the doubled laminate on its web
+facets; those facets are then the web (results meta strip_label), with the
+model's web stack. Older single-chain models give every facet the single
+laminate, so their FE web is half as stiff as the real one.
 
 Coiling check (only if the simulation gives F < 1): flattening a flange of
 radius r is the curvature change k = [0, 1/r, 0] (transverse, k_xx = k_xy = 0
@@ -200,18 +203,16 @@ def boom_row(bid):
 
 
 def doubled_laminate(lam, stack='mirror'):
-    """Web laminate: a second flange laminate bonded under this one (z from
-    the bond plane). 'mirror' = identical tape turned over (plies reversed,
-    angles negated); 'repeat' = the plies twice as listed."""
-    below = ([dict(q, theta=-q['theta'] + 0.0) for q in reversed(lam.plies)] if stack == 'mirror'
-             else lam.plies)
-    return lp.Laminate(lam.materials, [dict(theta=q['theta'], t=q['t'], mat=q['mat']) for q in below + lam.plies],
-                       kind=lam.kind, name=f'web of {lam.name}'.strip())
+    """Web laminate (laminate_properties.doubled_laminate; shell-mesh uses the
+    same one in the web facets of a TRAC / OM / CO model)."""
+    return lp.doubled_laminate(lam, stack)
 
 
 def strip_stations(res):
     """Section arc length s at the middle of every facet strip j (from the
     undeformed nodes of the first column of facets)."""
+    if 'strip_s' in res['meta']:                       # branched section (shell-mesh strips)
+        return np.array(res['meta']['strip_s'])
     nx, ny = res['meta']['nx'], res['meta']['ny']
     faces, pts = res['faces'], res['points']
     nodes = [faces[j * nx, 0] for j in range(ny)] + [faces[(ny - 1) * nx, 3]]
@@ -257,9 +258,17 @@ def facet_groups(res, lam, boom=None, web=None, stack='mirror'):
     """Flange and web facets of a results file. boom: catalog ID (default: case
     geometry "boom"); web: [(s0, s1), ...] (default: from the case / boom).
     Returns groups [(label, laminate, facet indices)], web mask, boom row, note."""
-    geom = case_geometry(res)
-    bid = boom or geom.get('boom')
+    geom, meta = case_geometry(res), res['meta']
+    bid = boom or geom.get('boom') or meta.get('boom')
     row = boom_row(bid) if bid else None
+    if not web and 'web' in meta.get('strip_label', []):
+        # the FE model has the webs (doubled laminate on its web facets): use exactly those facets
+        stack = meta.get('web_stack', stack)
+        lab = np.array(meta['strip_label'])
+        mask = (lab == 'web')[np.arange(len(res['faces'])) // meta['nx']]
+        note = (f'web facets: {mask.sum()} of {len(mask)} (the web facets of the FE model, which carry the doubled '
+                f'{stack} laminate)')
+        return [('flange', lam, np.flatnonzero(~mask)), ('web', doubled_laminate(lam, stack), np.flatnonzero(mask))],             mask, row, note
     ranges, src = web_ranges(geom, row, web)
     mask = web_mask(res, ranges) if ranges else np.zeros(len(res['faces']), bool)
     note = (f'web facets: {mask.sum()} of {len(mask)} ({src}'
@@ -398,8 +407,10 @@ def main():
         print(f'boom {boom["id"]} ({boom["type"]})')
     print(note)
     if web.any():
-        print(f'web laminate ({a.web_stack}): [{groups[1][1].describe()}]; NOTE the FE model has the single '
-              'laminate in the web, so web strains come from a web half as stiff as the doubled one')
+        fe_web = 'web' in res['meta'].get('strip_label', [])
+        print(f'web laminate: [{groups[1][1].describe()}]' + (' (also in the FE model)' if fe_web else
+              '; NOTE the FE model has the single laminate in the web, so web strains come from a web half as '
+              'stiff as the doubled one'))
     nf = len(res['faces'])
     Fmax_f, ply_f, mode_f = np.zeros(nf), np.zeros(nf, int), np.full(nf, -1)
     F_sim = 0.0

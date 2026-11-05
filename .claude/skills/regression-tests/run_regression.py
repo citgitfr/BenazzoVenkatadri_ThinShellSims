@@ -612,7 +612,10 @@ def T20_abaqus_export():
     ex = SKILLS / 'shell-bc-load' / 'examples'
     with tempfile.TemporaryDirectory() as tmp:
         (Path(tmp) / 'c.json').write_text(json.dumps(T20_CASE))
-        for path in (ex / 'plate_tip_load_laminate.json', ex / 'tape_spring_L024_tip_load.json', Path(tmp) / 'c.json'):
+        for k, c in enumerate((BOOM_TRAC_CASE, BOOM_OMEGA_CASE)):
+            (Path(tmp) / f'boom{k}.json').write_text(json.dumps(c))
+        for path in (ex / 'plate_tip_load_laminate.json', ex / 'tape_spring_L024_tip_load.json', Path(tmp) / 'c.json',
+                     Path(tmp) / 'boom0.json', Path(tmp) / 'boom1.json'):
             case = json.loads(path.read_text())
             with redirect_stdout(io.StringIO()):
                 script, M, ref = c2a.generate(path, Path(tmp) / f'abaqus_{case["name"]}.py')
@@ -713,9 +716,15 @@ def T20_abaqus_export():
                              [c for c in log if c[0] == 'part.seedEdgeByNumber'])]
                 across = sum(n for p, n in seeds if abs(p[0]) < 1e-9)
                 along = {n for p, n in seeds if abs(p[0] - mesh.L / 2) < 1e-9}
-                check(f'{tag}: seeds across the section = OpenSees ny ({mesh.ny})', across, mesh.ny, 0, True)
+                check(f'{tag}: seeds across the section = OpenSees strips ({mesh.nstrips})', across, mesh.nstrips, 0, True)
                 check(f'{tag}: seeds along x = OpenSees nx ({mesh.nx})', float(along == {mesh.nx}), 1, 0, True)
-                layers = [c[2] for c in log if c[0] == 'section.SectionLayer']
+                layers = [c[2] for c in log if c[0] == 'section.SectionLayer' and not c[2]['plyName'].startswith('web')]
+                web_layers = [c[2] for c in log if c[0] == 'section.SectionLayer' and c[2]['plyName'].startswith('web')]
+                wl = sm.web_laminate(mesh, lam)
+                if wl is not None and lam.kind != 'isotropic':
+                    check(f'{tag}: web layers = doubled laminate plies (angle, t)',
+                          float([(l['orientAngle'], l['thickness']) for l in web_layers] ==
+                                [(float(q['theta']), q['t']) for q in wl.plies]), 1, 0, True)
                 check(f'{tag}: composite layers = plies bottom to top (angle, t)',
                       float([(l['orientAngle'], l['thickness']) for l in layers] ==
                             [(float(q['theta']), q['t']) for q in lam.plies] or lam.kind == 'isotropic'), 1, 0, True)
@@ -737,7 +746,7 @@ def T21_assembled_script():
     import assemble_run as ar
     ex = SKILLS / 'shell-bc-load' / 'examples'
     t20 = dict(T20_CASE, name='trac_like_load_control', analysis={'type': 'load_control', 'n_steps': 2})
-    cases = [json.loads((ex / 'tape_spring_L024_tip_load.json').read_text()), t20]
+    cases = [json.loads((ex / 'tape_spring_L024_tip_load.json').read_text()), t20, BOOM_TRAC_CASE, BOOM_OMEGA_CASE]
     with tempfile.TemporaryDirectory() as tmp:
         for case in cases:
             script, npz = Path(tmp) / f'{case["name"]}_opensees.py', Path(tmp) / f'{case["name"]}.npz'
@@ -764,7 +773,8 @@ def T22_opensees_to_abaqus():
     import opensees_to_abaqus as o2a
     ex = SKILLS / 'shell-bc-load' / 'examples'
     t20 = dict(T20_CASE, name='trac_like_load_control', analysis={'type': 'load_control', 'n_steps': 2})
-    cases = [json.loads((ex / 'tape_spring_L024_tip_load.json').read_text()), T20_CASE, t20]
+    cases = [json.loads((ex / 'tape_spring_L024_tip_load.json').read_text()), T20_CASE, t20, BOOM_TRAC_CASE,
+             BOOM_OMEGA_CASE]
     with tempfile.TemporaryDirectory() as tmp:
         for case in cases:
             src, out = Path(tmp) / f'{case["name"]}_opensees.py', Path(tmp) / f'abaqus_{case["name"]}.py'
@@ -842,6 +852,142 @@ def embedded_extractor(script, npz, tmp, name):
           float(same), 1, 0, True)
 
 
+# =========================== branched sections (TRAC, omega, corrugated) ===========================
+
+BOOM_TRAC_CASE = {
+    'name': 'trac_R001_linear',
+    'laminate': {'catalog': 'L024', 'layup': '[45/-45]s'},
+    'geometry': {'L': 60, 'section': {'type': 'boom', 'id': 'R001'}, 'size': 4},
+    'element': {'type': 'ASDShellQ4'},
+    'supports': [{'rigid_end': 'x0', 'dofs': [1, 1, 1, 1, 1, 1]}, {'edge': 'y0', 'dofs': [0, 1, 0, 0, 0, 0]}],
+    'loads': [{'edge': 'xL', 'force': [0, 0.05, -0.2], 'moment': [0, 5, 0]},
+              {'node': {'x': 32, 's': 30}, 'force': [0, 0.05, 0]}],
+    'analysis': {'type': 'linear'},
+}
+BOOM_OMEGA_CASE = {
+    'name': 'omega_M014_linear',
+    'laminate': {'catalog': 'L024', 'layup': '[0/90]s'},
+    'geometry': {'L': 45, 'section': {'type': 'boom', 'id': 'M014'}, 'size': 3},
+    'element': {'type': 'ASDShellQ4'},
+    'supports': [{'edge': 'x0', 'dofs': [1, 1, 1, 1, 1, 1]}, {'rigid_end': 'xL'}],
+    'loads': [{'node': {'rigid': 'xL'}, 'force': [0, 0.1, -0.5], 'moment': [3, 0, 0]}],
+    'analysis': {'type': 'linear'},
+}
+
+
+def thin_walled_EI(sec, EA_flange, EA_web, n=4000):
+    """Thin-walled beam theory: EI about the centroidal y and z axes of the
+    section mid-line, membrane stiffness per unit width EA_flange / EA_web
+    (web = bonded double tape), by midpoint integration along every branch."""
+    P, w = [], []
+    for br, lab in zip(sec.branches, sec.labels):
+        s = (np.arange(n) + 0.5) / n * br.b
+        P.append(np.array([br.point(u) for u in s]))
+        w.append(np.full(n, (EA_web if lab == 'web' else EA_flange) * br.b / n))
+    P, w = np.vstack(P), np.concatenate(w)
+    d = P - w @ P / w.sum()
+    return w @ d[:, 1]**2, w @ d[:, 0]**2            # about y (z offsets), about z (y offsets)
+
+
+def _pure_moment_EI(sec, lam, L, size, axis):
+    """FE: rigid ends, x0 clamped, end moment M about global y or z at xL;
+    EI = M L / rotation (linear)."""
+    mesh = sm.ShellMesh(L, sec, size)
+    sm.build_model(mesh, lam)
+    m0, m1 = bc.rigid_end(mesh, 'x0'), bc.rigid_end(mesh, 'xL')
+    ops.fix(m0, 1, 1, 1, 1, 1, 1)
+    M = 1000.0
+    bc.point_load(m1, (0, 0, 0), (0, M, 0) if axis == 'y' else (0, 0, M))
+    bc.linear_solve()
+    return M * L / ops.nodeDisp(m1, 5 if axis == 'y' else 6), mesh
+
+
+def T23_branched_sections():
+    """shell-mesh branched sections (TRAC, omega, corrugated): junctions, web laminate, EI vs thin-walled theory."""
+    import json
+    import tempfile
+    sys.path.insert(0, str(REPO / '.claude' / 'memory.boom_geometry_catalog'))
+    import make_boom_catalog as mk
+    from boom_data import GEOMETRIES
+
+    # geometry: every buildable TRAC / OM / CO row lies on the catalog polylines, the branches share nodes
+    def dist(p, P):
+        d = P[1:] - P[:-1]
+        u = np.clip(((p - P[:-1]) * d).sum(1) / (d * d).sum(1), 0, 1)
+        return np.min(np.linalg.norm(P[:-1] + u[:, None] * d - p, axis=1))
+    worst, n_ok, rejected = 0.0, 0, []
+    for g in GEOMETRIES:
+        if g['type'] == 'TS':
+            continue
+        try:
+            sec = sm.boom_section(g)
+        except ValueError:
+            rejected.append(g['id'])
+            continue
+        mesh = sm.ShellMesh(10, sec, 2.0)
+        b = mk.build(g)
+        lines = [np.array(x) for x in b['lines'] + b['webs']]
+        worst = max(worst, max(min(dist(np.array(mesh.coords(0, j)[1:]), P) for P in lines)
+                               for j in range(mesh.ny + 1)))
+        closed = g['type'] != 'TRAC'
+        n_ok += mesh.nstrips == mesh.ny + (1 if closed else 0)      # tree: strips = lines - 1; one loop: + 1
+    n_rows = sum(g['type'] != 'TS' for g in GEOMETRIES)
+    check(f'{n_ok} of {n_rows - len(rejected)} sections: strips = node lines - 1 (+1 closed loop): junctions shared',
+          n_ok, n_rows - len(rejected), 0, True)
+    check('nodes on the catalog polylines (40-step arc chords; max distance, mm)', worst, 0, 0.05, True)
+    info(f'rejected (shells with different free chords): {", ".join(rejected)}')
+
+    # web laminate: doubled mirror stack in the web facets only
+    lam = lp.laminate_from_spec({'catalog': 'L024', 'layup': '[0/45]'})
+    mesh = sm.ShellMesh(20, sm.boom_section('R001'), 4)
+    sm.build_model(mesh, lam)
+    web = [f for f, lab in zip(mesh.facets, mesh.facet_labels) if lab == 'web']
+    check('R001: web facets = web strips x nx', len(web), sum(st[2] == 'web' for st in mesh.strips) * mesh.nx, 0, True)
+    check('R001 web laminate = [-45/0/0/45] (mirror stack of [0/45])',
+          float([q['theta'] for q in mesh.web_laminate.plies] == [-45.0, 0.0, 0.0, 45.0]), 1, 0, True)
+    check('R001 web ABD A11 = 2 x flange A11', mesh.web_laminate.abd()[0, 0] / lam.abd()[0, 0], 2, 1e-12)
+    ops.wipe()
+
+    # EI vs thin-walled beam theory (isotropic, nu = 0: no Poisson coupling with the curved flanges)
+    E, t = 70000.0, 0.1
+    iso = lp.Laminate.isotropic(E, 0.0, t)
+    for bid, size in (('R001', 2.0), ('M001', 2.0), ('C013', 2.0)):
+        sec = sm.boom_section(bid)
+        Iy, Iz = thin_walled_EI(sec, E * t, 2 * E * t)
+        for axis, ref in (('y', Iy), ('z', Iz)):
+            EI, mesh = _pure_moment_EI(sec, iso, 300.0, size, axis)
+            check(f'{bid}: EI about {axis} (pure moment) vs thin-walled theory', EI, ref, 0.02)
+            ops.wipe()
+    # laminate omega: membrane stiffness per width 1 / a11 (flange) and of the doubled web
+    lam = lp.laminate_from_spec({'catalog': 'L024', 'layup': '[0/90/0]'})
+    sec = sm.boom_section('M001')
+    web = lp.doubled_laminate(lam)
+    ea = lambda L_: 1.0 / np.linalg.inv(L_.abd()[:3, :3])[0, 0]
+    Iy, Iz = thin_walled_EI(sec, ea(lam), ea(web))
+    for axis, ref in (('y', Iy), ('z', Iz)):
+        EI, mesh = _pure_moment_EI(sec, lam, 300.0, 2.0, axis)
+        check(f'M001 [0/90/0]: EI about {axis} vs thin-walled theory (1/a11)', EI, ref, 0.03)
+        ops.wipe()
+    _, Iz1 = thin_walled_EI(sec, ea(lam), ea(lam))
+    info(f'M001 [0/90/0]: a single-laminate web would change EI_z by {Iz1 / Iz - 1:+.2%}')
+
+    # case file -> results -> failure-check finds the web facets of the model
+    with tempfile.TemporaryDirectory() as tmp:
+        with redirect_stdout(io.StringIO()):
+            res = bc.run_case(BOOM_TRAC_CASE, tmp)
+        npz = sorted(Path(tmp).rglob('*.npz'))[0]
+        res = bc.load_results(npz)
+        lam = lp.laminate_from_spec(BOOM_TRAC_CASE['laminate'])
+        groups, mask, row, note = th.facet_groups(res, lam)
+        mesh = sm.build_from_spec(BOOM_TRAC_CASE['geometry'])
+        check('failure-check: web facets of the results = web facets of the mesh',
+              float(np.array_equal(mask, np.array(mesh.facet_labels) == 'web')), 1, 0, True)
+        check('failure-check: boom row from the results (R001)', float(row is not None and row['id'] == 'R001'), 1, 0, True)
+        check('failure-check: web group laminate = doubled', float(len(groups) == 2 and
+              [q['theta'] for q in groups[1][1].plies] == [q['theta'] for q in lp.doubled_laminate(lam).plies]), 1, 0, True)
+    ops.wipe()
+
+
 def abaqus_mock_P(g):
     return (g[1], g[2], g[0])
 
@@ -855,7 +1001,7 @@ TESTS = [T01_poisson_convention, T02_ply_rotation, T03_hand_check, T04_90_0, T05
          T11_large_deflection_10mm, T12_large_deflection_5mm, T13_curved_strip, T14_pure_moment,
          T15_tip_load_laminate, T16_orientation_on_curved_facets, T17_failure_unit, T18_failure_vs_clt,
          T19_case_file_and_viewer, T20_abaqus_export, T21_assembled_script,
-         T22_opensees_to_abaqus]
+         T22_opensees_to_abaqus, T23_branched_sections]
 SLOW = {'T09', 'T12'}
 
 

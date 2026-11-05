@@ -148,10 +148,11 @@ def write_pieces(case, folder):
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=True)
     paths = {k: folder / f'{k}_code.py' for k in ('laminate', 'mesh', 'bc')}
-    lp.laminate_from_spec(case['laminate']).write_code(paths['laminate'])
+    lam = lp.laminate_from_spec(case['laminate'])
+    lam.write_code(paths['laminate'])
     el = case.get('element', {})
     sm.write_code(sm.build_from_spec(case['geometry']), paths['mesh'], el.get('type', 'ASDShellQ4'),
-                  el.get('corotational', False), el.get('eas'), geometry=case['geometry'])
+                  el.get('corotational', False), el.get('eas'), geometry=case['geometry'], laminate=lam)
     bc.write_code(case, paths['bc'])
     return paths
 

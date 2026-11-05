@@ -148,14 +148,18 @@ def facet_normal(X):
     return n / np.linalg.norm(n)
 
 
-def through_thickness(os_m):
+def through_thickness(os_m, web=None):
     """OpenSees layers bottom to top as (t, angle, material constants), the
     angle measured from global x about the facet normal, from each element's
     -local axis (one coincident element per ply angle: in each layer exactly
     one of them has a real material, the others the zero-stiffness void).
-    Also returns the largest spread of the angle of one section over the facets."""
+    Also returns the largest spread of the angle of one section over the facets.
+    web: None = every facet; True / False = only the facets whose sections are
+    (are not) the web laminate of a branched section (tags > shell_mesh.WEB_TAG_OFFSET)."""
     angle_of, spread = {}, 0.0
     for q, els in os_m['quads'].items():
+        if web is not None and (min(e[0] for e in els) > sm.WEB_TAG_OFFSET) != web:
+            continue
         X = np.array([os_m['nodes'][n] for n in q])
         n = facet_normal(X)
         x = np.array([1.0, 0.0, 0.0]) - n[0] * n          # global x on the facet (= Abaqus material axis 1)
@@ -269,26 +273,32 @@ def check_model(os_m, script, M, case, lam):
              zip([c for c in log if c[0] == 'part.edges.findAt'], [c for c in log if c[0] == 'part.seedEdgeByNumber'])]
     across = sum(n for p, n in seeds if abs(p[2]) < 1e-9)
     along = {n for p, n in seeds if abs(p[2] - L / 2) < 1e-9}
-    add(f'Abaqus seeds: {mesh.nx} along x, {mesh.ny} across the section', across == mesh.ny and along == {mesh.nx},
+    add(f'Abaqus seeds: {mesh.nx} along x, {mesh.nstrips} across the section',
+        across == mesh.nstrips and along == {mesh.nx},
         f'{sorted(along)} along, {across} across')
 
-    # section: layers through the thickness (angle from global x about the normal, material, z)
-    os_layers, spread = through_thickness(os_m)
-    add('ply angle of each section the same on every facet (from the -local axes)', spread < 1e-6,
-        f'max spread {spread:.1e} deg')
+    # section(s): layers through the thickness (angle from global x about the normal, material, z);
+    # a section with webs has the flange 'Section' and the doubled 'WebSection'
     elastic = [c[2] for c in log if c[0] == 'model.Material().Elastic']
-    if os_layers[0][2][0] == 'isotropic':
-        hom = [c[2] for c in log if c[0] == 'model.HomogeneousShellSection'][0]
-        t, _, (_, E, nu) = os_layers[0]
-        ok = abs(hom['thickness'] - t) <= TOL * t and np.allclose(elastic[0]['table'][0], (E, nu), rtol=1e-12)
-        add('isotropic section: thickness, E, nu = OpenSees ElasticMembranePlateSection', ok,
-            f'h {hom["thickness"]:g} / {t:g}')
-    else:
+    groups = [(None, '', lambda kw: True)] if not M.get('web_faces') else [
+        (False, 'flange: ', lambda kw: not kw.get('plyName', '').startswith('web')),
+        (True, 'web: ', lambda kw: kw.get('plyName', '').startswith('web'))]
+    for gi, (web, pre, mine) in enumerate(groups):
+        os_layers, spread = through_thickness(os_m, web)
+        add(f'{pre}ply angle of each section the same on every facet (from the -local axes)', spread < 1e-6,
+            f'max spread {spread:.1e} deg')
+        if os_layers[0][2][0] == 'isotropic':
+            hom = [c[2] for c in log if c[0] == 'model.HomogeneousShellSection'][gi]
+            t, _, (_, E, nu) = os_layers[0]
+            ok = abs(hom['thickness'] - t) <= TOL * t and np.allclose(elastic[0]['table'][0], (E, nu), rtol=1e-12)
+            add(f'{pre}isotropic section: thickness, E, nu = OpenSees ElasticMembranePlateSection', ok,
+                f'h {hom["thickness"]:g} / {t:g}')
+            continue
         ab = [(kw['thickness'], kw['orientAngle'], elastic[int(kw['material'][3:])]['table'][0])
-              for kw in (c[2] for c in log if c[0] == 'section.SectionLayer')]
+              for kw in (c[2] for c in log if c[0] == 'section.SectionLayer') if mine(kw)]
         z_ab = np.cumsum([0.0] + [t for t, _, _ in ab])
         z_os = np.cumsum([0.0] + [t for t, _, _ in os_layers])
-        add('total thickness: Abaqus layup = OpenSees LayeredShell', abs(z_ab[-1] - z_os[-1]) <= TOL * z_os[-1],
+        add(f'{pre}total thickness: Abaqus layup = OpenSees LayeredShell', abs(z_ab[-1] - z_os[-1]) <= TOL * z_os[-1],
             f'{z_ab[-1]:g} / {z_os[-1]:g} mm')
         bad_angle = bad_mat = 0
         g23 = set()
@@ -299,9 +309,9 @@ def check_model(os_m, script, M, case, lam):
             bad_angle += abs((th - th_ab + 180) % 360 - 180) > 1e-6
             bad_mat += not np.allclose(tab[:5], mat[:5], rtol=1e-12)     # E1 E2 nu12 G12 G13
             g23.add((tab[5], mat[5]))
-        add(f'ply angles through the thickness ({len(os_layers)} OpenSees layers in {len(ab)} Abaqus plies, '
+        add(f'{pre}ply angles through the thickness ({len(os_layers)} OpenSees layers in {len(ab)} Abaqus plies, '
             'bottom = SNEG)', bad_angle == 0, f'{bad_angle} layer(s) differ')
-        add('ply E1, E2, nu12, G12, transverse G13 = OpenSees', bad_mat == 0, f'{bad_mat} layer(s) differ')
+        add(f'{pre}ply E1, E2, nu12, G12, transverse G13 = OpenSees', bad_mat == 0, f'{bad_mat} layer(s) differ')
         if any(abs(a - b) > 1e-9 * a for a, b in g23):
             out.append(('note: Abaqus G23 differs from the OpenSees Gyz (OpenSees plate uses one transverse modulus)',
                         True, ''))

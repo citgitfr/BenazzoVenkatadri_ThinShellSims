@@ -59,9 +59,12 @@ ply stiffness and the five ply strengths Xt Xc Yt Yc S from the catalog;
   the `line` segments of a `segments` section whose length is the catalog
   web width w. A TRAC/OM/CO boom with no web found prints a WARNING and is
   checked all as flange. TS and booms without an ID: all flange.
-- shell-mesh puts the single laminate on every facet (no double-thickness
-  web yet), so the FE web is too compliant and its curvatures too large:
-  web F from such a model is conservative. Say so when reporting it.
+- A model built from a catalog boom section (shell-mesh `{"type": "boom"}`,
+  or any branched section with `web` branches) has the doubled laminate on
+  its web facets; its results meta lists them (`strip_label`), and those
+  facets ARE the web here (with the model's web stack) unless `--web` is
+  given. Older single-chain models put the single laminate on every facet,
+  so their FE web is too compliant: web F from them is conservative. Say so.
 
 ## Coiling check
 Run only when the simulation gives F < 1. The flange is flattened from the

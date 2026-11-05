@@ -481,6 +481,20 @@ class Laminate:
         return cls.from_dict(json.loads(Path(path).read_text()))
 
 
+def doubled_laminate(lam, stack='mirror'):
+    """Web (bonded tab) laminate of a TRAC / OM / CO boom: a second flange
+    laminate bonded under this one, z from the bond plane (-h..+h). 'mirror' =
+    identical tape turned over (plies reversed, angles negated), which is the
+    same seen from either side; 'repeat' = the plies twice as listed. The
+    flange layup is read from the bonded face outward."""
+    if stack not in ('mirror', 'repeat'):
+        raise ValueError(f"web stack must be 'mirror' or 'repeat', not {stack!r}")
+    below = ([dict(q, theta=-q['theta'] + 0.0) for q in reversed(lam.plies)] if stack == 'mirror'
+             else lam.plies)
+    return Laminate(lam.materials, [dict(theta=q['theta'], t=q['t'], mat=q['mat']) for q in below + lam.plies],
+                    merge=lam.merge, G_out=lam.G_out, kind=lam.kind, name=f'web of {lam.name}'.strip())
+
+
 def laminate_from_spec(spec):
     """Laminate from a dict as used in case files:
       {'catalog': 'L024', 'layup': '[0/90]s', 'thickness': None (catalog t_ply), 'n_sub': ..., 'merge': true}
