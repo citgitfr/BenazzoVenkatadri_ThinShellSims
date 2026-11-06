@@ -24,10 +24,11 @@ To add or check catalog materials, layups or boom geometries, use the CompositeL
 (literature work), not this one.
 
 Layup data: `.claude/memory.layup_catalog/layup_catalog.txt` lists the
-layups to simulate (IDs Y001-Y455): every symmetric 1-5 ply sequence with
-angles 0, 15, ..., 90 deg, bottom to top, plus thickness at 0.035 mm plies,
-number of distinct angles (= coincident elements per facet, i.e. run cost)
-and whether it is cross-ply (no A16/A26/D16/D26 coupling). Pick the next
+layups to simulate (IDs Y001-Y199): every symmetric 3-5 ply sequence with
+angles 0, +-30, +-45, +-60, 90 deg and at least one 0 ply, bottom to top,
+plus thickness at 0.035 mm plies, number of distinct angles (= coincident
+elements per facet, i.e. run cost), whether it is cross-ply (no
+A16/A26/D16/D26 coupling) and whether it is balanced (A16 = A26 = 0). Pick the next
 layup from it by ID, pass its `layup` string unchanged to `--layup`, and
 report the ID with the results. Regenerate it only with
 `make_layup_catalog.py` in the same folder.

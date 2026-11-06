@@ -18,7 +18,7 @@
  "extra_constraints": [],
  "limits": {"max_thickness_mm": null, "max_width_mm": null, "max_height_mm": null},
  "materials": {"allow": "all", "exclude": [], "allow_caution": false},
- "layups": {"allow": "all", "min_plies": 1, "max_plies": 5, "cross_ply_only": false},
+ "layups": {"allow": "all", "min_plies": 3, "max_plies": 5, "cross_ply_only": false},
  "geometries": {"allow": "all", "exclude": []},
  "max_iterations": 100,
  "verification": {"min": 5, "max": 10}

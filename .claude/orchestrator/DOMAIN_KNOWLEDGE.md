@@ -25,11 +25,12 @@ E_x = 1/(h a11) with a = A^-1.
   are too stiff if the mesh across the curvature is coarse. The study uses
   at least about 8 elements across the arc (size = min(5, b/8) mm). Never
   coarsen it.
-- **Laminate (CLT).** Symmetric layups give B = 0. Any 15-75 deg ply in the
-  0..90-only catalog makes the laminate unbalanced: A16, A26 (extension-shear)
-  and D16, D26 (bend-twist) are non-zero, so a tip load also twists the boom.
-  Cross-ply layups have neither coupling. With few plies, D is dominated by
-  the outer plies: the outer 0 deg plies carry EI, while +-45 plies carry
+- **Laminate (CLT).** Symmetric layups give B = 0. Any +-30..60 deg ply makes D16, D26
+  (bend-twist) non-zero, so a tip load also twists the boom; A16, A26
+  (extension-shear) are non-zero too unless the layup is balanced (catalog
+  column `balanced`: every +theta ply has a -theta partner). Cross-ply
+  layups have neither coupling. Every catalog layup has at least one 0 ply.
+  With few plies, D is dominated by the outer plies: the outer 0 deg plies carry EI, while +-45 plies carry
   torsion (GJ) and the shear needed for flattening-induced stresses. With
   ply thickness fixed at 0.035 mm, thinner laminates coil to smaller radii
   but have lower EI (proportional to h) and much lower local buckling
