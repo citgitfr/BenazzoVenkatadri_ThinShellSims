@@ -500,7 +500,13 @@ for k, ld in enumerate(M['loads']):
         for g, (w, labs) in enumerate(sorted(groups.items())):
             point_loads('L%%d_%%d' %% (k, g), node_set(labs, 'LOAD%%d_%%d' %% (k, g)), [w * f for f in F], [w * m for m in Mm])
 
-model.fieldOutputRequests['F-Output-1'].setValues(variables=('S', 'E', 'SE', 'SF', 'SM', 'U', 'UR', 'RF'), frequency=1)   # SE: section strains + curvatures (SK)
+# Field output. Abaqus rejects the WHOLE request ("Invalid variables are specified in an output
+# request") if any one name is invalid. 'SM' is NOT a valid request name (refused by Abaqus/CAE,
+# 2026-11-06): section moments come with 'SF', which writes the SF and SM fields to the ODB, and 'SE'
+# writes section strains (SE) and curvatures (SK). Only names verified in Abaqus go here; regression
+# test T20 fails if any other name is requested.
+FIELD_OUTPUT = ('S', 'E', 'SE', 'SF', 'U', 'UR', 'RF')
+model.fieldOutputRequests['F-Output-1'].setValues(variables=FIELD_OUTPUT, frequency=1)
 
 job = mdb.Job(name=JOB, model=model.name, type=ANALYSIS, nodalOutputPrecision=SINGLE,
               memoryUnits=PERCENTAGE, memory=90)

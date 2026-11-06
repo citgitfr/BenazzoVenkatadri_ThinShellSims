@@ -668,6 +668,9 @@ def T20_abaqus_export():
                     stopped = False
                 except abaqus_mock.StopAtJob:
                     stopped = True
+                except ValueError as err:                       # e.g. an invalid field-output name
+                    print(f'      script stopped: {err}')
+                    stopped = False
                 finally:
                     if 'REPORT' in ns:
                         ns['REPORT'].close()
@@ -676,6 +679,14 @@ def T20_abaqus_export():
                         sys.modules.pop(m, None)
                 tag = f'{case["name"]}{" (normals flipped)" if flip else ""}'
                 check(f'{tag}: script runs up to the job', float(stopped), 1, 0, True)
+                # field output: only Abaqus-verified names (no 'SM'); the request left on the step
+                # must hold everything the comparison needs
+                fo = [c for c in log if c[0] == 'fieldOutput.setValues' and 'variables' in c[2]]
+                final = [c[2]['variables'] for c in fo if not c[2]['rejected']]
+                need = {'S', 'E', 'SE', 'SF', 'U', 'UR', 'RF'}
+                check(f'{tag}: valid field output request (S, E, SE, SF, U, UR, RF; no SM)',
+                      float(bool(final) and need <= set(final[-1])
+                            and set(final[-1]) <= abaqus_mock.VALID_FIELD_OUTPUT), 1, 0, True)
                 flips = sum(1 for c in log if c[0] == 'part.flipNormal')
                 check(f'{tag}: faces flipped to the OpenSees normal', flips, len(M['faces']) if flip else 0, 0, True)
                 if flip:

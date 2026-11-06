@@ -33,6 +33,12 @@ abaqus cae noGUI=abaqus_<name>.py [-- <size> <S4R|S4>]      # on a machine with 
   runs before the script's own comparison; if it fails, `<job>_results.txt`
   gives the `abaqus python odb_extract.py <job>.odb` command to run instead.
   Regression T22 checks the copy is verbatim and writes the same arrays.
+- Field output request: `S, E, SE, SF, U, UR, RF` only. **Never request
+  `SM`**: Abaqus/CAE refuses it and rejects the whole request ("Invalid
+  variables are specified in an output request", 2026-11-06). `SF` already
+  writes the SF and SM fields to the ODB, and `SE` writes SE and SK. Add a name
+  only after it ran in Abaqus, in both `FIELD_OUTPUT` and
+  `regression-tests/abaqus_mock.py` `VALID_FIELD_OUTPUT`; T20 fails otherwise.
 
 ## Translation
 | OpenSees (v2.0 skills) | Abaqus |

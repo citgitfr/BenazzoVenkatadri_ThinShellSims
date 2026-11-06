@@ -96,6 +96,30 @@ class Rec:
         return iter(())
 
 
+# Field-output variable names confirmed to be accepted by Abaqus/CAE in a static/Riks step.
+# Any other name raises like Abaqus ("Invalid variables are specified in an output request"):
+# 'SM' was refused by Abaqus/CAE on 2026-11-06 (section moments come with 'SF'). Add a name here
+# only after it ran in Abaqus.
+VALID_FIELD_OUTPUT = {'S', 'E', 'SE', 'SF', 'U', 'UR', 'RF'}
+
+
+class FieldOutput(Rec):
+    """fieldOutputRequests[...]: setValues checks the variable names (whole request rejected)."""
+
+    def __init__(self, log):
+        super().__init__(log, 'fieldOutput')
+        self.variables = None
+
+    def setValues(self, **kw):
+        bad = [v for v in kw.get('variables', ()) if v not in VALID_FIELD_OUTPUT]
+        self._log.append(('fieldOutput.setValues', (), dict(kw, rejected=bad)))
+        if bad:
+            raise ValueError('Invalid variables are specified in an output request.  An output request '
+                             'cannot be created in a step where some variables are invalid. (%s)' % ', '.join(bad))
+        if 'variables' in kw:
+            self.variables = tuple(kw['variables'])
+
+
 class Face:
     def __init__(self, normal):
         self.normal = normal
@@ -188,7 +212,7 @@ def install(nodes_xyz, normal_of):
         def __init__(self, name):
             super().__init__(log, 'model')
             self.rootAssembly = Asm()
-            self.fieldOutputRequests = {'F-Output-1': Rec(log, 'fieldOutput')}
+            self.fieldOutputRequests = {'F-Output-1': FieldOutput(log)}
 
         def Part(self, **kw):
             log.append(('model.Part', (), kw))
