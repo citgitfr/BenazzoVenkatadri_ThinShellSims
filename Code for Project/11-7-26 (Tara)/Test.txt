@@ -1,0 +1,1 @@
+I am testing whether GitHub/VSCode/Claude Code have been added to my lab's server
