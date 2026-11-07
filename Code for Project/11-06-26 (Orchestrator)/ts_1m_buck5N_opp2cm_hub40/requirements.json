@@ -1,0 +1,60 @@
+{
+ "_help": "Written by the orchestrator from the user's prompt (PROTOCOL.md step 1), then checked by study.py init. Units N, mm. Remove the requirements the user did not give; keep their words in each 'text'. Keys starting with _ are ignored.",
+ "prompt": "1 m long tape-spring boom, must have buckling strength above 5N under axial compression when under pin/pin boundary conditions, must have transverse stiffness in the direction of opposite sense bending such that it does not deflect more than 2 cm under a 5N load if clamped at the root, coils on a 40 mm hub",
+ "_clarifications": "Asked once (2026-11-06): hub = 40 mm RADIUS; 'tape-spring boom' = TS sections only. Opposite-sense bending of the shell-mesh arc (centre of curvature on +z, edges at +z) = tip load along -z (edges in tension). Stiffness: 5 N / 20 mm = 0.25 N/mm at a 5 N service load.",
+ "study_name": "ts_1m_buck5N_opp2cm_hub40",
+ "length_mm": 1000,
+ "section_classes": [
+  "TS"
+ ],
+ "objective": {
+  "sense": "minimize",
+  "quantity": "mass"
+ },
+ "requirements": {
+  "bending_stiffness": {
+   "text": "must have transverse stiffness in the direction of opposite sense bending such that it does not deflect more than 2 cm under a 5N load if clamped at the root (k >= 5 N / 20 mm = 0.25 N/mm)",
+   "direction": "z",
+   "sign": -1,
+   "min_N_per_mm": 0.25,
+   "load_N": 5.0
+  },
+  "buckling": {
+   "text": "must have buckling strength above 5N under axial compression when under pin/pin boundary conditions",
+   "load": "compression",
+   "ends": "pinned",
+   "min_value": 5.0,
+   "units": "N"
+  },
+  "coiling": {
+   "text": "coils on a 40 mm hub (radius, confirmed by the user)",
+   "hub_radius_mm": 40
+  }
+ },
+ "extra_constraints": [],
+ "limits": {
+  "max_thickness_mm": null,
+  "max_width_mm": null,
+  "max_height_mm": null
+ },
+ "materials": {
+  "allow": "all",
+  "exclude": [],
+  "allow_caution": false
+ },
+ "layups": {
+  "allow": "all",
+  "min_plies": 3,
+  "max_plies": 5,
+  "cross_ply_only": false
+ },
+ "geometries": {
+  "allow": "all",
+  "exclude": []
+ },
+ "max_iterations": 100,
+ "verification": {
+  "min": 5,
+  "max": 10
+ }
+}

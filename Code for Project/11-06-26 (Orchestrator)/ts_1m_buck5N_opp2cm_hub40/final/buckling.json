@@ -1,0 +1,38 @@
+{
+ "name": "it002_L006_Y001_T014_buck",
+ "laminate": {
+  "json": "lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "arc",
+   "R": 20,
+   "b": 79.93608
+  },
+  "size": 5.0
+ },
+ "load": {
+  "type": "compression",
+  "ends": "pinned"
+ },
+ "A": {
+  "step": 0.006103355169119211,
+  "max": 0.3662013101471527,
+  "n_coarse": 8
+ },
+ "B": {
+  "step": 0.0011318190108453696,
+  "max": 0.022636380216907392,
+  "amplitude": 0.0105,
+  "control": "disp"
+ },
+ "B_cutoff": 15.0,
+ "mode_file": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-06-26 (Orchestrator)\\ts_1m_buck5N_opp2cm_hub40\\iterations\\it002\\buckling\\it002_L006_Y001_T014_buck_modeA.npz",
+ "A_known": {
+  "critical_load": 51.05680374971193,
+  "critical_param": 0.03862279442958251,
+  "time": 12097.0,
+  "source": "logs/A_reused_from_buckling_0.log"
+ }
+}
