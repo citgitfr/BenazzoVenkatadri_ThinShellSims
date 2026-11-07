@@ -50,6 +50,10 @@ LEDGER_COLS = ('iter', 'material', 'layup', 'geometry', 'type', 'h_mm', 'size_mm
                'F_governing', 'feasible', 'objective', 'sanity', 'override', 'reason')
 K_TOL = 0.15            # FE tip stiffness vs thin-walled beam theory (rigid-end tape spring: 0.4% in v2.0 tests)
 CONV_TOL = dict(k=0.02, F=0.10)
+# Buckling path cutoff (threshold requirements only): path B stops once it carries this multiple of the required
+# load and the value is recorded as a lower bound (the design passes with that margin). Override per study with
+# requirements.json "buckling": {"cutoff_factor": ...}; 0 or null = no cutoff. Added 2026-11-06 at the user's request.
+BUCKLING_CUTOFF = 3.0
 NO_IMPROVE_WINDOW, MIN_ITERS_BEFORE_STOP, IMPROVE_TOL = 15, 20, 0.01
 
 
@@ -608,7 +612,7 @@ def run_step(sd, st, i, step):
             d.update(buckling_value=None, buckling_kind=f'skipped: already violates {", ".join(bad)}')
             jsave(idir / 'design.json', d)
             return True, f'buckling skipped: the design already violates {", ".join(bad)} (saves the path run)'
-        return run_buckling(idir, d, logs)
+        return run_buckling(idir, d, logs, req=_clean(jload(sd / 'requirements.json')))
     if step == 'objcon':
         vals = []
         if d.get('F_hub') is not None:
@@ -630,13 +634,104 @@ def _widen(case, f=2.0):
     return case
 
 
-def run_buckling(idir, d, logs, max_widen=3):
+def buckling_cutoff(req, d):
+    """Load at which path B may stop with a lower bound (cutoff_factor x required value), or None."""
+    bq = (req or {}).get('requirements', {}).get('buckling')
+    obj = (req or {}).get('objective', {})
+    if not bq or not bq.get('min_value') or (obj.get('quantity') == 'buckling' and obj.get('sense') == 'maximize'):
+        return None, None
+    f = bq.get('cutoff_factor', BUCKLING_CUTOFF)
+    if not f:
+        return None, None
+    return f * bq['min_value'], f
+
+
+def apply_cutoff(case, d, cut):
+    """Shorten B's path range to twice the linear end shortening / rotation at the cutoff load, so the path
+    passes the cutoff unless it buckles first (A keeps its full range: it must find the mode)."""
+    if 'B' not in case or not cut:
+        return
+    if case['load']['type'] == 'bending':
+        lin = cut * d['L'] / d['EIz']
+    else:
+        lin = cut * d['L'] / (d['Ex'] * d['h_mm'] * d['b'])
+    mx = min(case['B']['max'], 2 * lin)
+    case['B']['step'] = min(case['B']['step'], mx / 20)
+    case['B']['max'] = mx
+
+
+def resume_A(case, bdir, logs):
+    """A finished in an earlier, interrupted run of this case (its mode file and its log line exist): reuse it,
+    so only B is rerun. Returns the A result dict or None."""
+    mf = bdir / f'{case["name"]}_mode.npz'
+    if case.get('A_known') or not mf.exists():
+        return case.get('A_known')
+    for lg in sorted(logs.glob('buckling_*.log')):
+        m = re.search(r'A \(ShellNLDKGQ stability scan\): critical ([\d.eE+-]+) at ([\d.eE+-]+); (\d+) s',
+                      lg.read_text(errors='ignore'))
+        if m:
+            keep = bdir / f'{case["name"]}_modeA.npz'     # a copy: B rewrites <name>_mode.npz
+            shutil.copyfile(mf, keep)
+            shutil.copyfile(lg, logs / f'A_reused_from_{lg.name}')
+            case['mode_file'] = str(keep)
+            case['A_known'] = dict(critical_load=float(m.group(1)), critical_param=float(m.group(2)),
+                                   time=float(m.group(3)), source=f'logs/A_reused_from_{lg.name}')
+            return case['A_known']
+    return None
+
+
+def reuse_section_mode(case, idir, d, bdir):
+    """Step A costs hours (dense K_T eigenvalues at every scan point), so it runs once per section: a later design
+    with the same geometry, element size, length and load case takes the A mode shape of the first one as its
+    imperfection and runs B only (user decision, 2026-11-06). A's critical load is laminate-specific and is NOT
+    carried over. Returns the A_known dict (critical_load None) or None."""
+    if case.get('A_known') or case.get('mode_file'):
+        return case.get('A_known')
+    for od in sorted(idir.parent.glob('it[0-9][0-9][0-9]')):
+        if od == idir or not (od / 'design.json').exists() or not (od / 'buckling.json').exists():
+            continue
+        o = jload(od / 'design.json')
+        oc = jload(od / 'buckling.json')
+        if (o.get('geometry'), o.get('size'), o.get('L')) != (d.get('geometry'), d.get('size'), d.get('L')) \
+                or oc.get('load') != case.get('load') or not o.get('buckling_A') \
+                or o.get('buckling_imperfection') != 'mode A' or (oc.get('A_known') or {}).get('from_section'):
+            continue                                   # only modes computed by a real step A on this section
+        ob = od / 'buckling'
+        src = next((p for p in (ob / f'{oc["name"]}_modeA.npz', ob / f'{oc["name"]}_mode.npz') if p.exists()), None)
+        if src is None:
+            continue
+        bdir.mkdir(parents=True, exist_ok=True)
+        keep = bdir / f'{case["name"]}_modeA.npz'
+        shutil.copyfile(src, keep)
+        case['mode_file'] = str(keep)
+        case['A_known'] = dict(critical_load=None, critical_param=None, from_section=True,
+                               source=f'{od.name} ({o.get("key")}): A mode of section {d.get("geometry")}, '
+                                      f'size {d.get("size")} mm, reused as imperfection shape')
+        return case['A_known']
+    return None
+
+
+def run_buckling(idir, d, logs, max_widen=3, req=None):
     """boom_buckling.py on the design. The path range comes from the screening estimate (a lower bound for
     tape springs), so it is doubled (up to max_widen times) while A finds no crossing or B's path is still
-    rising at its end. Off-axis layups: mode shape of A from a 0/90 surrogate of the same thickness."""
+    rising at its end. Off-axis layups: mode shape of A from a 0/90 surrogate of the same thickness.
+    Threshold requirements: B stops at cutoff_factor x the required value (lower bound, design passes).
+    A finished in an interrupted run is reused (only B reruns)."""
     case = jload(idir / 'buckling.json')
     bdir = idir / 'buckling'
     notes = []
+    cut, cut_f = buckling_cutoff(req, d)
+    if cut and 'B_cutoff' not in case:
+        apply_cutoff(case, d, cut)
+        case['B_cutoff'] = cut
+    A_known = resume_A(case, bdir, logs)
+    if A_known:
+        notes.append(f'A reused from an interrupted run ({A_known["source"]}); only B rerun')
+    else:
+        A_known = reuse_section_mode(case, idir, d, bdir)
+        if A_known:
+            notes.append(f'A not run: mode shape from {A_known["source"]}; only B run (no A crossing value)')
+    only = ['--only', 'B'] if A_known else []
     if not d['cross_ply'] and 'mode_file' not in case:
         lam = jload(idir / 'lam.json')
         surlam = idir / 'lam_surrogate_0_90.json'
@@ -659,22 +754,30 @@ def run_buckling(idir, d, logs, max_widen=3):
             notes.append('mode shape from a 0/90 surrogate laminate (ShellNLDKGQ takes 0/90 plies only)')
         else:
             notes.append('NO MODE SHAPE (surrogate scan found no crossing): B ran without imperfection')
+    tag = 'Bonly_' if A_known else ''
     for k in range(max_widen + 1):
         jsave(idir / 'buckling.json', case)
-        code, out = run_cmd([SKILLS / 'shell-buckling' / 'boom_buckling.py', idir / 'buckling.json', '--out', bdir],
-                            logs / f'buckling_{k}.log', cwd=idir)
+        lg = logs / f'buckling_{tag}{k}.log'
+        code, out = run_cmd([SKILLS / 'shell-buckling' / 'boom_buckling.py', idir / 'buckling.json', '--out', bdir]
+                            + only, lg, cwd=idir)
         rf = bdir / f'{case["name"]}.json'
         if code or not rf.exists():
-            return False, f'boom_buckling failed (log {rel(logs / f"buckling_{k}.log")})'
+            return False, f'boom_buckling failed (log {rel(lg)})'
         r = jload(rf)
         B = r.get('B') or {}
         if B.get('peak_load') is not None and not B.get('peak_is_last_point'):
             break
+        if cut and B.get('peak_load') is not None and B['peak_load'] >= cut:
+            break
         if k < max_widen:
             notes.append(f'path range doubled to {case["B"]["max"] * 2:g} (no peak yet)')
             _widen(case)
-    A = (r.get('A') or {}).get('critical_load')
-    if B.get('peak_load') is not None and not B.get('peak_is_last_point'):
+    A =(r.get('A') or {}).get('critical_load') or (A_known or {}).get('critical_load')
+    passed_cut = cut and B.get('peak_load') is not None and B['peak_load'] >= cut and B.get('peak_is_last_point')
+    if passed_cut:
+        val, kind = B['peak_load'], (f'B LOWER BOUND: path passed the cutoff {cut:g} (= {cut_f:g} x requirement) '
+                                     f'still rising; stopped there by design')
+    elif B.get('peak_load') is not None and not B.get('peak_is_last_point'):
         val, kind = B['peak_load'], 'B peak (limit point)'
         drop = 1 - abs(B['history'][-1][1]) / abs(B['peak_load']) if B.get('history') else 0
         if drop < 0.01:
