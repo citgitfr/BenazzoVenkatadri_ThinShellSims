@@ -526,6 +526,24 @@ def buckling_case(d, bq):
         mx = 3 * est * d['L'] / (d['Ex'] * d['h_mm'] * d['b'])   # 3 x end shortening at P_est
     case['A'] = {'step': mx / 60, 'max': mx, 'n_coarse': 8}
     case['B'] = {'step': mx / 60, 'max': mx, 'amplitude': round(0.1 * d['h_mm'], 6), 'control': 'disp'}
+    return solver_settings(case)
+
+
+# Solution control of the study's buckling runs (user request 2026-11-08: make them faster, up to 16 CPUs).
+# Profiling it001 (TRAC, 58k DOFs): NormDispIncr 1e-8 is at the round-off floor of these models (Newton
+# converges quadratically to ~1e-6, then stalls), so 1e-8 cost 2x the iterations per step and up to 100
+# iterations per failed attempt near buckling; the converged load factors agree to 5 digits at 1e-6.
+# Step A's scan points run in parallel processes (boom_buckling.py 'workers').
+BUCKLING_SOLVER = {'A': dict(tol=1e-6, max_iter=30, workers=16, n_rounds=2),
+                   'B': dict(tol=1e-6, max_iter=40)}
+
+
+def solver_settings(case):
+    """Add the study's solution-control settings to a buckling case (keeps values already in it)."""
+    for blk, kv in BUCKLING_SOLVER.items():
+        if blk in case:
+            for k, v in kv.items():
+                case[blk].setdefault(k, v)
     return case
 
 
@@ -717,7 +735,7 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
     rising at its end. Off-axis layups: mode shape of A from a 0/90 surrogate of the same thickness.
     Threshold requirements: B stops at cutoff_factor x the required value (lower bound, design passes).
     A finished in an interrupted run is reused (only B reruns)."""
-    case = jload(idir / 'buckling.json')
+    case = solver_settings(jload(idir / 'buckling.json'))
     bdir = idir / 'buckling'
     notes = []
     cut, cut_f = buckling_cutoff(req, d)

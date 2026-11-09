@@ -267,6 +267,94 @@ def stability_path(control, step, max_steps=200, n_eig=4, stop_after=0, rel_tol=
     return dict(history=np.array(rows), critical=crit, eig0=eig0)
 
 
+def scan_point(build, p, step, n_eig=3, tol=1e-8, max_iter=100, max_cuts=6, algorithm='KrylovNewton',
+               want_mode=False, mode_nodes=None, verbose=True):
+    """One evaluation of the stability scan (method A): build() the model
+    (returns the control dict), march to path parameter p in steps <= step,
+    then mu_min(K_T). Returns ((p, load factor, mu_min), mode or None), or
+    (None, None) if the march fails. Used by stability_scan and by
+    parallel_stability_scan (one model per worker process)."""
+    ctrl = build()
+    _setup(tol, max_iter)
+    ops.algorithm(algorithm)
+    done, d = 0.0, math.copysign(min(abs(step), abs(p)), p)
+    while abs(p - done) > 1e-9 * abs(p):
+        d = math.copysign(min(abs(d), abs(p - done)), p)
+        taken = _step(ctrl, d, max_cuts)
+        if taken is None:
+            if verbose:
+                print(f'  scan p = {p: .6g}: march failed at {done: .6g}', flush=True)
+            return None, None
+        done += taken
+        d = step if taken == d else 2 * taken          # regrow after a cut
+    ops.integrator('LoadControl', 0.0)
+    ops.analysis('Static')
+    mu = tangent_eigen(n_eig)
+    ev = (p, ops.getLoadFactor(1), mu[0])
+    if verbose:
+        print(f'  scan p = {p: .6g}: load factor {ev[1]: .6g}, mu_min {mu[0]: .4e}', flush=True)
+    return ev, (mode_shape(1, mode_nodes) if want_mode else None)
+
+
+def parallel_stability_scan(evaluate_many, max_param, n_coarse=8, n_rounds=2, n_points=7, verbose=True):
+    """Method (A) with the scan points evaluated concurrently (one process
+    per point; each rebuilds and re-marches its own model, as in
+    stability_scan, so the points are independent).
+    evaluate_many([p, ...]) -> [((p, load factor, mu_min) or None, mode), ...].
+    Coarse grid p = max_param * k / n_coarse (k = 1..n_coarse) all at once;
+    the bracket is the first point with mu_min < 0 (or a failed march) and
+    the point before it. Then n_rounds rounds of n_points equally spaced
+    interior points each (bracket / (n_points + 1) per round); the critical
+    point is linearly interpolated on mu_min = 0 in the final bracket, and
+    the mode is the eigenvector at its far end, as in stability_scan.
+    Returns the same dict as stability_scan."""
+    evals = []
+
+    def run(ps):
+        out = evaluate_many(ps)
+        for (e, _m) in out:
+            if e is not None:
+                evals.append(e)
+        return out
+
+    def first_neg(ps, out):
+        for k, (p, (e, m)) in enumerate(zip(ps, out)):
+            if e is None or e[2] < 0:
+                return k
+        return None
+
+    ps = [1e-9 * max_param] + [max_param * k / n_coarse for k in range(1, n_coarse + 1)]
+    out = run(ps)
+    if out[0][0] is None:
+        return dict(param=None, load_factor=None, mode=None, evaluations=evals)
+    k = first_neg(ps, out)
+    if k is None:
+        return dict(param=None, load_factor=None, mode=None, evaluations=evals)
+    a, b = (out[k - 1][0], out[k - 1][1]), (out[k][0] or (ps[k], float('nan'), None), out[k][1])
+    for r in range(n_rounds):
+        pa, pb = a[0][0], b[0][0]
+        if abs(pb - pa) <= 1e-9 * abs(max_param):
+            break
+        ps = [pa + (pb - pa) * j / (n_points + 1) for j in range(1, n_points + 1)]
+        out = run(ps)
+        k = first_neg(ps, out)
+        if k is None:                       # all interior points stable: the crossing is in (last, b)
+            a = (out[-1][0], out[-1][1])
+        else:
+            if k > 0:
+                a = (out[k - 1][0], out[k - 1][1])
+            b = (out[k][0] or (ps[k], float('nan'), None), out[k][1])
+        if verbose:
+            print(f'  round {r + 1}: bracket [{a[0][0]: .6g}, {b[0][0]: .6g}]', flush=True)
+    ea, eb = a[0], b[0]
+    if eb[2] is None:                      # far end is a failed march: no mu there
+        lf, p, mode = ea[1], ea[0], a[1]
+    else:
+        w = ea[2] / (ea[2] - eb[2])
+        p, lf, mode = ea[0] + w * (eb[0] - ea[0]), ea[1] + w * (eb[1] - ea[1]), b[1]
+    return dict(param=p, load_factor=lf, mode=mode, evaluations=evals)
+
+
 def stability_scan(build, step, max_param, n_coarse=8, n_refine=5, n_eig=3, tol=1e-8,
                    max_iter=100, max_cuts=6, algorithm='KrylovNewton', mode_nodes=None, verbose=True):
     """Method (A) without eigen calls on the path: every evaluation rebuilds
