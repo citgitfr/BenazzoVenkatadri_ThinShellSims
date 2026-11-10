@@ -36,10 +36,13 @@ Units: N, mm, MPa.
 """
 import argparse
 import json
+import os
 import sys
 import time
 from pathlib import Path
 
+for _v in ('OMP_NUM_THREADS', 'OPENBLAS_NUM_THREADS', 'MKL_NUM_THREADS'):   # one core per process: the
+    os.environ.setdefault(_v, '1')                                           # parallel scan sets the CPU count
 import numpy as np
 import openseespy.opensees as ops
 
@@ -96,6 +99,51 @@ def _sign(x):
     return -1.0 if x < 0 else 1.0
 
 
+MAX_WORKERS = 16        # CPU cap of the parallel scan on the shared server (user decision, 2026-11-08)
+
+
+def _solver(c):
+    """Solution-control keys of an A or B block (defaults = the original serial settings)."""
+    return dict(tol=c.get('tol', 1e-8), max_iter=c.get('max_iter', 100), max_cuts=c.get('max_cuts', 6))
+
+
+def _scan_worker(args):
+    """One step-A scan point in its own process (own OpenSees domain)."""
+    case, p, step, sv, cwd = args
+    os.chdir(cwd)
+    ev, mode = sb.scan_point(lambda: build_case(case, 'ShellNLDKGQ')[1], p, step, want_mode=True, **sv)
+    ops.wipe()
+    return ev, mode
+
+
+def _evaluate_many(case, step, sv, workers):
+    """evaluate_many for sb.parallel_stability_scan: the points run concurrently in a process pool; once
+    the first unstable point (mu_min < 0 or failed march) is known and every point before it is done,
+    the remaining points are irrelevant and the pool is terminated."""
+    import multiprocessing as mp
+
+    def run(ps):
+        n = min(workers, len(ps))
+        out = [None] * len(ps)
+        ctx = mp.get_context('spawn')
+        with ctx.Pool(n) as pool:
+            jobs = [pool.apply_async(_scan_worker, ((case, p, step, sv, os.getcwd()),)) for p in ps]
+            pending = set(range(len(ps)))
+            while pending:
+                for k in sorted(pending):
+                    if jobs[k].ready():
+                        out[k] = jobs[k].get()
+                        pending.discard(k)
+                first = next((k for k, r in enumerate(out) if r is not None and (r[0] is None or r[0][2] < 0)),
+                             None)
+                if first is not None and all(out[j] is not None for j in range(first)):
+                    break                                  # bracket decided: drop the far points
+                time.sleep(0.5)
+            pool.terminate()
+        return [r if r is not None else (None, None) for r in out]
+    return run
+
+
 def run(case, out_dir, only=None):
     name = case.get('name', 'boom')
     out_dir = Path(out_dir)
@@ -110,11 +158,17 @@ def run(case, out_dir, only=None):
     if only != 'B' and 'A' in case and nld_ok:
         a = case['A']
         t0 = time.perf_counter()
-        r = sb.stability_scan(lambda: build_case(case, 'ShellNLDKGQ')[1], sgn * a['step'], sgn * a['max'],
-                              n_coarse=a.get('n_coarse', 8), n_refine=a.get('n_refine', 5))
+        workers = min(int(a.get('workers', 1)), MAX_WORKERS)
+        if workers > 1:
+            r = sb.parallel_stability_scan(_evaluate_many(case, sgn * a['step'], _solver(a), workers),
+                                           sgn * a['max'], n_coarse=a.get('n_coarse', 8),
+                                           n_rounds=a.get('n_rounds', 2), n_points=max(workers - 1, 1))
+        else:
+            r = sb.stability_scan(lambda: build_case(case, 'ShellNLDKGQ')[1], sgn * a['step'], sgn * a['max'],
+                                  n_coarse=a.get('n_coarse', 8), n_refine=a.get('n_refine', 5), **_solver(a))
         res['A'] = dict(critical_load=None if r['load_factor'] is None else abs(r['load_factor']),
                         critical_param=None if r['param'] is None else abs(r['param']),
-                        evaluations=r['evaluations'], time=time.perf_counter() - t0)
+                        evaluations=r['evaluations'], time=time.perf_counter() - t0, workers=workers)
         mode = r['mode']
         print(f'A (ShellNLDKGQ stability scan): critical {res["A"]["critical_load"]} at '
               f'{res["A"]["critical_param"]}; {res["A"]["time"]:.0f} s', flush=True)
@@ -133,9 +187,10 @@ def run(case, out_dir, only=None):
         if b.get('control', 'disp') == 'load':
             ctrl = {'type': 'load'}
             h, peak, k = sb.imperfect_path(ctrl, b['step'], int(round(b['max'] / b['step'])),
-                                           record=lambda: [ops.nodeDisp(ctrl.get('node', mesh.rigid['xL']), 1)])
+                                           record=lambda: [ops.nodeDisp(ctrl.get('node', mesh.rigid['xL']), 1)],
+                                           **_solver(b))
         else:
-            h, peak, k = sb.imperfect_path(ctrl, sgn * b['step'], int(round(b['max'] / b['step'])))
+            h, peak, k = sb.imperfect_path(ctrl, sgn * b['step'], int(round(b['max'] / b['step'])), **_solver(b))
         res['B'] = dict(peak_load=float(peak), param_at_peak=float(abs(h[k, 0])), amplitude=amp,
                         imperfection='mode A' if mode is not None else 'none',
                         history=h.tolist(), time=time.perf_counter() - t0,
