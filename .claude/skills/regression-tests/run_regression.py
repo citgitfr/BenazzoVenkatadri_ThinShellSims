@@ -675,7 +675,8 @@ def T20_abaqus_export():
                     if 'REPORT' in ns:
                         ns['REPORT'].close()
                     os.chdir(cwd)
-                    for m in ('abaqus', 'abaqusConstants', 'mesh', 'regionToolset', 'section', 'odbAccess'):
+                    for m in ('abaqus', 'abaqusConstants', 'mesh', 'regionToolset', 'section', 'interaction', 'step', 'load',
+                              'job', 'odbAccess'):
                         sys.modules.pop(m, None)
                 tag = f'{case["name"]}{" (normals flipped)" if flip else ""}'
                 check(f'{tag}: script runs up to the job', float(stopped), 1, 0, True)
@@ -687,7 +688,16 @@ def T20_abaqus_export():
                 check(f'{tag}: valid field output request (S, E, SE, SF, U, UR, RF; no SM)',
                       float(bool(final) and need <= set(final[-1])
                             and set(final[-1]) <= abaqus_mock.VALID_FIELD_OUTPUT), 1, 0, True)
-                flips = sum(1 for c in log if c[0] == 'part.flipNormal')
+                # S, E at every ply's section points (3 per layer; 5 for a homogeneous section), per section
+                fr = {c[2]['name']: c[2] for c in log if c[0] == 'model.FieldOutputRequest'}
+                want_sp = [('F-Output-PLIES-FLANGE', M['plies'])] + ([('F-Output-PLIES-WEB', M['web_plies'])]
+                                                                     if M['web_faces'] else [])
+                check(f'{tag}: S, E requested at every section point of every ply (flange{" and web" if M["web_faces"] else ""})',
+                      float(all(n in fr and {'S', 'E'} <= set(fr[n]['variables']) and tuple(fr[n]['sectionPoints'])
+                                == tuple(range(1, (5 if M['kind'] == 'isotropic' else 3 * len(pl)) + 1))
+                                and (('region' in fr[n]) == bool(M['web_faces'])) for n, pl in want_sp)
+                            and len(fr) == len(want_sp)), 1, 0, True)
+                flips =sum(1 for c in log if c[0] == 'part.flipNormal')
                 check(f'{tag}: faces flipped to the OpenSees normal', flips, len(M['faces']) if flip else 0, 0, True)
                 if flip:
                     continue

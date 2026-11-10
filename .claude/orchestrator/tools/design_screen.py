@@ -22,8 +22,10 @@ What is exact and what is an estimate
   estimates (thin-walled beam, membrane modulus Ex = 1/(h a11)):
     EI_z, EI_y       = Ex * Iyy (deflection along z), Ex * Izz (along y), centroidal.
     k_est            = 3 EI / L^3 (cantilever tip stiffness) in the requirement's direction.
-    P_col            = column buckling (Euler / flexural-torsional, TS only: sb.column_buckling).
-    P_loc            = 0.3 x classical curved-panel stress x area (knock-down 0.3), TS only.
+    P_col            = column buckling (TS: Euler / flexural-torsional, sb.column_buckling;
+                       TRAC/OM/CO: Euler with the weaker EI).
+    P_loc            = KNOCKDOWN x classical curved-panel stress x area (TS 0.3; OM/CO 0.3 on the
+                       flattest wall; TRAC 0.027, free-edge flanges, calibrated on one FE run).
     M_fold           = tape-spring steady fold moments: opposite sense (1+nu) D alpha,
                        equal sense (1-nu) D alpha, D = sqrt(D11 D22), nu = D12/D, alpha = b/R; TS only.
                        These are the post-buckling fold moments, a LOWER bound of the peak moment.
@@ -236,10 +238,37 @@ def coiling_indices(L, r, R_hub):
     return F_flat, F_hub
 
 
+# Local-buckling knock-down on the classical curved-panel stress, per section family (compression).
+# TS: 0.3 (literature). OM/CO: closed walls, both edges supported -> 0.3 on the flattest wall (largest R).
+# TRAC: flanges with a FREE edge -> far lower; 0.027 = FE of boom study boom_1m_buck500N_opp1cm_hub50 it001
+# (L038/Y005/R014: local flange mode, B stall 49.0 N, A 48.4 N vs 0.3-classical 542 N). One data point:
+# study.py refines it per section type from the FE runs (calibration). User decision 2026-11-09.
+KNOCKDOWN = {'TS': 0.3, 'OM': 0.3, 'CO': 0.3, 'TRAC': 0.027}
+
+
+def branched_buckling(L, geo, length, req_b):
+    """(P_col, P_loc) for TRAC/OM/CO in compression. P_col: Euler with the weaker EI (K = 1 pinned,
+    0.5 clamped; closed OM/CO have no flexural-torsional mode; TRAC's local mode governed in FE).
+    P_loc: KNOCKDOWN x classical curved-panel stress of the flattest arc (largest R) x area; the
+    webs (doubled laminate) are stiffer and not checked."""
+    g = geo['g']
+    K = 0.5 if req_b.get('ends', 'clamped') == 'clamped' else 1.0
+    EI = L.Ex * L.h * min(geo['I1']['Iyy'], geo['I1']['Izz'])
+    P_col = math.pi**2 * EI / (K * length)**2
+    R = max(abs(r) for r, _ in g['A'] + g.get('B', []))
+    nu_m = min(abs(L.nu_xy), 0.49)
+    sig = L.Ex * L.h / (R * math.sqrt(3 * (1 - nu_m**2)))
+    P_loc = KNOCKDOWN[g['type']] * sig * L.h * geo['s_total']
+    return P_col, P_loc
+
+
 def buckling_estimates(L, geo, length, req_b):
-    """(P_col, P_loc, M_opp, M_eq) estimates for TS sections, else Nones."""
+    """(P_col, P_loc, M_opp, M_eq) estimates: TS all four; TRAC/OM/CO P_col, P_loc in compression
+    (no fold-moment estimate for bending: M Nones)."""
     g = geo['g']
     if g['type'] != 'TS':
+        if req_b and req_b.get('load') == 'compression':
+            return (*branched_buckling(L, geo, length, req_b), None, None)
         return None, None, None, None
     import shell_buckling as sb
     R, th = g['A'][0]

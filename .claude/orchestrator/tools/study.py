@@ -14,7 +14,7 @@ ACTION; the orchestrator follows that line (PROTOCOL.md).
     study.py run <iter> --step laminate|model|visualize|failure|buckling|objcon|all
     study.py record <iter>                         sanity checks, ledger, calibration, verification/stop decisions
     study.py converge <iter>                       mesh-convergence rerun (element size x 0.6)
-    study.py verify <iter>                         Abaqus script + user instructions (opensees-to-abaqus)
+    study.py verify <iter>                         Abaqus script (opensees-to-abaqus) + the run_abaqus.py command
     study.py verify-result <iter> --verdict agree|disagree|inconclusive --comparison FILE [--note ..]
     study.py finalize [--force-reason ..]          final/ folder, REPORT.md, list of files to commit
     study.py close [--reason ..]                   stop without finalizing (removes the active-study marker)
@@ -53,7 +53,7 @@ CONV_TOL = dict(k=0.02, F=0.10)
 # Buckling path cutoff (threshold requirements only): path B stops once it carries this multiple of the required
 # load and the value is recorded as a lower bound (the design passes with that margin). Override per study with
 # requirements.json "buckling": {"cutoff_factor": ...}; 0 or null = no cutoff. Added 2026-11-06 at the user's request.
-BUCKLING_CUTOFF = 3.0
+BUCKLING_CUTOFF = 1.5     # B stops at 1.5 x a threshold requirement (was 3.0; Federico, 2026-11-09)
 NO_IMPROVE_WINDOW, MIN_ITERS_BEFORE_STOP, IMPROVE_TOL = 15, 20, 0.01
 
 
@@ -303,8 +303,12 @@ def cmd_status(a):
     print('NEXT: ' + next_action(st))
 
 
-def calib_factor(st, key):
+def calib_factor(st, key, typ=None):
+    """Median FE/estimate ratio. Buckling ('b') with a section type: that type's runs if any (the TRAC,
+    OM/CO and TS estimates are different formulas, user decision 2026-11-09), else all runs."""
     v = st['calib'][key]
+    if key == 'b' and typ and st['calib'].get('b_type', {}).get(typ):
+        v = st['calib']['b_type'][typ]
     return statistics.median(v) if v else 1.0
 
 
@@ -337,7 +341,7 @@ def candidate_list(sd, st, n=10):
             continue
         k, b = _num(r['k_est_N_mm']), _num(r['buckling_est'])
         kc = k * ck if k is not None else None
-        bc = b * cb if b is not None else None
+        bc = b * calib_factor(st, 'b', r.get('type')) if b is not None else None
         pred = True
         if rq.get('bending_stiffness') and kc is not None and kc < rq['bending_stiffness']['min_N_per_mm']:
             pred = False
@@ -489,7 +493,7 @@ def cmd_choose(a):
                   F_hub=_num(row['F_hub']), r_min=float(row['r_min_mm']), cross_ply=row['cross_ply'] == 'True')
     bq = req['requirements'].get('buckling')
     if bq:
-        design['buckling_est_cal'] = (design['buckling_est'] or bq['min_value']) * calib_factor(st, 'b')
+        design['buckling_est_cal'] = (design['buckling_est'] or bq['min_value']) * calib_factor(st, 'b', row['type'])
         jsave(idir / 'buckling.json', buckling_case(design, bq))
     jsave(idir / 'design.json', design)
     st['designs'][key] = dict(iter=i)
@@ -534,8 +538,15 @@ def buckling_case(d, bq):
 # converges quadratically to ~1e-6, then stalls), so 1e-8 cost 2x the iterations per step and up to 100
 # iterations per failed attempt near buckling; the converged load factors agree to 5 digits at 1e-6.
 # Step A's scan points run in parallel processes (boom_buckling.py 'workers').
-BUCKLING_SOLVER = {'A': dict(tol=1e-6, max_iter=30, workers=16, n_rounds=2),
+# A max_iter 10: ShellNLDKGQ converges in 2-3 iterations when it converges at all; a failing attempt cost
+# 30 x 110 s on the 317k-DOF it003 boom before the cut (2026-11-09). A_ENOUGH: stable A beyond this
+# multiple of a threshold requirement settles it, so the refinement rounds are skipped.
+A_ENOUGH = 1.5
+BUCKLING_SOLVER = {'A': dict(tol=1e-6, max_iter=10, workers=16, n_rounds=2),
                    'B': dict(tol=1e-6, max_iter=40)}
+
+
+STEP_GROWTH = 8     # adaptive path steps up to 8 x the base step (shell_buckling._next_step; 2026-11-09)
 
 
 def solver_settings(case):
@@ -544,6 +555,7 @@ def solver_settings(case):
         if blk in case:
             for k, v in kv.items():
                 case[blk].setdefault(k, v)
+            case[blk].setdefault('max_step', STEP_GROWTH * case[blk]['step'])
     return case
 
 
@@ -649,6 +661,8 @@ def _widen(case, f=2.0):
         if k in case:
             case[k]['max'] *= f
             case[k]['step'] *= f
+            if case[k].get('max_step'):
+                case[k]['max_step'] *= f
     return case
 
 
@@ -685,8 +699,8 @@ def resume_A(case, bdir, logs):
     if case.get('A_known') or not mf.exists():
         return case.get('A_known')
     for lg in sorted(logs.glob('buckling_*.log')):
-        m = re.search(r'A \(ShellNLDKGQ stability scan\): critical ([\d.eE+-]+) at ([\d.eE+-]+); (\d+) s',
-                      lg.read_text(errors='ignore'))
+        m = re.search(r'A \(ShellNLDKGQ stability scan\): (?:critical|STABLE to) ([\d.eE+-]+) at ([\d.eE+-]+)'
+                      r'(?: \(lower bound[^)]*\))?; (\d+) s', lg.read_text(errors='ignore'))
         if m:
             keep = bdir / f'{case["name"]}_modeA.npz'     # a copy: B rewrites <name>_mode.npz
             shutil.copyfile(mf, keep)
@@ -696,6 +710,21 @@ def resume_A(case, bdir, logs):
                                    time=float(m.group(3)), source=f'logs/A_reused_from_{lg.name}')
             return case['A_known']
     return None
+
+
+STALL_FRACTION = 0.5    # B path ending below this fraction of its range = stall (no convergence), not range end
+
+
+def _stalled(B, bcase):
+    """B's path ended (last point = peak) far short of its range: the solver could not go past that load
+    (a limit point, or a numerical stall), so doubling range and step cannot help (user decision, 2026-11-08)."""
+    h = B.get('history') or []
+    return bool(B.get('peak_is_last_point') and h and bcase
+                and abs(h[-1][0]) < STALL_FRACTION * abs(bcase['max']))
+
+
+def _same_model(a, b):
+    return all(a.get(k) == b.get(k) for k in ('laminate', 'geometry', 'load', 'mode_file'))
 
 
 def reuse_section_mode(case, idir, d, bdir):
@@ -742,6 +771,8 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
     if cut and 'B_cutoff' not in case:
         apply_cutoff(case, d, cut)
         case['B_cutoff'] = cut
+    if cut and 'A' in case:            # threshold requirement: A stops refining once stable beyond this
+        case['A'].setdefault('enough', A_ENOUGH * (req['requirements']['buckling']['min_value']))
     A_known = resume_A(case, bdir, logs)
     if A_known:
         notes.append(f'A reused from an interrupted run ({A_known["source"]}); only B rerun')
@@ -773,17 +804,27 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
         else:
             notes.append('NO MODE SHAPE (surrogate scan found no crossing): B ran without imperfection')
     tag = 'Bonly_' if A_known else ''
-    for k in range(max_widen + 1):
+    rf = bdir / f'{case["name"]}.json'
+    prev = jload(rf) if rf.exists() else {}
+    stalled = False
+    if _same_model(prev.get('case') or {}, case) and _stalled(prev.get('B') or {}, (prev.get('case') or {}).get('B')):
+        r, B, stalled = prev, prev['B'], True             # a finished run of this model already stalled: reuse it
+        notes.append('B reused from a finished run of the same model (its path had stalled; widening cannot help)')
+    for k in range(0 if stalled else max_widen + 1):
         jsave(idir / 'buckling.json', case)
         lg = logs / f'buckling_{tag}{k}.log'
         code, out = run_cmd([SKILLS / 'shell-buckling' / 'boom_buckling.py', idir / 'buckling.json', '--out', bdir]
                             + only, lg, cwd=idir)
-        rf = bdir / f'{case["name"]}.json'
         if code or not rf.exists():
             return False, f'boom_buckling failed (log {rel(lg)})'
         r = jload(rf)
         B = r.get('B') or {}
         if B.get('peak_load') is not None and not B.get('peak_is_last_point'):
+            break
+        if _stalled(B, case['B']):
+            stalled = True
+            notes.append(f'path stalled at {B["peak_load"]:g} (no convergence beyond, '
+                         f'{abs(B["history"][-1][0]):g} of range {case["B"]["max"]:g}): not widened')
             break
         if cut and B.get('peak_load') is not None and B['peak_load'] >= cut:
             break
@@ -800,6 +841,11 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
         drop = 1 - abs(B['history'][-1][1]) / abs(B['peak_load']) if B.get('history') else 0
         if drop < 0.01:
             kind = 'B peak (limit point reached, path stalled there: falling branch not traced; Abaqus Riks to confirm)'
+    elif stalled:
+        val, kind = B['peak_load'], ('B STALL: no convergence beyond this load, far short of the path range '
+                                     '(limit point; falling branch not traced; Abaqus Riks to confirm)')
+        if A and B['peak_load'] < 0.8 * A:
+            kind += f' [well below the A crossing {A:g}: may be a numerical stall]'
     elif B.get('peak_load') is not None:
         val, kind = B['peak_load'], 'B LOWER BOUND (path stopped while rising)'
     elif A:
@@ -864,8 +910,11 @@ def cmd_record(a):
     if not sanity:
         if k_fe and d.get('k_est'):
             st['calib']['k'].append(k_fe / d['k_est'])
-        if d.get('buckling_value') and d.get('buckling_est') and d.get('buckling_kind', '').startswith('B peak'):
+        if d.get('buckling_value') and d.get('buckling_est') and d.get('buckling_kind', '').startswith(
+                ('B peak', 'B STALL')):
             st['calib']['b'].append(d['buckling_value'] / d['buckling_est'])
+            st['calib'].setdefault('b_type', {}).setdefault(d.get('type'), []).append(
+                d['buckling_value'] / d['buckling_est'])
     obj = req.get('objective', {})
     qn = obj.get('quantity', 'mass')
     objective = (oc.get('objective') or {}).get('value') if qn == 'mass' else k_fe if qn == 'bending_stiffness' \
@@ -1033,9 +1082,15 @@ def cmd_verify(a):
     if st.get('verification_due') == i:
         st['verification_due'] = None
     save_state(sd, st)
-    print(f'Abaqus script ready for iteration {i}. Give the user the instructions block VERBATIM from '
-          f'{rel(instr)} and continue the loop; the comparison runs when the user brings back <job>_odb.npz.')
-    print(instr.read_text(encoding='utf-8', errors='replace') if instr.exists() else out[-3000:])
+    abq = idir / f'abaqus_{d["name"]}.py'
+    print(f'Abaqus script ready for iteration {i}: {rel(abq)} (model check passed).')
+    print('RUN IT NOW, in the background, with the shared-server runner (PROTOCOL.md section 6; never call '
+          'abaqus directly, at most 8 CPUs, nothing written outside the ME295 folder):')
+    print(f'  "{PY}" "{HERE / "run_abaqus.py"}" "{abq}" --cpus 1')
+    print('Continue the loop while it runs. When it prints NEXT, run the OpenSeesAbaqusResultsComparator on '
+          f'ONLY {rel(idir / "results" / (d["name"] + ".npz"))} and the <job>_odb.npz it copied into {rel(idir)}, '
+          'then study.py verify-result. (Manual fallback if the runner cannot run Abaqus: the instructions block in '
+          f'{rel(instr)}.)')
     print('NEXT: ' + next_action(st))
 
 

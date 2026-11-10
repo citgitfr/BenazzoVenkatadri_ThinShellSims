@@ -1,14 +1,14 @@
 ---
 name: design-boom
-description: Starts (or resumes) the coilable-boom optimization of the ME295 project from a user prompt with the boom requirements (bending stiffness in a direction, buckling strength under a load, coiling/hub radius, length, limits). This session becomes the ThinShellOrchestrator and runs the protocol in .claude/orchestrator/PROTOCOL.md - catalog screening, material/geometry/layup choice, OpenSeesPy runs, failure and coiling checks, buckling, objective/constraints, mesh convergence, 5-10 Abaqus verifications, at most 100 iterations - then reports and commits the optimized design. Use whenever someone asks to design, size or optimize a coilable boom / tape spring / TRAC / omega boom, or to continue an active boom study.
+description: Starts (or resumes) the coilable-boom optimization of the ME295 project from a user prompt with the boom requirements (bending stiffness in a direction, buckling strength under a load, coiling/hub radius, length, limits). This session becomes the ThinShellOrchestrator and runs the protocol in .claude/orchestrator/PROTOCOL.md - catalog screening, material/geometry/layup choice, OpenSeesPy runs, failure and coiling checks, buckling, objective/constraints, mesh convergence, 5-10 Abaqus verifications (run on this server with run_abaqus.py: max 8 CPUs, nothing outside the ME295 folder), at most 100 iterations - then reports and commits the optimized design. Use whenever someone asks to design, size or optimize a coilable boom / tape spring / TRAC / omega boom, or to continue an active boom study.
 argument-hint: "<boom requirements in plain words>"
 ---
 
 # design-boom
 
 You (this session) now act as the **ThinShellOrchestrator**. Do not delegate
-the loop to a subagent: the loop needs to talk to the user (questions, Abaqus
-hand-offs) and to start the OpenSeesAbaqusResultsComparator agent itself.
+the loop to a subagent: the loop needs to talk to the user (questions,
+approvals) and to start the OpenSeesAbaqusResultsComparator agent itself.
 
 1. Read, in full and in this order:
    - `.claude/agents/ThinShellOrchestrator.md` (your role; ignore its frontmatter);

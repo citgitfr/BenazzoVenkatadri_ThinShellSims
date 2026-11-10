@@ -7,10 +7,23 @@ description: Writes an Abaqus/CAE Python script (run elsewhere with `abaqus cae 
 
 Script: `case_to_abaqus.py` (this folder). For an assembled OpenSeesPy script
 (shell-assemble-run) use the opensees-to-abaqus skill, which calls
-`case_to_abaqus.write_script(case, laminate, out, element, ref, source)`. Abaqus is **not installed** on the
-project VM: the generated script can be checked here (compile, and a run
-against a stand-in Abaqus API in regression test T20), but the Abaqus run
-itself is untested until someone runs it.
+`case_to_abaqus.write_script(case, laminate, out, element, ref, source)`. The generated script is
+checked here (compile, and a run against a stand-in Abaqus API in regression
+test T20) and runs in Abaqus 2026 (tape spring, linear, 2026-11-06).
+Abaqus 2026 is installed on this server: run the generated script ONLY with
+`.claude/orchestrator/tools/run_abaqus.py <dir>/abaqus_<name>.py [--cpus N]` (shared server: at most
+8 CPUs, default 1; it keeps the run folder and Abaqus scratch inside the ME295 folder, never touches
+Abaqus env/install files, extracts `<job>_odb.npz` with `abaqus python odb_extract.py` and copies the
+results next to the script; PROTOCOL.md section 6a of the orchestrator).
+- The job's CPU count is `ME295_ABAQUS_CPUS` (set by the runner), clamped to
+  1..8 in the script (`numCpus = numDomains = NCPUS`; default 1).
+- `abaqus cae noGUI` does not preload modules: the script imports
+  `interaction`, `step`, `load` and `job` (else `Model.Coupling` is missing).
+- The embedded ODB extractor is unreliable inside CAE 2026 ("'NoneType' has no
+  len()", or a CAE segfault after it wrote the file, which also loses the
+  script's own comparison); under the runner (`ME295_ABAQUS_RUNNER` set) the
+  script skips it and the runner extracts with the standalone
+  `abaqus python odb_extract.py`.
 
 ```
 python case_to_abaqus.py <case>.json [--out abaqus_<name>.py] [--element S4R|S4] [--no-reference]
@@ -39,6 +52,10 @@ abaqus cae noGUI=abaqus_<name>.py [-- <size> <S4R|S4>]      # on a machine with 
   writes the SF and SM fields to the ODB, and `SE` writes SE and SK. Add a name
   only after it ran in Abaqus, in both `FIELD_OUTPUT` and
   `regression-tests/abaqus_mock.py` `VALID_FIELD_OUTPUT`; T20 fails otherwise.
+  Extra requests `F-Output-PLIES-FLANGE` / `-WEB` (one per section, element sets
+  of the same names when there are webs) write `S, E` at every section point
+  (3 per ply: bottom, middle, top; 5 for a homogeneous shell), so every ply,
+  e.g. an interior 90 deg ply, can be compared (2026-11-09; T20 checks them).
 
 ## Translation
 | OpenSees (v2.0 skills) | Abaqus |
@@ -65,7 +82,7 @@ abaqus cae noGUI=abaqus_<name>.py [-- <size> <S4R|S4>]      # on a machine with 
   differences; compare on two meshes.
 - Transverse shear: Abaqus uses G13 and G23 from the lamina; OpenSees one
   modulus (G13). Negligible for thin shells.
-- Least certain API calls (untested): `Face.getNormal`, the DISCRETE
+- Least certain API calls (ran in Abaqus 2026 for a linear tape spring only): `Face.getNormal`, the DISCRETE
   `MaterialOrientation` arguments, `asm.rotateInstance` about (1,1,1),
   Riks frames vs the `LPF` history output. If one fails, the error is in
   `<job>_results.txt` / the Abaqus log; fix it in `case_to_abaqus.py` and

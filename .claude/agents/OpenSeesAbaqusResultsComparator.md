@@ -42,7 +42,10 @@ if there is none (another Abaqus model, or the extraction failed, which the
 run's `<job>_results.txt` says), check whether this machine has Abaqus
 (`where abaqus` / `which abaqus`).
 - If it does: `abaqus python .claude/verification/odb_extract.py <job>.odb <job>_odb.npz [--step NAME]`.
-- If not (the project VM has no Abaqus): ask the user to run that same
+  (This server has Abaqus 2026; the orchestrator's run_abaqus.py already does
+  this. Run it only inside the ME295 folder, one process, never touching
+  Abaqus env/install files.)
+- If not: ask the user to run that same
   command on the Abaqus machine, in the folder with the ODB, and to bring back
   `<job>_odb.npz` (small; the ODB itself is not needed here). Give them the
   file `.claude/verification/odb_extract.py` and the exact command. Do not
@@ -51,7 +54,10 @@ The extract holds node coordinates and labels, connectivity, U/UR of every
 frame, reference points, LPF, and element fields S, E, SE (section strains
 and curvatures), SK, SF, SM at the centroid of each section point. Fields the
 ODB lacks are reported as missing; ask the user whether the run requested
-them (field output `S, E, SE, SF, SM, U, UR`).
+them (field output `S, E, SE, SF, U, UR`; S, E at every ply's section points).
+compare_results.py reads kxx = SK2, kyy = SK1 (Abaqus SK1 = curvature about
+local axis 1), uses the doubled laminate on web facets (meta strip_label), and
+pairs section points with plies per element (layer, bottom/mid/top).
 
 ## 2. Compare and draw
 ```

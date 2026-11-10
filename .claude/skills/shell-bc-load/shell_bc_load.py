@@ -197,7 +197,12 @@ def linear_solve():
     ops.algorithm('Linear')
     ops.analysis('Static')
     if ops.analyze(1) != 0:
-        raise RuntimeError('linear analysis failed')
+        # UmfPack (32-bit) runs out of memory near 1M DOFs; SuperLU solves those models
+        print('UmfPack failed; retrying the linear step with SuperLU', flush=True)
+        ops.system('SuperLU')
+        ops.analysis('Static')
+        if ops.analyze(1) != 0:
+            raise RuntimeError('linear analysis failed')
     ops.reactions()
 
 
@@ -371,7 +376,12 @@ ops.integrator('LoadControl', 1.0)
 ops.algorithm('Linear')
 ops.analysis('Static')
 if ops.analyze(1) != 0:
-    raise RuntimeError('linear analysis failed')
+    # UmfPack (32-bit) runs out of memory near 1M DOFs; SuperLU solves those models
+    print('UmfPack failed; retrying the linear step with SuperLU', flush=True)
+    ops.system('SuperLU')
+    ops.analysis('Static')
+    if ops.analyze(1) != 0:
+        raise RuntimeError('linear analysis failed')
 ops.reactions()                       # re-forms element forces (strains read zero otherwise)
 history = np.array([[0.0], [1.0]])
 '''
