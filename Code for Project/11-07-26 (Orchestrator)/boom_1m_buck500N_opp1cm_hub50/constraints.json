@@ -1,0 +1,37 @@
+{
+ "constraints": [
+  {
+   "name": "boom length",
+   "text": "boom length 1000 mm (requirements.json)",
+   "expr": "L",
+   "op": "==",
+   "limit": 1000,
+   "tol": 0.01,
+   "units": "mm"
+  },
+  {
+   "name": "bending stiffness",
+   "text": "must have transverse stiffness in the direction of opposite sense bending such that it does not deflect more than 1 cm under a 50N load if clamped at the root (k >= 50 N / 10 mm = 5 N/mm)",
+   "expr": "abs(force_z) / abs(tip_uz)",
+   "op": ">=",
+   "limit": 5.0,
+   "units": "N/mm"
+  },
+  {
+   "name": "buckling",
+   "text": "must have buckling strength above 500N under axial compression when under pin/pin boundary conditions",
+   "expr": "buckling_load",
+   "op": ">=",
+   "limit": 500.0,
+   "units": "N"
+  },
+  {
+   "name": "coiling on hub",
+   "text": "coils on a 50 mm radius hub",
+   "expr": "F_hub",
+   "op": "<",
+   "limit": 1,
+   "units": "-"
+  }
+ ]
+}
