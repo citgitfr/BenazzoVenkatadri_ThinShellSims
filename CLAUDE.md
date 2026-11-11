@@ -10,6 +10,10 @@
   forbids. Continue it (`study.py status`) or close it (`study.py close`)
   before unrelated work that edits `.claude/`.
 - Simulations use the skills in `.claude/skills/` (read each SKILL.md) with
-  the `shells` conda env; units N, mm, MPa. Catalogs in `.claude/memory.*`
+  the `shells` env (on the shared Abaqus server:
+  `C:\Users\fbenazzo\Desktop\ME295\envs\shells312\Scripts\python.exe`); units N, mm, MPa.
+- Shared Abaqus server: run Abaqus only via `.claude/orchestrator/tools/run_abaqus.py`
+  (at most 8 CPUs, default 1), and never write or change anything outside the
+  `C:\Users\fbenazzo\Desktop\ME295` folder (PROTOCOL.md section 6a). Catalogs in `.claude/memory.*`
   are maintained by the CompositeLaminaLibrarian agent.
 - Running Log entries: date, person, entry (see `Running Log/`).

@@ -230,11 +230,10 @@ from abaqusConstants import (ANALYSIS, AXIS_1, AXIS_3, CARTESIAN, CENTROID, CLOC
 import mesh
 import regionToolset
 import section
-for _mod in ('part', 'material', 'assembly', 'step', 'interaction', 'load', 'job'):
-    try:                                # real Abaqus/CAE: importing a module registers its Model methods
-        __import__(_mod)                # (e.g. interaction -> Model.Coupling); added 11/10/26 after the first
-    except ImportError:                 # real-Abaqus run failed with "'Model' object has no attribute
-        pass                            # 'Coupling'". The stand-in mock API has none of these modules.
+import interaction   # Model.Coupling: 'abaqus cae noGUI' does not preload modules (Abaqus 2026)
+import step          # Model.StaticStep / StaticRiksStep / BuckleStep
+import load          # Model.DisplacementBC / ConcentratedForce / Moment / Pressure
+import job           # mdb.Job
 from odbAccess import openOdb
 
 # --- Inputs (from the OpenSeesPy case; do not edit by hand, regenerate instead) ---
@@ -247,6 +246,10 @@ ELEM = args[1].upper() if len(args) > 1 else '%(element)s'
 ELEM_CODES = {'S4R': S4R, 'S4': S4}
 JOB = ('%(job)s_%%s_%%gmm' %% (ELEM, SIZE)).replace('.', 'p')
 REPORT = open(JOB + '_results.txt', 'w')
+# CPUs of the Abaqus job: ME295_ABAQUS_CPUS (set by .claude/orchestrator/tools/run_abaqus.py),
+# default 1 and never more than 8 (shared Abaqus server: project rule, 2026-11-06)
+import os
+NCPUS = max(1, min(8, int(os.environ.get('ME295_ABAQUS_CPUS') or 1)))
 
 
 def log(text=''):
@@ -512,9 +515,23 @@ for k, ld in enumerate(M['loads']):
 # test T20 fails if any other name is requested.
 FIELD_OUTPUT = ('S', 'E', 'SE', 'SF', 'U', 'UR', 'RF')
 model.fieldOutputRequests['F-Output-1'].setValues(variables=FIELD_OUTPUT, frequency=1)
+# S and E at EVERY section point (default above: only the bottom of ply 1 and the top of the last ply, so
+# interior plies such as a 90 deg ply could not be checked): composite = 3 Simpson points per layer,
+# section points 3k-2, 3k-1, 3k = bottom, middle, top of layer k from the bottom; homogeneous = 5 points.
+# One request per section (flange / web), as the two layups have different section point counts.
+PLY_OUTPUT = [('PLIES-FLANGE', M['plies'], [f[0] for f in M['faces'] if f[0] not in M['web_faces']])]
+if M['web_faces']:
+    PLY_OUTPUT.append(('PLIES-WEB', M['web_plies'], M['web_faces']))
+for name, plies, mids in PLY_OUTPUT:
+    kw = dict(name='F-Output-' + name, createStepName=STEP, variables=('S', 'E'), frequency=1,
+              sectionPoints=tuple(range(1, (5 if M['kind'] == 'isotropic' else 3 * len(plies)) + 1)))
+    if M['web_faces']:
+        part.Set(name=name, faces=faces_at(mids))
+        kw['region'] = inst.sets[name]
+    model.FieldOutputRequest(**kw)
 
 job = mdb.Job(name=JOB, model=model.name, type=ANALYSIS, nodalOutputPrecision=SINGLE,
-              memoryUnits=PERCENTAGE, memory=90)
+              memoryUnits=PERCENTAGE, memory=90, numCpus=NCPUS, numDomains=NCPUS)
 job.submit(consistencyChecking=OFF)
 job.waitForCompletion()
 mdb.saveAs(pathName=JOB + '.cae')
@@ -523,12 +540,17 @@ mdb.saveAs(pathName=JOB + '.cae')
 # (verbatim copy of .claude/verification/odb_extract.py; bring <job>_odb.npz back with the
 # results). Done before the comparison below, so a failure there does not stop it.
 ODB_EXTRACT = %(extractor)s
-try:
-    _ns = {'__name__': 'odb_extract'}
-    exec(compile(ODB_EXTRACT, 'odb_extract.py', 'exec'), _ns)
-    log(_ns['extract'](JOB + '.odb', JOB + '_odb.npz'))
-except Exception as exc:
-    log('ODB extraction failed (%%s); on this machine run: abaqus python odb_extract.py %%s.odb' %% (exc, JOB))
+if os.environ.get('ME295_ABAQUS_RUNNER'):
+    # run_abaqus.py extracts with the standalone `abaqus python odb_extract.py` after CAE exits: inside
+    # CAE 2026 this embedded copy fails or segfaults CAE after writing, which loses the comparison below
+    log('ODB extraction: done by run_abaqus.py after this script (abaqus python odb_extract.py)')
+else:
+    try:
+        _ns = {'__name__': 'odb_extract'}
+        exec(compile(ODB_EXTRACT, 'odb_extract.py', 'exec'), _ns)
+        log(_ns['extract'](JOB + '.odb', JOB + '_odb.npz'))
+    except Exception as exc:
+        log('ODB extraction failed (%%s); on this machine run: abaqus python odb_extract.py %%s.odb' %% (exc, JOB))
 
 # --- Results ---
 odb = openOdb(JOB + '.odb', readOnly=True)

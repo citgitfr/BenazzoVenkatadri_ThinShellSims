@@ -114,6 +114,9 @@ def _solver(c):
     return dict(tol=c.get('tol', 1e-8), max_iter=c.get('max_iter', 100), max_cuts=c.get('max_cuts', 6))
 
 
+FINE_FROM = 0.7     # B: base-size steps from this fraction of the step-A critical parameter on (peak resolution)
+
+
 def _scan_worker(args):
     """One step-A scan point in its own process (own OpenSees domain)."""
     case, p, step, sv, cwd = args
@@ -167,9 +170,11 @@ def run(case, out_dir, only=None):
         t0 = time.perf_counter()
         workers = min(int(a.get('workers', 1)), MAX_WORKERS)
         if workers > 1:
-            r = sb.parallel_stability_scan(_evaluate_many(case, sgn * a['step'], _solver(a), workers),
+            sv = dict(_solver(a), max_step=a.get('max_step') and sgn * a['max_step'])
+            r = sb.parallel_stability_scan(_evaluate_many(case, sgn * a['step'], sv, workers),
                                            sgn * a['max'], n_coarse=a.get('n_coarse', 8),
-                                           n_rounds=a.get('n_rounds', 2), n_points=max(workers - 1, 1))
+                                           n_rounds=a.get('n_rounds', 2), n_points=max(workers - 1, 1),
+                                           enough=a.get('enough'))
         else:
             r = sb.stability_scan(lambda: build_case(case, 'ShellNLDKGQ')[1], sgn * a['step'], sgn * a['max'],
                                   n_coarse=a.get('n_coarse', 8), n_refine=a.get('n_refine', 5), **_solver(a))
@@ -177,8 +182,14 @@ def run(case, out_dir, only=None):
                         critical_param=None if r['param'] is None else abs(r['param']),
                         evaluations=r['evaluations'], time=time.perf_counter() - t0, workers=workers)
         mode = r['mode']
-        print(f'A (ShellNLDKGQ stability scan): critical {res["A"]["critical_load"]} at '
-              f'{res["A"]["critical_param"]}; {res["A"]["time"]:.0f} s', flush=True)
+        if r.get('bracket_only'):      # stable at least to critical_load; first unstable/failed point above
+            res['A'].update(lower_bound=True, bracket=[abs(x) if x == x else None for x in r['bracket_only']])
+            print(f'A (ShellNLDKGQ stability scan): STABLE to {res["A"]["critical_load"]} at '
+                  f'{res["A"]["critical_param"]} (lower bound; crossing in bracket {res["A"]["bracket"]}); '
+                  f'{res["A"]["time"]:.0f} s', flush=True)
+        else:
+            print(f'A (ShellNLDKGQ stability scan): critical {res["A"]["critical_load"]} at '
+                  f'{res["A"]["critical_param"]}; {res["A"]["time"]:.0f} s', flush=True)
     elif 'A' in case and not nld_ok:
         print('A skipped: off-axis plies (ShellNLDKGQ takes 0/90 only)')
     if case.get('mode_file'):
@@ -197,7 +208,16 @@ def run(case, out_dir, only=None):
                                            record=lambda: [ops.nodeDisp(ctrl.get('node', mesh.rigid['xL']), 1)],
                                            **_solver(b))
         else:
-            h, peak, k = sb.imperfect_path(ctrl, sgn * b['step'], int(round(b['max'] / b['step'])), **_solver(b))
+            ad = {}
+            if b.get('max_step'):                            # adaptive steps; fine again near the A crossing
+                a_crit = (res.get('A') or {}).get('critical_param') or (case.get('A_known') or {}).get(
+                    'critical_param')
+                ad = dict(max_step=sgn * b['max_step'], max_param=sgn * b['max'],
+                          fine_from=sgn * FINE_FROM * a_crit if a_crit else None)
+            if case.get('B_cutoff'):                         # threshold requirement: stop once it is passed
+                ad['max_load'] = case['B_cutoff']
+            h, peak, k = sb.imperfect_path(ctrl, sgn * b['step'], int(round(b['max'] / b['step'])), **_solver(b),
+                                           **ad)
         res['B'] = dict(peak_load=float(peak), param_at_peak=float(abs(h[k, 0])), amplitude=amp,
                         imperfection='mode A' if mode is not None else 'none',
                         history=h.tolist(), time=time.perf_counter() - t0,

@@ -10,6 +10,10 @@ written by study.py init, removed by finalize/close). While a study is active:
                git add -A / git add . / adding iteration folders, .npz or screen tables,
                force pushes, reset --hard, rebase, clean, package installs;
       asks     before edits of skills, orchestrator, agents or settings files, and before git push.
+Shared Abaqus server (PROTOCOL.md section 6a), enforced even with no study active: denies edits of
+Abaqus environment/install files (abaqus_v6.env, custom_v6.env, C:/SIMULIA/...) and Abaqus commands
+asking for more than 8 CPUs; while a study is active, also denies file edits outside the ME295 folder
+and any direct `abaqus cae/job/python` call that does not go through tools/run_abaqus.py.
 See PROTOCOL.md section 2. Exit 0 always (a crash of this script must not block work).
 """
 import json
@@ -27,7 +31,9 @@ CARD = ('BOOM STUDY ACTIVE - follow .claude/orchestrator/PROTOCOL.md (re-read it
         'run laminate, model, visualize (READ the PNG), failure, [buckling], objcon->record->converge/verify when '
         'due->repeat until STOP or 100 iterations->finalize. Numbers come from tool outputs only. Verification '
         '5-10 per prompt, never blocking; comparator agent gets ONLY the two result files. Commit only the paths '
-        'finalize lists. Catalogs and verification tools are read-only; skill edits need the user.')
+        'finalize lists. Catalogs and verification tools are read-only; skill edits need the user. '
+        'Abaqus runs here, ONLY via tools/run_abaqus.py, max 8 CPUs (default 1), and NOTHING outside the ME295 '
+        'folder may be written or changed (shared server).')
 
 DENY_EDIT = (r'\.claude/memory\.[^/]+/', r'\.claude/verification/')
 ASK_EDIT = (r'\.claude/skills/', r'\.claude/orchestrator/', r'\.claude/agents/', r'\.claude/settings[^/]*\.json$',
@@ -40,6 +46,52 @@ DENY_CMD = ((r'\bgit\s+add\s+(-A\b|--all\b|\.(\s|$)|\*)', 'git add -A / . / *: a
             (r'\bgit\s+(rebase|clean)\b', 'git rebase / clean'),
             (r'\b(pip|conda|mamba)\s+install\b', 'package installs'))
 ASK_CMD = ((r'\bgit\s+push\b', 'git push: only after the user OKs the commit'),)
+
+# Shared Abaqus server (PROTOCOL.md section 6a). ALWAYS enforced, study or not:
+#   no edits of Abaqus env/install files, no Abaqus job with more than 8 CPUs.
+# While a study is active, also: no file writes outside the ME295 folder, and Abaqus only via run_abaqus.py.
+ME295 = ROOT.parent
+MAX_CPUS = 8
+ABAQUS_FILES = r'(abaqus_v6\.env|custom_v6\.env|/SIMULIA/|^[A-Za-z]:/SIMULIA\b)'
+CPU_ARG = r'(?:--cpus[\s=]+|\bcpus\s*=\s*|numCpus\s*=\s*)(\d+)'
+
+
+def outside_me295(p):
+    if not p:
+        return False
+    q = Path(p)
+    if not q.is_absolute():
+        q = ROOT / q
+    try:
+        q.resolve().relative_to(ME295.resolve())
+        return False
+    except ValueError:
+        return True
+
+
+def abaqus_guard(tool, ti, active):
+    """(decision, reason) for the shared-server Abaqus rules, or None."""
+    if tool in ('Edit', 'Write', 'NotebookEdit', 'MultiEdit'):
+        p = norm(ti.get('file_path') or ti.get('notebook_path') or '')
+        if re.search(ABAQUS_FILES, p, re.I):
+            return 'deny', f'PROTOCOL.md 6a: {p} is an Abaqus environment/install file (shared server): never edit it.'
+        if active and outside_me295(p):
+            return 'deny', f'PROTOCOL.md 6a: {p} is outside the ME295 folder ({ME295}): nothing outside it may change.'
+    if tool in ('Bash', 'PowerShell'):
+        cmd = ti.get('command', '')
+        if re.search(r'\babaqus', cmd, re.I):
+            for n in re.findall(CPU_ARG, cmd, re.I):
+                if int(n) > MAX_CPUS:
+                    return 'deny', f'PROTOCOL.md 6a: {n} CPUs requested; at most {MAX_CPUS} per Abaqus job (shared server).'
+            if re.search(r'(>|Set-Content|Out-File|Add-Content|\bcp\b|\bmv\b|Copy-Item|Move-Item)[^\n]*' + ABAQUS_FILES,
+                         norm(cmd), re.I):
+                return 'deny', 'PROTOCOL.md 6a: never write Abaqus environment or install files (shared server).'
+            if active and re.search(r'(^|[\s;&|"\'(])abaqus(\.bat)?\s+(cae|job\s*=|python|interactive|j=)', cmd, re.I) \
+                    and 'run_abaqus.py' not in cmd \
+                    and not re.search(r'abaqus(\.bat)?\s+python\s+\S*odb_extract\.py', cmd, re.I):
+                return 'deny', ('PROTOCOL.md 6a: run Abaqus only through .claude/orchestrator/tools/run_abaqus.py '
+                                '(keeps every file inside ME295, caps CPUs at 8).')
+    return None
 
 
 def state_line():
@@ -72,13 +124,18 @@ def norm(p):
 
 
 def main():
-    if not ACTIVE.exists():
-        return
     try:
         data = json.load(sys.stdin)
     except Exception:                                                 # noqa: BLE001
         return
     event = data.get('hook_event_name', '')
+    active = ACTIVE.exists()
+    if event == 'PreToolUse':
+        g = abaqus_guard(data.get('tool_name', ''), data.get('tool_input') or {}, active)
+        if g:
+            return out(event, g[0], g[1], state_line() if active else '')
+    if not active:
+        return
     if event == 'UserPromptSubmit':
         out(event, context=CARD + ' ' + state_line())
         return

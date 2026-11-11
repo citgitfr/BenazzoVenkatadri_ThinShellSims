@@ -1,7 +1,7 @@
 """
 Abaqus/CAE Python script equivalent to an assembled OpenSeesPy shell script
 (the one standalone script written by the shell-assemble-run skill), to run
-elsewhere with `abaqus cae noGUI=...` (Abaqus is not installed on the project VM).
+with `abaqus cae noGUI=...` (on this server: through .claude/orchestrator/tools/run_abaqus.py).
 
 What it does:
   1. reads the assembled script: it must contain the laminate, mesh and
@@ -226,7 +226,8 @@ def run_on_mock(script, grid, faces):
                 ns['REPORT'].close()
             os.chdir(cwd)
             sys.argv = argv
-            for m in ('abaqus', 'abaqusConstants', 'mesh', 'regionToolset', 'section', 'odbAccess'):
+            for m in ('abaqus', 'abaqusConstants', 'mesh', 'regionToolset', 'section', 'interaction', 'step', 'load', 'job',
+                      'odbAccess'):
                 sys.modules.pop(m, None)
     return log, ns
 
@@ -484,7 +485,7 @@ def main():
         if n_fail:
             guide.unlink(missing_ok=True)
             raise SystemExit(1)
-    print('Abaqus run itself: untested here (Abaqus is not installed on this VM)')
+    print('Abaqus run: python .claude/orchestrator/tools/run_abaqus.py <this abaqus_*.py> [--cpus N<=8]')
     text = instructions(out, info['NAME'], a.element, M['size'], npz or src.parent / 'results' / f'{info["NAME"]}.npz',
                         src, checked=not a.no_check)
     guide.write_text(text, encoding='utf-8')

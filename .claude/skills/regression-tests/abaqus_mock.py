@@ -23,6 +23,7 @@ class StopAtJob(Exception):
 KNOWN = {
     'ArcByCenterEnds', 'BaseShellExtrude', 'BuckleStep', 'CompositeShellSection', 'ConcentratedForce',
     'ConstrainedSketch', 'Coupling', 'DatumCsysByThreePoints', 'Density', 'DisplacementBC', 'Elastic', 'ElemType',
+    'FieldOutputRequest', 'Set',
     'HistoryOutputRequest', 'HomogeneousShellSection', 'Line', 'Material', 'MaterialOrientation', 'Moment',
     'Pressure', 'Region', 'SectionAssignment', 'SectionLayer', 'StaticRiksStep', 'StaticStep',
     'flipNormal', 'generateMesh', 'seedEdgeByNumber', 'setElementType', 'setMeshControls', 'rotate', 'translate',
@@ -51,6 +52,10 @@ KWARGS = {
                                'useLongTermSolution', 'convertSDI'},
     'BuckleStep': _STEP | {'numEigen', 'eigensolver', 'minEigen', 'maxEigen', 'vectors', 'maxIterations',
                            'blockSize', 'maxBlocks', 'matrixStorage'},
+    'FieldOutputRequest': {'name', 'createStepName', 'region', 'variables', 'frequency', 'modes', 'timeInterval',
+                           'numIntervals', 'timeMarks', 'sectionPoints', 'rebar', 'filter', 'directions',
+                           'layupNames', 'layupLocationMethod', 'outputAtPlyTop', 'outputAtPlyMid',
+                           'outputAtPlyBottom', 'position', 'exteriorOnly'},
     'HistoryOutputRequest': {'name', 'createStepName', 'region', 'variables', 'frequency', 'modes', 'timeInterval',
                              'numIntervals', 'timeMarks', 'sectionPoints', 'rebar', 'filter', 'fasteners'},
     'ConcentratedForce': {'name', 'createStepName', 'region', 'distributionType', 'field', 'cf1', 'cf2', 'cf3',
@@ -66,6 +71,10 @@ KWARGS = {
 
 def check_kwargs(name, kw):
     ok = KWARGS.get(name.split('.')[-1])
+    if name.endswith('FieldOutputRequest'):
+        bad = [v for v in kw.get('variables', ()) if v not in VALID_FIELD_OUTPUT]
+        if bad:
+            raise ValueError('Invalid variables are specified in an output request. (%s)' % ', '.join(bad))
     for k in kw:
         if ok is not None and k not in ok:
             raise TypeError('keyword error on %s' % k)
@@ -231,7 +240,7 @@ def install(nodes_xyz, normal_of):
     abaqus = types.ModuleType('abaqus')
     abaqus.mdb = Mdb()
     sys.modules['abaqus'] = abaqus
-    for name in ('mesh', 'regionToolset', 'section', 'odbAccess'):
+    for name in ('mesh', 'regionToolset', 'section', 'interaction', 'step', 'load', 'job', 'odbAccess'):
         mod = types.ModuleType(name)
         mod.__getattr__ = (lambda n, _name=name: Rec(log, f'{_name}.{n}'))
         sys.modules[name] = mod

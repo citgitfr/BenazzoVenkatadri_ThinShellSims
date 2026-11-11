@@ -1,0 +1,86 @@
+Log of changes to the Python tools and skill scripts made by Claude (orchestrator session) under
+Federico's standing permission of 11/9/26 ("feel free to make any changes to the python codes tools,
+where you deemed that it will not break other sections of the code. And keep a log of what you do").
+Every change is backward compatible (new options default to the old behaviour) unless noted.
+Study used for testing: Code for Project/11-07-26 (Orchestrator)/boom_1m_buck500N_opp1cm_hub50
+(test scripts and logs in its perf/ folder).
+
+Format: Date / Person / Entry
+
+11/8/26
+Claude (for Federico)
+- shell-buckling (shell_buckling.py, boom_buckling.py): parallel step-A stability scan (multiprocessing,
+  up to 16 workers, one OpenSees model per worker), per-case solver tolerances (tol, max_iter, max_cuts);
+  study.py adds tol 1e-6 (the 1e-8 used before sat at the round-off floor and doubled the iterations).
+  Validated on the tape-spring compression and opposite-bending cases (A and B within 0.15%), regression
+  349/349. Committed and pushed as 59c9485 (Federico's OK).
+- study.py run_buckling: a B path that STALLS (stops converging at less than half of its range) is no
+  longer re-run with doubled range and step (that cannot help and cost 1.6 h per retry on it001); it is
+  recorded as "B STALL" (limit point, Abaqus Riks to confirm). A finished stalled B of the same model is
+  reused instead of re-run. Not committed.
+
+11/9/26
+Claude (for Federico)
+- design_screen.py: buckling estimates for TRAC / OM / CO sections in compression (before: tape springs
+  only, so no TRAC/OM/CO design was ever rejected for buckling).
+    P_col = Euler with the weaker EI (K = 1 pinned, 0.5 clamped).
+    P_loc = KNOCKDOWN x classical curved-panel stress of the flattest arc (largest R) x total area;
+            KNOCKDOWN 0.3 for OM/CO (closed walls, both edges supported, as for TS) and 0.027 for TRAC
+            (free-edge flanges), calibrated on it001 (L038/Y005/R014 buckled LOCALLY at 49 N: the mode is
+            0.84 local distortion vs 0.075 rigid-section motion; Euler load 19 kN; 0.3-classical 542 N).
+  Screen re-run for the study with --max-rows 100000 (the 20000-row cap had cut off every 0.14-0.175 mm
+  design): 57318 rows pass.
+- study.py: buckling calibration per section type (FE/estimate median per TS/TRAC/OM/CO, falling back to
+  all runs), because the estimates are different formulas; "B STALL" results now enter the calibration.
+- shell_buckling.py: adaptive path steps (_next_step): after a step that converged easily the next one
+  doubles, up to max_step (only when max_step is given; otherwise unchanged). Step A: "easily" = <= 3
+  iterations. Step B (imperfect_path, ASDShellQ4 needs 8+ iterations from the start): <= first-step
+  iterations + 2; beyond fine_from (0.7 x the A critical parameter) B goes back to the base step so the
+  peak is resolved as before; max_param ends the path at the range end.
+  Validation (perf/ex): tape-spring compression A 45.6229 vs 45.6235 N, 28 s vs 87 s; opposite bending A
+  identical (311.481 N mm); B opposite bending identical (401.99 N mm at 0.145).
+- shell_buckling.parallel_stability_scan: option `enough`: when the stable end of the coarse bracket already
+  carries this load, the refinement rounds (each re-marches the whole path) are skipped and A is reported
+  as a lower bound with its bracket ("A ... STABLE to X (lower bound; crossing in bracket [X, Y])").
+- study.py: max_step = 8 x step for A and B (STEP_GROWTH); A max_iter 30 -> 10 (ShellNLDKGQ converges in
+  2-3 iterations when it converges at all; a failing attempt cost 30 x 110 s on it003 before the step cut);
+  A enough = 1.5 x the required buckling load (A_ENOUGH) for threshold requirements.
+- Why the buckling runs were slow (measured on it003, OM M008, 2.2 mm mesh, 317,388 DOFs, 1 CPU):
+  model build 7 s; one path step 213-233 s (2 Newton iterations, ~110 s each: tangent + UmfPack sparse
+  factorization); one eigenvalue solve of K_T 1376 s (23 min; OpenSees eigen = ARPACK on a BAND matrix,
+  ~10 GB, the only eigen solvers in this build are band/dense: genBandArpack, symmBandLapack,
+  symmGenLapack, fullGenLapack); 8 BLAS threads gave no speedup (same 213 s and 1375 s), so more CPUs
+  per process do not help - only more processes. The old A scan's farthest point marched 60 steps and
+  then stalled near 1446 N, where each failed attempt ran 30 iterations (55 min) before the step was
+  halved: > 12 h for one scan point.
+- Verification chain (done by a subagent, approved by Federico 11/9/26): compare_results.py read Abaqus
+  SK1/SK2 as kxx/kyy, but Abaqus 2026 names SK by the axis bent ABOUT (SK1 = kyy, SK2 = kxx); it rebuilt
+  N/M with the single laminate on the doubled webs; and Abaqus wrote stresses only at 3 section points,
+  so the 90-deg ply could not be checked. Fixed: case_to_abaqus.py writes S/E at every section point of
+  every ply (flange and web sets), compare_results.py pairs section points with plies and uses the doubled
+  web laminate. Tests: test_verification.py 29/29, regression 359/359 (10 new T20 checks); real Abaqus
+  rerun of it001: kxx -0.79%, kyy -1.89%, web N11 -0.64%, 90-deg ply s2 within 0.4%.
+  NOT INSTALLED: the protocol hook blocks writes to .claude/verification/ during a study; the fixed
+  compare_results.py, odb_mock.py and test_verification.py are staged in the study's perf/verif_fix/
+  verification/ and must be copied over .claude/verification/ (by Federico, or after the study closes).
+- study.py BUCKLING_CUTOFF 3.0 -> 1.5 (Federico's decision): for a threshold buckling requirement B stops at
+  1.5 x the required load. shell_buckling.imperfect_path option max_load: the path stops once the load
+  factor reaches it; boom_buckling passes the case's B_cutoff (before, the cutoff only shortened the path
+  RANGE, to 2 x the linear shortening at the cutoff load, so B ran on to ~2 x the cutoff). Tested:
+  tape-spring compression with B_cutoff 30 N stops at 32.2 N (5 steps, 20 s).
+  study.py resume_A also recognises the new "A ... STABLE to X at Y (lower bound ...); T s" line.
+- Regression suite after all of the above: 359 checks, 359 passed, 0 failed (868 s; log
+  perf/regression_2026-11-09.log). It does not cover the buckling path code; that was checked on the
+  tape-spring cases above.
+- shell-bc-load (shell_bc_load.py, linear_solve and the LINEAR_CODE piece of assembled scripts): when the
+  UmfPack linear step fails, it is retried once with SuperLU (same model, analysis re-created). Reason: the
+  mesh-convergence run of it003 (OM M008, 1.32 mm, 856,164 DOFs) failed with "numeric analysis returns -1 --
+  Umfpackgenlinsolver" (UmfPack out of memory); the same script with SuperLU solved in 399 s, tip uz
+  -6.5826 mm (coarse 2.2 mm mesh: 6.59 mm). SparseSYM crashed on it. Models that UmfPack solves are unchanged
+  (the fallback only runs after a failure). Test files in the study's perf/fine_solver/.
+
+11/10/26
+Claude (for Federico)
+- Regression suite with the SuperLU fallback in place: 359 checks, 359 passed, 0 failed (432 s; log
+  perf/regression_2026-11-10.log). Tool, protocol and log changes committed and merged into main for Tara
+  (Federico's request); study folders and the staged verification fixes not included.

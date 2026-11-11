@@ -7,9 +7,11 @@ description: Turns the one standalone OpenSeesPy shell script assembled by the s
 
 Script: `opensees_to_abaqus.py` (this folder; uses `../abaqus-export/case_to_abaqus.py`
 for the translation and `../regression-tests/abaqus_mock.py` for the check).
-**Abaqus is not installed on the project VM**: everything that can be checked
-here is checked, and the Abaqus run itself is untested until the user runs it
-elsewhere. Say so plainly. Units: N, mm, MPa, t/mm^3.
+Abaqus 2026 is installed on this server: run the generated script ONLY with
+`.claude/orchestrator/tools/run_abaqus.py <dir>/abaqus_<name>.py [--cpus N]` (shared server: at most
+8 CPUs, default 1; it keeps the run folder and Abaqus scratch inside the ME295 folder, never touches
+Abaqus env/install files, extracts `<job>_odb.npz` with `abaqus python odb_extract.py` and copies the
+results next to the script; PROTOCOL.md section 6a of the orchestrator). Units: N, mm, MPa, t/mm^3.
 Python: conda env `shells` (openseespy 3.8): Federico
 `D:\Users\fbenazzo\miniconda3\envs\shells\python.exe`, Tara
 `D:\Users\tvenkata\miniforge3\envs\shells\python.exe`.
@@ -81,7 +83,7 @@ abaqus cae noGUI=abaqus_<name>.py [-- <size> <S4R|S4>]          # on a machine w
   user knows what to run, what to bring back and what to ask for;
 - the model in a short list (geometry, plies bottom to top, element, mesh,
   BCs, loads, step) and the OpenSees reference values it embeds;
-- the model-check lines (n/n pass) and that the Abaqus run is untested;
+- the model-check lines (n/n pass) and, if it was run, the run_abaqus.py result;
 - what is not one-to-one: coincident per-angle elements -> one composite
   section; `-noeas` ASDShellQ4 vs S4R/S4 (compare on two meshes); LayeredShell
   layer mid-points vs Simpson (Abaqus D slightly stiffer, ~1/(layers)^2);

@@ -267,11 +267,26 @@ def stability_path(control, step, max_steps=200, n_eig=4, stop_after=0, rel_tol=
     return dict(history=np.array(rows), critical=crit, eig0=eig0)
 
 
+GROW_ITERS = 3      # a step that converged in <= this many iterations lets the next one double (up to max_step)
+
+
+def _next_step(d, taken, step, max_step, grow_iters=GROW_ITERS):
+    """Size of the next path step: regrow after a cut; with max_step, double after an easy step
+    (<= grow_iters iterations; prebuckling paths are nearly linear: 2 iterations per step at the base
+    step on the it003 boom, 317k DOFs, 220 s per step; 2026-11-09). Sign of step."""
+    if taken != d:
+        return 2 * taken                                   # regrow after a cut
+    if max_step and abs(max_step) > abs(step) and ops.testIter() <= grow_iters:
+        return math.copysign(min(2 * abs(taken), abs(max_step)), step)
+    return math.copysign(max(abs(step), abs(taken)) if max_step else abs(step), step)
+
+
 def scan_point(build, p, step, n_eig=3, tol=1e-8, max_iter=100, max_cuts=6, algorithm='KrylovNewton',
-               want_mode=False, mode_nodes=None, verbose=True):
+               want_mode=False, mode_nodes=None, max_step=None, verbose=True):
     """One evaluation of the stability scan (method A): build() the model
-    (returns the control dict), march to path parameter p in steps <= step,
-    then mu_min(K_T). Returns ((p, load factor, mu_min), mode or None), or
+    (returns the control dict), march to path parameter p in steps <= step
+    (or growing up to max_step while Newton converges easily), then
+    mu_min(K_T). Returns ((p, load factor, mu_min), mode or None), or
     (None, None) if the march fails. Used by stability_scan and by
     parallel_stability_scan (one model per worker process)."""
     ctrl = build()
@@ -286,7 +301,7 @@ def scan_point(build, p, step, n_eig=3, tol=1e-8, max_iter=100, max_cuts=6, algo
                 print(f'  scan p = {p: .6g}: march failed at {done: .6g}', flush=True)
             return None, None
         done += taken
-        d = step if taken == d else 2 * taken          # regrow after a cut
+        d = _next_step(d, taken, math.copysign(abs(step), p), max_step)
     ops.integrator('LoadControl', 0.0)
     ops.analysis('Static')
     mu = tangent_eigen(n_eig)
@@ -296,7 +311,8 @@ def scan_point(build, p, step, n_eig=3, tol=1e-8, max_iter=100, max_cuts=6, algo
     return ev, (mode_shape(1, mode_nodes) if want_mode else None)
 
 
-def parallel_stability_scan(evaluate_many, max_param, n_coarse=8, n_rounds=2, n_points=7, verbose=True):
+def parallel_stability_scan(evaluate_many, max_param, n_coarse=8, n_rounds=2, n_points=7, enough=None,
+                            verbose=True):
     """Method (A) with the scan points evaluated concurrently (one process
     per point; each rebuilds and re-marches its own model, as in
     stability_scan, so the points are independent).
@@ -307,7 +323,11 @@ def parallel_stability_scan(evaluate_many, max_param, n_coarse=8, n_rounds=2, n_
     interior points each (bracket / (n_points + 1) per round); the critical
     point is linearly interpolated on mu_min = 0 in the final bracket, and
     the mode is the eigenvector at its far end, as in stability_scan.
-    Returns the same dict as stability_scan."""
+    enough (|load factor|): if the stable end of the coarse bracket already
+    carries it, the rounds are skipped (a threshold requirement is settled;
+    each round re-marches the whole path) and the result is the stable end
+    (load_factor, param) with its mode, flagged bracket_only = (a, b) loads.
+    Returns the same dict as stability_scan (+ bracket_only)."""
     evals = []
 
     def run(ps):
@@ -331,6 +351,12 @@ def parallel_stability_scan(evaluate_many, max_param, n_coarse=8, n_rounds=2, n_
     if k is None:
         return dict(param=None, load_factor=None, mode=None, evaluations=evals)
     a, b = (out[k - 1][0], out[k - 1][1]), (out[k][0] or (ps[k], float('nan'), None), out[k][1])
+    if enough is not None and abs(a[0][1]) >= abs(enough):
+        if verbose:
+            print(f'  stable to load factor {a[0][1]:.6g} >= {enough:g} (enough): bracket '
+                  f'[{a[0][0]: .6g}, {b[0][0]: .6g}] not refined', flush=True)
+        return dict(param=a[0][0], load_factor=a[0][1], mode=a[1], evaluations=evals,
+                    bracket_only=(a[0][1], b[0][1]))
     for r in range(n_rounds):
         pa, pb = a[0][0], b[0][0]
         if abs(pb - pa) <= 1e-9 * abs(max_param):
@@ -466,7 +492,8 @@ def lba(build, lam_small, n_modes=3, max_dofs=8000, verbose=True):
 
 
 def imperfect_path(control, step, n_steps, record=None, tol=1e-8, max_iter=100, max_cuts=6,
-                   algorithm='KrylovNewton', min_step=None, verbose=True):
+                   algorithm='KrylovNewton', min_step=None, max_step=None, fine_from=None, max_param=None,
+                   max_load=None, verbose=True):
     """Method (B): path of the current (imperfect) model, no eigen calls.
     control: {'type': 'disp', 'node', 'dof'} (rotation/displacement of a
     LOADED DOF: limit points, snap-through) or {'type': 'load'} (bifurcation
@@ -475,6 +502,12 @@ def imperfect_path(control, step, n_steps, record=None, tol=1e-8, max_iter=100, 
     a column, diverges at the first step). KrylovNewton accelerates the
     modified-Newton-like convergence of ASDShellQ4 near buckling.
     Steps are halved on failure (max_cuts) and grown back after success.
+    Adaptive (max_step set): easy steps double up to max_step, but beyond
+    |param| >= fine_from (e.g. 0.7 x the step-A critical value) steps are
+    held at `step` so the peak is resolved as finely as before; max_param
+    ends the path there (the n_steps budget then only bounds the count).
+    max_load: stop once |load factor| reaches it (threshold cutoff; the
+    last point is then the peak, still rising).
     Returns (rows [param, load factor, record()..., iterations], peak
     |load factor|, its row index)."""
     record = record or (lambda: [])
@@ -482,7 +515,13 @@ def imperfect_path(control, step, n_steps, record=None, tol=1e-8, max_iter=100, 
     ops.algorithm(algorithm)
     rows = [[_param(control), ops.getLoadFactor(1), *record(), 0]]
     d = step
-    for k in range(n_steps):
+    for k in range(n_steps if not max_param else 100 * n_steps):
+        if max_param and abs(rows[-1][0]) >= abs(max_param) * (1 - 1e-9):
+            break
+        if max_param:                                      # do not pass the end of the range
+            d = math.copysign(min(abs(d), abs(max_param) - abs(rows[-1][0])), step)
+        if fine_from and abs(rows[-1][0]) >= abs(fine_from):
+            d = math.copysign(min(abs(d), abs(step)), step)
         taken = _step(control, d, max_cuts)
         if taken is None:
             if verbose:
@@ -492,7 +531,13 @@ def imperfect_path(control, step, n_steps, record=None, tol=1e-8, max_iter=100, 
         if verbose:
             print(f'  step {k + 1:3d}: param {rows[-1][0]: .5g}, load factor {rows[-1][1]: .6g}, '
                   f'iters {ops.testIter()}', flush=True)
-        d = step if taken == d else taken * 2        # grow back after a cut
+        if max_load and abs(rows[-1][1]) >= abs(max_load):
+            if verbose:
+                print(f'  cutoff: load factor {rows[-1][1]:.6g} >= {max_load:g}, path stopped', flush=True)
+            break
+        if k == 0:      # ASDShellQ4 converges slowly at any step size (8-9 iterations from the start):
+            grow = max(GROW_ITERS, ops.testIter() + 2)    # "easy" = as easy as the first step
+        d = _next_step(d, taken, step, max_step, grow)
     h = np.array(rows)
     k = int(np.argmax(np.abs(h[:, 1])))
     return h, abs(h[k, 1]), k
