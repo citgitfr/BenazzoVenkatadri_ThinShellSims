@@ -18,7 +18,7 @@ python boom_buckling.py case.json [--out DIR] [--only A|B]
 ```json
 {"name": "tape_opp", "laminate": {"isotropic": {"E": 131000, "nu": 0.3, "t": 0.1}},
  "geometry": {"L": 200, "section": {"type": "arc", "R": 13.3, "b": 24.605}, "size": 3},
- "load": {"type": "bending", "axis": "y", "sign": 1},          // or {"type": "compression", "ends": "clamped"|"pinned"}
+ "load": {"type": "bending", "axis": "y", "sign": 1},          // or {"type": "compression", "ends": "clamped"|"pinned"|"free_tip"} (free_tip: Palmeri & Laurenzi, tip fixed only in rx)
  "A": {"step": 0.005, "max": 0.2},                              // rotation [rad] or end shortening [mm]
  "B": {"step": 0.005, "max": 0.2, "amplitude": 0.01, "control": "disp"}}
 ```

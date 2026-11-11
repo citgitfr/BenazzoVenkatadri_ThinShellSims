@@ -1,0 +1,24 @@
+=== Abaqus verification of "it002_CTM_r30p000_a1p3000" ===
+
+ON THE MACHINE WITH ABAQUS
+  1. Copy this ONE file into an empty folder there:
+       abaqus_it002_CTM_r30p000_a1p3000.py
+  2. In that folder run:
+       abaqus cae noGUI=abaqus_it002_CTM_r30p000_a1p3000.py
+     (10 mm mesh, S4R, job "it002_CTM_r30p000_a1p3000_S4R_10mm". For another mesh / element, e.g.
+      abaqus cae noGUI=abaqus_it002_CTM_r30p000_a1p3000.py -- 5 S4
+      the job and every file name below become "it002_CTM_r30p000_a1p3000_S4_5mm".)
+  3. When it finishes, open it002_CTM_r30p000_a1p3000_S4R_10mm_results.txt and check that it does NOT say
+     "ODB extraction failed". If it does, copy .claude/verification/odb_extract.py
+     from the project into the same folder and run:
+       abaqus python odb_extract.py it002_CTM_r30p000_a1p3000_S4R_10mm.odb
+     Optional: open the model in Abaqus/CAE to check the set-up:
+       abaqus cae database=it002_CTM_r30p000_a1p3000_S4R_10mm.cae
+
+COPY BACK TO THIS MACHINE, into F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002
+  it002_CTM_r30p000_a1p3000_S4R_10mm_odb.npz        REQUIRED: the Abaqus results as plain arrays
+  it002_CTM_r30p000_a1p3000_S4R_10mm_results.txt    recommended: run log and Abaqus vs embedded OpenSees values
+  not needed: it002_CTM_r30p000_a1p3000_S4R_10mm.odb / .cae / .dat / .msg / .sta (keep them there for inspection)
+
+THEN TELL CLAUDE (paste):
+  Run the OpenSeesAbaqusResultsComparator agent on F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002\results\it002_CTM_r30p000_a1p3000.npz and F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002\it002_CTM_r30p000_a1p3000_S4R_10mm_odb.npz

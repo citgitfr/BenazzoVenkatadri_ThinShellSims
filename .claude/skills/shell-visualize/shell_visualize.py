@@ -60,7 +60,7 @@ POINT_FIELDS = ('ux', 'uy', 'uz', 'rx', 'ry', 'rz', '|u|')
 UNITS = {'k': '1/mm', 'sigma': 'MPa', 'tau': 'MPa', 'von': 'MPa', 'hashin': '-', 'eps': '-', 'gam': '-'}
 
 
-def fields(res, boom=None, web=None, web_stack='mirror'):
+def fields(res, boom=None, web=None, web_stack='mirror', lam_file=None, web_lam_file=None):
     """All cell fields of a results dict (see module docstring). Web facets
     (failure-check: boom / web ranges) use the doubled layup; hashin_ply<k>
     there is the max over ply k of both bonded tapes."""
@@ -71,8 +71,10 @@ def fields(res, boom=None, web=None, web_stack='mirror'):
              k_1=m + r, k_2=m - r, k_absmax=np.where(np.abs(m + r) >= np.abs(m - r), m + r, m - r))
     if res['laminate'] is None:
         return f
-    lam = lp.Laminate.from_dict(res['laminate'])
-    groups, is_web, _, note = fc.facet_groups(res, lam, boom, web, web_stack)
+    lam = lp.Laminate.load(lam_file) if lam_file else lp.Laminate.from_dict(res['laminate'])
+    groups, is_web, _, note = fc.facet_groups(res, lam, boom, web, web_stack,
+                                              lp.Laminate.load(web_lam_file) if web_lam_file else None)
+    web_stack = res['meta'].get('web_stack', web_stack) if not web else web_stack   # the model's stack
     print(note)
     nf, n = len(E), len(lam.plies)
     for _, gl, idx in groups:
@@ -92,13 +94,15 @@ def fields(res, boom=None, web=None, web_stack='mirror'):
             f['hashin_R'][idx] = R.reshape(len(F), -1).min(axis=1)
             if n > 1:
                 for p in range(len(gl.plies)):
-                    q = fc.tape_ply(n, p, web_stack) if len(gl.plies) > n else p
+                    q = fc.tape_ply(n, p, web_stack, len(gl.plies)) if len(gl.plies) > n else p
+                    if q is None:                       # bond ply of a custom web stack
+                        continue
                     key = f'hashin_ply{q + 1}'
                     f[key][idx] = np.maximum(f[key][idx], F[:, :, p].max(axis=(1, 2)))
     return f
 
 
-def to_polydata(res, boom=None, web=None, web_stack='mirror'):
+def to_polydata(res, boom=None, web=None, web_stack='mirror', lam_file=None, web_lam_file=None):
     faces = np.hstack([np.full((len(res['faces']), 1), 4), res['faces']]).ravel()
     mesh = pv.PolyData(np.asarray(res['points'], float), faces)
     u = res['disp']
@@ -106,7 +110,7 @@ def to_polydata(res, boom=None, web=None, web_stack='mirror'):
         mesh.point_data[name] = u[:, k]
     mesh.point_data['|u|'] = np.linalg.norm(u[:, :3], axis=1)
     mesh.point_data['fixed'] = res['fixed']
-    for name, v in fields(res, boom, web, web_stack).items():
+    for name, v in fields(res, boom, web, web_stack, lam_file, web_lam_file).items():
         mesh.cell_data[name] = v
     mesh.field_data['title'] = [res['meta'].get('title') or 'OpenSees shell model']
     return mesh
@@ -199,10 +203,12 @@ def main():
     ap.add_argument('--web', type=float, nargs=2, action='append', metavar=('S0', 'S1'),
                     help='web range of section arc length s [mm] (repeat for several webs)')
     ap.add_argument('--web-stack', choices=('mirror', 'repeat'), default='mirror')
+    ap.add_argument('--laminate', help='laminate JSON for the ply fields (default: the one in the results)')
+    ap.add_argument('--web-laminate', help='web laminate JSON for the ply fields (default: the model\'s)')
     a = ap.parse_args()
 
     res = bc.load_results(a.results)
-    mesh = to_polydata(res, a.boom, a.web, a.web_stack)
+    mesh = to_polydata(res, a.boom, a.web, a.web_stack, a.laminate, a.web_laminate)
     vtp = a.vtp or str(Path(a.results).with_suffix('.vtp'))
     mesh.save(vtp)
     print(f'saved {vtp}: {mesh.n_cells} facets, {mesh.n_points} nodes')

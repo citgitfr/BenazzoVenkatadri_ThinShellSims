@@ -121,3 +121,8 @@ Claude (for Federico)
   (0.1 N; arc-length increment cut to the 1e-8 minimum): not a strength, a Riks set-up problem still to solve.
   This export's Riks step had never been run in real Abaqus before (the 10-29-26 results files are --mock runs).
 - Regression after the B stop and buckling_to_abaqus changes: 359/359 passed (390 s; perf/regression_2026-11-11.log).
+- Merged Tara's 11/10/26 commits (CTM custom-design mode, Lanczos default in buckling_to_abaqus). Conflict in
+  buckling_to_abaqus.py resolved: Lanczos stays the default (Tara), "eigensolver": "subspace" with "vectors" /
+  "max_iterations" and "max_eigen" for Lanczos kept as options (needed on the omega M008 boom, where Lanczos
+  accepted 0 eigenvalues); the template gets source (Tara) and extractor. Merged code: regression 359/359,
+  test_verification 29/29, forced B-stop test unchanged (stall_passed at 23.6 N).

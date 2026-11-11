@@ -1,0 +1,8 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\orchestrator\tools\study.py _custom_abd_check "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001"
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+flange: [45GFPW/0CF/45GFPW] literal, h 0.08 mm, 30 layers: OpenSees vs CLT A 3.8e-16, B 1.2e-16, D 3.3e-03 (mid-plane layer integration); D vs the exact layer integral 6.7e-16 -> OK
+web: [45GFPW/0CF/(45GFPW)3/0CF/45GFPW] literal, h 0.185 mm, 28 layers: OpenSees vs CLT A 1.8e-16, B 1.9e-16, D 1.5e-03 (mid-plane layer integration); D vs the exact layer integral 1.0e-15 -> OK
+buckling twin: [45GFPW/0CF/45GFPW] equivalent 0-deg, h 0.08 mm, 30 layers: OpenSees vs CLT A 3.8e-16, B 1.3e-16, D 3.3e-03 (mid-plane layer integration); D vs the exact layer integral 7.8e-16 -> OK
+buckling twin (0/90 plies) ABD vs flange ABD: 4.8e-17
+custom laminates: ABD check OK

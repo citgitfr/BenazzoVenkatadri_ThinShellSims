@@ -1,0 +1,8 @@
+shell normal flipped on the face through [-40.7654962282387, 0.0]
+shell normal flipped on the face through [40.7654962282387, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0.008 mm); scale S = 500
+WARNING: LBA mode shape not written (list index out of range)
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+
+=== 3. RIKS with the LBA mode-1 imperfection (0.008 mm)

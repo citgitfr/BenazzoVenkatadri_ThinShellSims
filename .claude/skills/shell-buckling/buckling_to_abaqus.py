@@ -138,15 +138,21 @@ def insert_keyword(mdl, text, before=None, after=None):
 
 
 def buckle_step(mdl, name, previous):
-    if B.get('eigensolver', 'subspace').lower() == 'lanczos':
-        # clustered local modes (thin closed/branched booms): subspace iteration may not converge
-        from abaqusConstants import LANCZOS
-        mdl.BuckleStep(name=name, previous=previous, numEigen=B['n_modes'], eigensolver=LANCZOS, minEigen=0.0,
-                       maxEigen=B.get('max_eigen'))
-    else:
-        # vectors: a larger subspace separates clustered local modes (default n_modes + 8, as before)
-        mdl.BuckleStep(name=name, previous=previous, numEigen=B['n_modes'],
-                       vectors=B.get('vectors', B['n_modes'] + 8), maxIterations=B.get('max_iterations', 300))
+    # Lanczos (Tara, 11/10/26): the subspace solver converged only 2 of 4 eigenvalues in 300 iterations on a thin
+    # CTM shell (clustered wrinkle modes); minEigen = 0 skips negative (tension) eigenvalues.
+    # "eigensolver": "subspace" (Federico's study, 11/11/26): on the omega M008 boom (52780 S4R) Lanczos accepted
+    # 0 eigenvalues (its automatic interval was scaled at 2e-6, the factors are ~1.09) while subspace with
+    # "vectors": 30, "max_iterations": 1000 converged; "max_eigen" bounds the Lanczos interval.
+    if B.get('eigensolver', 'lanczos').lower() == 'lanczos':
+        try:
+            from abaqusConstants import LANCZOS
+            mdl.BuckleStep(name=name, previous=previous, numEigen=B['n_modes'], eigensolver=LANCZOS, minEigen=0.0,
+                           maxEigen=B.get('max_eigen'))
+            return
+        except (ImportError, TypeError, AttributeError):
+            pass
+    mdl.BuckleStep(name=name, previous=previous, numEigen=B['n_modes'], vectors=B.get('vectors', B['n_modes'] + 8),
+                   maxIterations=B.get('max_iterations', 3000))
 
 
 def new_model(name):
@@ -329,8 +335,8 @@ def generate(case_path, out=None, element='S4R'):
         f'Buckling: {json.dumps(case["buckling"])}',
         f'Reference values: {json.dumps(case.get("reference", {}))}'])
     text = (_PREFIX + _BUCKLE) % dict(
-        name=name, source='a shell-buckling case', extractor=ca._extractor(),   # keys of the shared template
-        case_file=Path(case_path).name, summary=summary, script=out.name, size=mesh.size,
+        name=name, case_file=Path(case_path).name, source=f'buckling case {Path(case_path).name}',
+        extractor=ca._extractor(), summary=summary, script=out.name, size=mesh.size,
         element=element, job=name.replace('-', '_')[:24], model=ca._literal(model), ref='{}',
         buckling=ca._literal(bk), reference=ca._literal(case.get('reference', {})))
     out.write_text(text, encoding='utf-8')

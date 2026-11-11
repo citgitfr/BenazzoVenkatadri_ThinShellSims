@@ -1,0 +1,301 @@
+{
+ "iter": 2,
+ "key": "CTM/r1=30.000/alpha=1.3000",
+ "custom": true,
+ "family": "CTM",
+ "r1": 30.0,
+ "alpha": 1.3,
+ "r2": 16.538461538461537,
+ "chord": 89.68503110421564,
+ "material": "custom",
+ "layup": "custom",
+ "layup_str": "[45GFPW/0CF/45GFPW] literal",
+ "geometry": "CTM(r1=30.000,a=1.3000)",
+ "type": "OM",
+ "section": {
+  "type": "branched",
+  "web_stack": {
+   "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_lit.json"
+  },
+  "branches": [
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "line",
+       4.5
+      ]
+     ],
+     "start": [
+      -49.34251555210782,
+      0.0
+     ]
+    },
+    "laminate": "web"
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "arc",
+       16.538461538461537,
+       21.5
+      ],
+      [
+       "arc",
+       -30.0,
+       78.0
+      ],
+      [
+       "arc",
+       16.538461538461537,
+       21.5
+      ]
+     ],
+     "start": [
+      -44.84251555210782,
+      0.0
+     ],
+     "heading": 0.0
+    },
+    "laminate": "flange"
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "arc",
+       -16.538461538461537,
+       21.5
+      ],
+      [
+       "arc",
+       30.0,
+       78.0
+      ],
+      [
+       "arc",
+       -16.538461538461537,
+       21.5
+      ]
+     ],
+     "start": [
+      -44.84251555210782,
+      0.0
+     ],
+     "heading": 0.0
+    },
+    "laminate": "flange",
+    "flip": true
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "line",
+       4.5
+      ]
+     ],
+     "start": [
+      44.84251555210782,
+      0.0
+     ]
+    },
+    "laminate": "web"
+   }
+  ]
+ },
+ "buckling_section": {
+  "type": "branched",
+  "web_stack": {
+   "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_eq.json"
+  },
+  "branches": [
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "line",
+       4.5
+      ]
+     ],
+     "start": [
+      -49.34251555210782,
+      0.0
+     ]
+    },
+    "laminate": "web"
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "arc",
+       16.538461538461537,
+       21.5
+      ],
+      [
+       "arc",
+       -30.0,
+       78.0
+      ],
+      [
+       "arc",
+       16.538461538461537,
+       21.5
+      ]
+     ],
+     "start": [
+      -44.84251555210782,
+      0.0
+     ],
+     "heading": 0.0
+    },
+    "laminate": "flange"
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "arc",
+       -16.538461538461537,
+       21.5
+      ],
+      [
+       "arc",
+       30.0,
+       78.0
+      ],
+      [
+       "arc",
+       -16.538461538461537,
+       21.5
+      ]
+     ],
+     "start": [
+      -44.84251555210782,
+      0.0
+     ],
+     "heading": 0.0
+    },
+    "laminate": "flange",
+    "flip": true
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "line",
+       4.5
+      ]
+     ],
+     "start": [
+      44.84251555210782,
+      0.0
+     ]
+    },
+    "laminate": "web"
+   }
+  ]
+ },
+ "R": 16.538461538461537,
+ "b": 251.0,
+ "L": 100.0,
+ "size": 10.0,
+ "name": "it002_CTM_r30p000_a1p3000",
+ "reason": "smoke test: interior point to exercise the buckling step",
+ "override": "",
+ "screen_rank": 0,
+ "h_mm": 0.08,
+ "h_web_mm": 0.185,
+ "k_est": null,
+ "buckling_est": null,
+ "Ex": 54859.007455252475,
+ "EIz": 517139254.8661302,
+ "EIy": 912563466.2287184,
+ "EA": 1143457.571455379,
+ "section_height": 68.17285497194632,
+ "section_width": 98.66253110421565,
+ "F_flat": 0.40823535752483675,
+ "F_flat_case": {
+  "mode": "matrix tension",
+  "ply": 3,
+  "r": 16.538461538461537
+ },
+ "F_hub": 0.5184875768313327,
+ "F_hub_case": {
+  "mode": "matrix tension",
+  "ply": 3,
+  "r": 16.538461538461537,
+  "R_hub": 100
+ },
+ "r_min": 16.538461538461537,
+ "cross_ply": true,
+ "buckling_laminate": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_eq.json",
+ "flange_laminate": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_lit.json",
+ "web_laminate": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_lit.json",
+ "buckling_objective": "A",
+ "buckling_est_cal": 545,
+ "abd_check": {
+  "ok": true,
+  "twin_rel_diff": 4.790945026025241e-17,
+  "runs": [
+   {
+    "laminate": "flange",
+    "file": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_lit.json",
+    "n_layers": 30,
+    "A": 3.832756020820193e-16,
+    "B": 1.2202370610289466e-16,
+    "D_vs_CLT": 0.003348474856731239,
+    "D_vs_midpoint_layers": 6.666082299983063e-16,
+    "ok": 1.0
+   },
+   {
+    "laminate": "web",
+    "file": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_lit.json",
+    "n_layers": 28,
+    "A": 1.8313062697307256e-16,
+    "B": 1.8759426940977585e-16,
+    "D_vs_CLT": 0.0015396210742712677,
+    "D_vs_midpoint_layers": 1.0097722559098211e-15,
+    "ok": 1.0
+   },
+   {
+    "laminate": "buckling twin",
+    "file": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_eq.json",
+    "n_layers": 30,
+    "A": 3.832756020820193e-16,
+    "B": 1.2893070833513396e-16,
+    "D_vs_CLT": 0.0033484748567307976,
+    "D_vs_midpoint_layers": 7.777096016646908e-16,
+    "ok": 1.0
+   }
+  ]
+ },
+ "failure_log": "Code for Project/11-10-26 (Tara)/zz_smoketest_custom/iterations/it002/logs/failure.log",
+ "F_governing_fc": 0.4082,
+ "buckling_value": 433.2208551384291,
+ "buckling_kind": "A: perfect-geometry nonlinear buckling (K_T zero crossing on the nonlinear path; objective by user choice, B for the final design)",
+ "buckling_A": 433.2208551384291,
+ "buckling_B": 1268.973629134042,
+ "buckling_amplitude": 0.008,
+ "buckling_imperfection": "mode A",
+ "buckling_notes": [],
+ "k_fe": 456.35245572194117,
+ "k_beam": 1551.4177645983905,
+ "k_ratio": 0.29415188232041123,
+ "sanity": [
+  "tip stiffness -70.6% from thin-walled beam theory (tolerance 15%)"
+ ],
+ "feasible": true,
+ "objective": 433.2208551384291,
+ "buckling_B_kind": "B LOWER BOUND (path stopped while rising)"
+}

@@ -486,9 +486,17 @@ def doubled_laminate(lam, stack='mirror'):
     laminate bonded under this one, z from the bond plane (-h..+h). 'mirror' =
     identical tape turned over (plies reversed, angles negated), which is the
     same seen from either side; 'repeat' = the plies twice as listed. The
-    flange layup is read from the bonded face outward."""
+    flange layup is read from the bonded face outward.
+    Custom web (e.g. two tapes bonded with an extra ply, Leclerc & Pellegrino
+    2020 / Palmeri & Laurenzi 2024): stack = {'json': 'web_laminate.json'} (a
+    laminate saved with --save-json, its full stack from -h_web/2 to +h_web/2),
+    returned as it is. Added 11/10/26 (Tara, user-approved study.py custom mode)."""
+    if isinstance(stack, dict) and 'json' in stack:
+        web = Laminate.load(stack['json'])
+        web.name = web.name or f'custom web ({stack["json"]})'
+        return web
     if stack not in ('mirror', 'repeat'):
-        raise ValueError(f"web stack must be 'mirror' or 'repeat', not {stack!r}")
+        raise ValueError(f"web stack must be 'mirror', 'repeat' or {{'json': file}}, not {stack!r}")
     below = ([dict(q, theta=-q['theta'] + 0.0) for q in reversed(lam.plies)] if stack == 'mirror'
              else lam.plies)
     return Laminate(lam.materials, [dict(theta=q['theta'], t=q['t'], mat=q['mat']) for q in below + lam.plies],

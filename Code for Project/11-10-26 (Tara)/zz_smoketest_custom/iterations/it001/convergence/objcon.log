@@ -1,0 +1,23 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe objective-constraints/objective_constraints.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\convergence\results\it001_CTM_r25p620_a1p5708_fine.npz" --constraints "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\constraints.json" --flatten-radius 12.895406162464987 --json "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\convergence\objcon_fine.json" --value F_hub=0.8097212876887878 --value r1=25.62 --value alpha=1.5708 --value r2=12.895406162464987
+
+Objective / constraints: it001_CTM_r25p620_a1p5708_fine  [[45/0/45] h = 0.08 mm]
+OBJECTIVE  minimize mass: 0.0036811 kg (3.681 g)
+CONSTRAINTS (g <= 0 is satisfied; g_rel = g / |limit|)
+  [satisfied    ] no failure: F_governing < 1.0  value 0.671476, limit 1, g -0.328524, g_rel -0.328524
+  [satisfied    ] boom length: L == 100  value 100, limit 100, g -0.01, g_rel -0.0001
+  [satisfied    ] coiling on hub: F_hub < 1  value 0.809721, limit 1, g -0.190279, g_rel -0.190279
+  [satisfied    ] r1 lower bound: r1 >= 12  value 25.62, limit 12, g -13.62, g_rel -1.135
+  [satisfied    ] r1 upper bound: r1 <= 50  value 25.62, limit 50, g -24.38, g_rel -0.4876
+  [satisfied    ] alpha lower bound: alpha >= 0.6283185307  value 1.5708, limit 0.628319, g -0.942481, g_rel -1.50001
+  [VIOLATED     ] alpha upper bound: alpha <= 1.5707963268  value 1.5708, limit 1.5708, g 3.6732e-06, g_rel 2.33843e-06
+  [satisfied    ] r2 lower bound: r2 >= 12  value 12.8954, limit 12, g -0.895406, g_rel -0.0746172
+  [satisfied    ] r2 upper bound: r2 <= 50  value 12.8954, limit 50, g -37.1046, g_rel -0.742092
+FEASIBLE: NO
+  note: web facets: 34 of 680 (the web facets of the FE model, which carry the doubled {'json': 'F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_lit.json'} laminate)
+  note: laminate rho = 1560 kg/m^3
+  note: laminate rho = 1910 kg/m^3
+  note: tip = free end xL: rigid end master node at xL
+  note: S23 = Yc/2 (default)
+  note: coiling: flange flattened from r = 12.8954 mm (given with --flatten-radius), F = 0.6715 (matrix tension)
+  note: critical point of the simulation: {'group': 'flange', 'facet': 102, 'i': 0, 'j': 6, 'ply': 3, 'theta': 45.0, 'at': 'top', 'mode': 'matrix tension', 's1_s2_t12': [-0.04349659614159089, 0.15437105452488115, -0.015590774341026084]}
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\convergence\objcon_fine.json

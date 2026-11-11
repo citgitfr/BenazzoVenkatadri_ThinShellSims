@@ -1,0 +1,295 @@
+{
+ "iter": 1,
+ "key": "CTM/r1=25.620/alpha=1.5708",
+ "custom": true,
+ "family": "CTM",
+ "r1": 25.62,
+ "alpha": 1.5708,
+ "r2": 12.895406162464987,
+ "chord": 77.03081232441029,
+ "material": "custom",
+ "layup": "custom",
+ "layup_str": "[45GFPW/0CF/45GFPW] literal",
+ "geometry": "CTM(r1=25.620,a=1.5708)",
+ "type": "OM",
+ "section": {
+  "type": "branched",
+  "web_stack": {
+   "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_lit.json"
+  },
+  "branches": [
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "line",
+       4.5
+      ]
+     ],
+     "start": [
+      -43.015406162205146,
+      0.0
+     ]
+    },
+    "laminate": "web"
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "arc",
+       12.895406162464987,
+       20.256104
+      ],
+      [
+       "arc",
+       -25.62,
+       80.487792
+      ],
+      [
+       "arc",
+       12.895406162464987,
+       20.256104
+      ]
+     ],
+     "start": [
+      -38.515406162205146,
+      0.0
+     ],
+     "heading": 0.0
+    },
+    "laminate": "flange"
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "arc",
+       -12.895406162464987,
+       20.256104
+      ],
+      [
+       "arc",
+       25.62,
+       80.487792
+      ],
+      [
+       "arc",
+       -12.895406162464987,
+       20.256104
+      ]
+     ],
+     "start": [
+      -38.515406162205146,
+      0.0
+     ],
+     "heading": 0.0
+    },
+    "laminate": "flange",
+    "flip": true
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "line",
+       4.5
+      ]
+     ],
+     "start": [
+      38.515406162205146,
+      0.0
+     ]
+    },
+    "laminate": "web"
+   }
+  ]
+ },
+ "buckling_section": {
+  "type": "branched",
+  "web_stack": {
+   "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_eq.json"
+  },
+  "branches": [
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "line",
+       4.5
+      ]
+     ],
+     "start": [
+      -43.015406162205146,
+      0.0
+     ]
+    },
+    "laminate": "web"
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "arc",
+       12.895406162464987,
+       20.256104
+      ],
+      [
+       "arc",
+       -25.62,
+       80.487792
+      ],
+      [
+       "arc",
+       12.895406162464987,
+       20.256104
+      ]
+     ],
+     "start": [
+      -38.515406162205146,
+      0.0
+     ],
+     "heading": 0.0
+    },
+    "laminate": "flange"
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "arc",
+       -12.895406162464987,
+       20.256104
+      ],
+      [
+       "arc",
+       25.62,
+       80.487792
+      ],
+      [
+       "arc",
+       -12.895406162464987,
+       20.256104
+      ]
+     ],
+     "start": [
+      -38.515406162205146,
+      0.0
+     ],
+     "heading": 0.0
+    },
+    "laminate": "flange",
+    "flip": true
+   },
+   {
+    "section": {
+     "type": "segments",
+     "segments": [
+      [
+       "line",
+       4.5
+      ]
+     ],
+     "start": [
+      38.515406162205146,
+      0.0
+     ]
+    },
+    "laminate": "web"
+   }
+  ]
+ },
+ "R": 12.895406162464987,
+ "b": 251.0,
+ "L": 100.0,
+ "size": 10.0,
+ "name": "it001_CTM_r25p620_a1p5708",
+ "reason": "smoke test: Palmeri and Laurenzi axial optimum point",
+ "override": "",
+ "screen_rank": 0,
+ "h_mm": 0.08,
+ "h_web_mm": 0.185,
+ "k_est": null,
+ "buckling_est": null,
+ "Ex": 54859.007455252475,
+ "EIz": 659871871.2272611,
+ "EIy": 699455003.2209806,
+ "EA": 1143441.3529502223,
+ "section_height": 77.02395226180397,
+ "section_width": 86.0083123244103,
+ "F_flat": 0.6714764422577414,
+ "F_flat_case": {
+  "mode": "matrix tension",
+  "ply": 3,
+  "r": 12.895406162464987
+ },
+ "F_hub": 0.8097212876887878,
+ "F_hub_case": {
+  "mode": "matrix tension",
+  "ply": 3,
+  "r": 12.895406162464987,
+  "R_hub": 100
+ },
+ "r_min": 12.895406162464987,
+ "cross_ply": true,
+ "buckling_laminate": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_eq.json",
+ "flange_laminate": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_lit.json",
+ "web_laminate": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_lit.json",
+ "buckling_objective": "A",
+ "buckling_est_cal": 545,
+ "abd_check": {
+  "ok": true,
+  "twin_rel_diff": 4.790945026025241e-17,
+  "runs": [
+   {
+    "laminate": "flange",
+    "file": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_lit.json",
+    "n_layers": 30,
+    "A": 3.832756020820193e-16,
+    "B": 1.2202370610289466e-16,
+    "D_vs_CLT": 0.003348474856731239,
+    "D_vs_midpoint_layers": 6.666082299983063e-16,
+    "ok": 1.0
+   },
+   {
+    "laminate": "web",
+    "file": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_lit.json",
+    "n_layers": 28,
+    "A": 1.8313062697307256e-16,
+    "B": 1.8759426940977585e-16,
+    "D_vs_CLT": 0.0015396210742712677,
+    "D_vs_midpoint_layers": 1.0097722559098211e-15,
+    "ok": 1.0
+   },
+   {
+    "laminate": "buckling twin",
+    "file": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_eq.json",
+    "n_layers": 30,
+    "A": 3.832756020820193e-16,
+    "B": 1.2893070833513396e-16,
+    "D_vs_CLT": 0.0033484748567307976,
+    "D_vs_midpoint_layers": 7.777096016646908e-16,
+    "ok": 1.0
+   }
+  ]
+ },
+ "failure_log": "Code for Project/11-10-26 (Tara)/zz_smoketest_custom/iterations/it001/logs/failure.log",
+ "F_governing_fc": 0.6715,
+ "buckling_value": null,
+ "buckling_kind": "skipped: already violates alpha upper bound",
+ "k_fe": 579.1986145507564,
+ "k_beam": 1979.615613681783,
+ "k_ratio": 0.2925813529392887,
+ "sanity": [
+  "tip stiffness -70.7% from thin-walled beam theory (tolerance 15%)"
+ ],
+ "feasible": false,
+ "objective": null
+}

@@ -1,0 +1,3 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe laminate-properties/laminate_properties.py --json "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\laminates\lam_shell_lit.json" --check --save-json "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\lam.json"
+
+[45/0/45] h = 0.08 mm (F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\laminates\lam_shell_lit.json); give --emit-code FILE, or use --catalog / --E1 .. for the full report

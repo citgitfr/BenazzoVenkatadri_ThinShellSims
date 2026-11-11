@@ -22,7 +22,7 @@ Case file:
  "laminate": {"isotropic": {"E": 131000, "nu": 0.3, "t": 0.1}},   # or {"catalog": "L024", "layup": "[0/90]s"}
  "geometry": {"L": 200, "section": {"type": "arc", "R": 13.3, "b": 24.605}, "size": 3},
  "load": {"type": "bending", "axis": "y", "sign": 1},             # tip moment about y (+1: tip turns down)
-       # or {"type": "compression", "ends": "pinned" | "clamped"}
+       # or {"type": "compression", "ends": "pinned" | "clamped" | "free_tip"}
  "A": {"step": 0.005, "max": 0.3, "n_coarse": 8},                 # path parameter: rotation [rad] / shortening [mm]
  "B": {"step": 0.005, "max": 0.3, "amplitude": 0.01, "control": "disp"},   # or "load" (step, max = load factor)
  "mode_file": null
@@ -83,6 +83,13 @@ def build_case(case, element, imperfection=None, amplitude=0.0):
             ops.fix(tip, 0, 0, 1, 1, 1, 0)
             ops.load(tip, 0, 0, 0, 0, 0, ld.get('sign', 1.0))
             dof = 6
+    elif ld['type'] == 'compression' and ld.get('ends') == 'free_tip':
+        # Palmeri & Laurenzi (2024): root clamped; tip reference point with only the rotation about the
+        # boom axis fixed (free to translate laterally and to rotate in bending). Added 11/10/26 (Tara).
+        ops.fix(root, 1, 1, 1, 1, 1, 1)
+        ops.fix(tip, 0, 0, 0, 1, 0, 0)
+        ops.load(tip, -1.0, 0, 0, 0, 0, 0)
+        dof = 1
     elif ld['type'] == 'compression':
         pinned = ld.get('ends', 'clamped') == 'pinned'
         ops.fix(root, 1, 1, 1, 1, *((0, 0) if pinned else (1, 1)))

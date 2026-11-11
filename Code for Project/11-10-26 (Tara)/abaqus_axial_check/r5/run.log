@@ -1,0 +1,64 @@
+Successfully checked out QAE/1 from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+Successfully checked out QAX/1 from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+Abaqus License Manager checked out the following license:
+"QAE" from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+<8 out of 11 licenses remain available>.
+shell normal flipped on the face through [-40.7654962282387, 0.0]
+shell normal flipped on the face through [40.7654962282387, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0.008 mm); scale S = 500
+   shape written: ctm_axial_r25p62_a90_shape_LBA_mode1.csv
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+   mode 1: eigenvalue 1.0144 -> 507.2
+   mode 2: eigenvalue 1.0144 -> 507.2
+   mode 3: eigenvalue 1.0144 -> 507.2
+   mode 4: eigenvalue 1.0144 -> 507.2
+
+=== 2. NLB (nonlinear preload f x LBA, then *BUCKLE about the deformed state)
+   f = 0.50: preload 253.6 + perturbation ['253.5', '253.5', '253.5', '253.5'] -> critical 507.075
+   f = 0.80: preload 405.76 + perturbation ['101.2', '101.2', '101.2', '101.2'] -> critical 506.965
+   f = 0.95: preload 481.84 + perturbation ['25.07', '25.08', '25.09', '25.1'] -> critical 506.909
+
+=== 3. RIKS with the LBA mode-1 imperfection (0.008 mm)
+   shape written: ctm_axial_r25p62_a90_shape_RIKS_peak.csv
+   shape written: ctm_axial_r25p62_a90_shape_RIKS_last.csv
+   263 increments; peak LPF 1.2025 -> buckling strength 601.273 (increment 25)
+   path (load, monitor U1):
+                0             0
+          434.995     -0.163597
+          590.112     -0.227153
+           597.29     -0.230494
+           575.78     -0.221432
+          585.434     -0.226241
+          578.867     -0.222898
+           575.86       -0.2212
+          589.616     -0.227596
+          583.832     -0.225496
+          582.239     -0.224569
+          591.904     -0.228127
+          593.143     -0.228511
+          591.185     -0.226691
+          516.511     -0.195582
+          382.951     -0.143901
+          207.965    -0.0781174
+          32.3858    -0.0121657
+         -143.186      0.053794
+         -318.712      0.119755
+         -494.184      0.185716
+           -669.6      0.251676
+         -844.958      0.317637
+         -1020.26      0.383597
+         -1195.49      0.449557
+         -1370.67      0.515516
+         -1545.79      0.581475
+   Southwell estimate (stable post-buckling paths): 7796.24
+
+=== Comparison with OpenSees / theory (case load units)
+   reference OpenSees B (ASDShellQ4 imperfect 8 um, 5 mm; still rising at) 680.659
+   reference Palmeri & Laurenzi max nonlinear Fcr (their optimum r1 25.62, alpha 1.57) 545.24
+   reference OpenSees A (ShellNLDKGQ, 5 mm; solver stall, not a crossing) 484.418
+   Abaqus LBA mode 1                                  507.2   -25.5% vs OpenSees B   -7.0% vs Palmeri & Laurenzi max nonlinear Fcr   +4.7% vs OpenSees A
+   Abaqus NLB f = 0.50                                507.075   -25.5% vs OpenSees B   -7.0% vs Palmeri & Laurenzi max nonlinear Fcr   +4.7% vs OpenSees A
+   Abaqus NLB f = 0.80                                506.965   -25.5% vs OpenSees B   -7.0% vs Palmeri & Laurenzi max nonlinear Fcr   +4.7% vs OpenSees A
+   Abaqus NLB f = 0.95                                506.909   -25.5% vs OpenSees B   -7.0% vs Palmeri & Laurenzi max nonlinear Fcr   +4.6% vs OpenSees A
+   Abaqus RIKS peak                                   601.273   -11.7% vs OpenSees B   +10.3% vs Palmeri & Laurenzi max nonlinear Fcr   +24.1% vs OpenSees A

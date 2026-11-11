@@ -1,0 +1,24 @@
+Analysis initiated from SIMULIA established products
+Abaqus JOB ctm_axial_r25p62_a90_LBA
+Abaqus 2020
+Successfully checked out QFT/30 from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+Successfully checked out QXT/30 from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+Abaqus License Manager checked out the following licenses:
+Abaqus/Foundation checked out 30 tokens from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com.
+<541 out of 1200 licenses remain available>.
+Begin Analysis Input File Processor
+11/10/2026 5:31:13 PM
+Run pre.exe
+11/10/2026 5:31:26 PM
+End Analysis Input File Processor
+Begin Abaqus/Standard Analysis
+11/10/2026 5:31:26 PM
+Run standard.exe
+11/10/2026 5:31:42 PM
+End Abaqus/Standard Analysis
+Begin SIM Wrap-up
+11/10/2026 5:31:44 PM
+Run SMASimUtility.exe
+11/10/2026 5:31:44 PM
+End SIM Wrap-up
+Abaqus JOB ctm_axial_r25p62_a90_LBA COMPLETED

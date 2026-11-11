@@ -1,0 +1,9 @@
+{
+ "evaluated": 0,
+ "screen_ok": 0,
+ "screen_ok_fe": 0,
+ "screen_ok_by_type": {},
+ "rejections": "custom-design mode: no catalog screen (material, layup and the geometry family are fixed by requirements.json custom_design)",
+ "materials_skipped": [],
+ "custom_design": true
+}

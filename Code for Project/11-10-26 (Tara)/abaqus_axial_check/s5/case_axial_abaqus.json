@@ -1,0 +1,171 @@
+{
+ "name": "ctm_axial_r25p62_a90",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_exactPL.json"
+ },
+ "geometry": {
+  "L": 500.0,
+  "section": {
+   "type": "branched",
+   "web_stack": {
+    "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_exactPL.json"
+   },
+   "branches": [
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       -43.015496228238675,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        12.895496228238672,
+        20.25619810751475
+       ],
+       [
+        "arc",
+        -25.62,
+        80.4876037849705
+       ],
+       [
+        "arc",
+        12.895496228238672,
+        20.25619810751475
+       ]
+      ],
+      "start": [
+       -38.515496228238675,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        -12.895496228238672,
+        20.25619810751475
+       ],
+       [
+        "arc",
+        25.62,
+        80.4876037849705
+       ],
+       [
+        "arc",
+        -12.895496228238672,
+        20.25619810751475
+       ]
+      ],
+      "start": [
+       -38.515496228238675,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange",
+     "flip": true
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       38.515496228238675,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    }
+   ]
+  },
+  "size": 5.0
+ },
+ "supports": [
+  {
+   "rigid_end": "x0",
+   "dofs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "rigid_end": "xL",
+   "dofs": [
+    0,
+    0,
+    0,
+    1,
+    0,
+    0
+   ]
+  }
+ ],
+ "loads": [
+  {
+   "node": {
+    "rigid": "xL"
+   },
+   "force": [
+    -1,
+    0,
+    0
+   ]
+  }
+ ],
+ "buckling": {
+  "scale": 500.0,
+  "n_modes": 4,
+  "preload_fractions": [
+   0.5,
+   0.8,
+   0.95
+  ],
+  "riks": {
+   "amplitude": 0.008,
+   "control": {
+    "rigid": "xL",
+    "dof": 1
+   },
+   "max_disp": 0.6,
+   "max_lpf": 3.0,
+   "max_inc": 300
+  },
+  "monitor": {
+   "rigid": "xL",
+   "dof": 1
+  }
+ },
+ "reference": {
+  "OpenSees A (ShellNLDKGQ, 5 mm; solver stall, not a crossing)": 484.418,
+  "OpenSees B (ASDShellQ4 imperfect 8 um, 5 mm; still rising at)": 680.659,
+  "Palmeri & Laurenzi max nonlinear Fcr (their optimum r1 25.62, alpha 1.57)": 545.24
+ }
+}

@@ -1,0 +1,18 @@
+Successfully checked out QAE/1 from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+Successfully checked out QAX/1 from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+Abaqus License Manager checked out the following license:
+"QAE" from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+<8 out of 11 licenses remain available>.
+shell normal flipped on the face through [-40.7654962282387, 0.0]
+shell normal flipped on the face through [40.7654962282387, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0.008 mm); scale S = 500
+WARNING: LBA mode shape not written (list index out of range)
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+
+=== 3. RIKS with the LBA mode-1 imperfection (0.008 mm)
+KeyError: Assembly ASSEMBLY
+File "abaqus_ctm_axial_r25p62_a90_buckling.py", line 11175, in <module>
+    lpf = [v for _, v in st.historyRegions['Assembly ASSEMBLY'].historyOutputs['LPF'].data]
+
+Abaqus Error: cae exited with an error.

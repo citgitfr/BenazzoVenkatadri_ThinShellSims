@@ -1,0 +1,45 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\skills\shell-buckling\boom_buckling.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002\buckling_finalB.json" --out "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002\buckling" --only B
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+  step   1: param -0.0014243, load factor  16.2682, iters 3
+  step   2: param -0.0028486, load factor  32.5361, iters 3
+  step   3: param -0.0042729, load factor  48.8037, iters 3
+  step   4: param -0.0056972, load factor  65.0709, iters 4
+  step   5: param -0.0071214, load factor  81.3377, iters 4
+  step   6: param -0.0085457, load factor  97.6043, iters 4
+  step   7: param -0.00997, load factor  113.87, iters 4
+  step   8: param -0.011394, load factor  130.136, iters 4
+  step   9: param -0.012819, load factor  146.402, iters 4
+  step  10: param -0.014243, load factor  162.667, iters 4
+  step  11: param -0.015667, load factor  178.932, iters 4
+  step  12: param -0.017091, load factor  195.196, iters 5
+  step  13: param -0.018516, load factor  211.46, iters 5
+  step  14: param -0.01994, load factor  227.724, iters 5
+  step  15: param -0.021364, load factor  243.987, iters 5
+  step  16: param -0.022789, load factor  260.25, iters 5
+  step  17: param -0.024213, load factor  276.513, iters 5
+  step  18: param -0.025637, load factor  292.775, iters 5
+  step  19: param -0.027061, load factor  309.037, iters 5
+  step  20: param -0.028486, load factor  325.298, iters 5
+  step  21: param -0.02991, load factor  341.559, iters 6
+  step  22: param -0.031334, load factor  357.82, iters 6
+  step  23: param -0.032759, load factor  374.08, iters 6
+  step  24: param -0.034183, load factor  390.34, iters 6
+  step  25: param -0.035607, load factor  406.6, iters 6
+  step  26: param -0.037031, load factor  422.859, iters 7
+  step  27: param -0.038456, load factor  439.118, iters 7
+  step  28: param -0.03988, load factor  455.376, iters 7
+  step  29: param -0.041304, load factor  471.635, iters 7
+  step  30: param -0.042729, load factor  487.892, iters 7
+  step  31: param -0.044153, load factor  504.149, iters 7
+  step  32: param -0.045577, load factor  520.406, iters 8
+  step  33: param -0.047002, load factor  536.663, iters 8
+  step  34: param -0.048426, load factor  552.919, iters 8
+  step  35: param -0.04985, load factor  569.174, iters 8
+  step  36: param -0.051274, load factor  585.429, iters 8
+  step  37: param -0.052699, load factor  601.684, iters 8
+  step  38: param -0.054123, load factor  617.939, iters 8
+  step  39: param -0.055547, load factor  634.192, iters 9
+  step  40: param -0.056972, load factor  650.446, iters 9
+B (ASDShellQ4 imperfect path, amplitude 0.008 mm): peak 650.45 at 0.056972 (last point: path stopped or still rising); 28 s
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002\buckling\it002_CTM_r30p000_a1p3000_buck_finalB.json
