@@ -1,0 +1,69 @@
+{
+ "constraints": [
+  {
+   "name": "boom length",
+   "text": "boom length 100 mm (requirements.json)",
+   "expr": "L",
+   "op": "==",
+   "limit": 100,
+   "tol": 0.01,
+   "units": "mm"
+  },
+  {
+   "name": "coiling on hub",
+   "text": "hub 100",
+   "expr": "F_hub",
+   "op": "<",
+   "limit": 1,
+   "units": "-"
+  },
+  {
+   "name": "r1 lower bound",
+   "text": "r1 >= 12 mm",
+   "expr": "r1",
+   "op": ">=",
+   "limit": 12,
+   "units": "mm"
+  },
+  {
+   "name": "r1 upper bound",
+   "text": "r1 <= 50 mm",
+   "expr": "r1",
+   "op": "<=",
+   "limit": 50,
+   "units": "mm"
+  },
+  {
+   "name": "alpha lower bound",
+   "text": "alpha >= 0.628319 rad",
+   "expr": "alpha",
+   "op": ">=",
+   "limit": 0.6283185307,
+   "units": "rad"
+  },
+  {
+   "name": "alpha upper bound",
+   "text": "alpha <= 1.5708 rad",
+   "expr": "alpha",
+   "op": "<=",
+   "limit": 1.5707963268,
+   "units": "rad"
+  },
+  {
+   "name": "r2 lower bound",
+   "text": "r2 >= 12 mm (Eq. 4 of Palmeri & Laurenzi 2024)",
+   "expr": "r2",
+   "op": ">=",
+   "limit": 12,
+   "units": "mm"
+  },
+  {
+   "name": "r2 upper bound",
+   "text": "r2 <= 50 mm (Eq. 4 of Palmeri & Laurenzi 2024)",
+   "expr": "r2",
+   "op": "<=",
+   "limit": 50,
+   "units": "mm"
+  }
+ ]
+}

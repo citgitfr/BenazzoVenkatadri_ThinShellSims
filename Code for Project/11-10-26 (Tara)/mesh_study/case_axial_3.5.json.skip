@@ -1,0 +1,121 @@
+{
+ "name": "axial_3.5",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_exactPL.json"
+ },
+ "geometry": {
+  "L": 500.0,
+  "section": {
+   "type": "branched",
+   "web_stack": {
+    "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_exactPL.json"
+   },
+   "branches": [
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       -43.015496228238675,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        12.895496228238672,
+        20.25619810751475
+       ],
+       [
+        "arc",
+        -25.62,
+        80.4876037849705
+       ],
+       [
+        "arc",
+        12.895496228238672,
+        20.25619810751475
+       ]
+      ],
+      "start": [
+       -38.515496228238675,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        -12.895496228238672,
+        20.25619810751475
+       ],
+       [
+        "arc",
+        25.62,
+        80.4876037849705
+       ],
+       [
+        "arc",
+        -12.895496228238672,
+        20.25619810751475
+       ]
+      ],
+      "start": [
+       -38.515496228238675,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange",
+     "flip": true
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       38.515496228238675,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    }
+   ]
+  },
+  "size": 3.5
+ },
+ "load": {
+  "type": "compression",
+  "ends": "free_tip"
+ },
+ "A": {
+  "step": 0.041625067108258154,
+  "max": 0.41625067108258157,
+  "n_coarse": 8,
+  "n_rounds": 1,
+  "workers": 16,
+  "tol": 1e-06,
+  "max_cuts": 2,
+  "max_iter": 30
+ }
+}

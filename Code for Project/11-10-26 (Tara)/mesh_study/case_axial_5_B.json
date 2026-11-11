@@ -1,0 +1,120 @@
+{
+ "name": "axial_5_B",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_exactPL.json"
+ },
+ "geometry": {
+  "L": 500.0,
+  "section": {
+   "type": "branched",
+   "web_stack": {
+    "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_exactPL.json"
+   },
+   "branches": [
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       -43.015496228238675,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        12.895496228238672,
+        20.25619810751475
+       ],
+       [
+        "arc",
+        -25.62,
+        80.4876037849705
+       ],
+       [
+        "arc",
+        12.895496228238672,
+        20.25619810751475
+       ]
+      ],
+      "start": [
+       -38.515496228238675,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        -12.895496228238672,
+        20.25619810751475
+       ],
+       [
+        "arc",
+        25.62,
+        80.4876037849705
+       ],
+       [
+        "arc",
+        -12.895496228238672,
+        20.25619810751475
+       ]
+      ],
+      "start": [
+       -38.515496228238675,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange",
+     "flip": true
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       38.515496228238675,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    }
+   ]
+  },
+  "size": 5.0
+ },
+ "load": {
+  "type": "compression",
+  "ends": "free_tip"
+ },
+ "mode_file": "results/axial_5_mode.npz",
+ "B": {
+  "step": 0.006166666666666667,
+  "max": 0.37,
+  "amplitude": 0.008,
+  "control": "disp",
+  "tol": 1e-06,
+  "max_iter": 40
+ }
+}

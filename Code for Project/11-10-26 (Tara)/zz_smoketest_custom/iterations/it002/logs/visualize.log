@@ -1,0 +1,7 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe shell-visualize/shell_visualize.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002\results\it002_CTM_r30p000_a1p3000.npz" --png "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002\results\it002_CTM_r30p000_a1p3000.png" --no-gui
+
+web facets: 20 of 260 (the web facets of the FE model, which carry the doubled {'json': 'F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_lit.json'} laminate)
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002\results\it002_CTM_r30p000_a1p3000.vtp: 260 facets, 288 nodes
+k_xx [1/mm]: min -7.2797e-06, max 7.28e-06
+hashin_max [-]: min 1.0123e-08, max 9.6786e-06
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it002\results\it002_CTM_r30p000_a1p3000.png

@@ -47,3 +47,7 @@ Limitations: only tape springs can be simulated (shell-mesh cannot yet build TRA
 11/6/26
 Tara
 Federico's and my advisor (Professor Pellegrino) asked us to give a presentation on our project for the class at our weekly group meeting on November 11th.  We are using this as a preliminary version of the final presentation we will give in class on December 2nd.  I used Claude to design the slides based on a detailed outline and slide template, along with several examples of Federico's and my past presentations (i.e. few-shot prompting).  After several iterations, I obtained a satisfactory set of slides, although some of them are still placeholders because Federico is currently running an initial optimization test that we want to include in the slides eventually.
+
+11/10/26
+Tara
+We originally wanted to try to establish a baseline using the omega boom buckling load optimization studies in Palmeri and Laurenzi (2024) in our Literature folder.  I tried to run the optimization using our agent system, but it couldn't run the buckling simulations to match the authors' optimal solutions because OpenSeesPy is not well-set-up to handle buckling and the closed cross-section omega boom is difficult to model.  We will think about revising our approach to studying buckling problems and closed cross-sections in the future, but for now, we are considering doing a simpler baseline test for Lab Report 3 that involves just a tape spring and less-complicated loads.

@@ -1,0 +1,118 @@
+{
+ "name": "it002_CTM_r30p000_a1p3000_buck_finalB",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_eq.json"
+ },
+ "geometry": {
+  "L": 100.0,
+  "section": {
+   "type": "branched",
+   "web_stack": {
+    "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_eq.json"
+   },
+   "branches": [
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       -49.34251555210782,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        16.538461538461537,
+        21.5
+       ],
+       [
+        "arc",
+        -30.0,
+        78.0
+       ],
+       [
+        "arc",
+        16.538461538461537,
+        21.5
+       ]
+      ],
+      "start": [
+       -44.84251555210782,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        -16.538461538461537,
+        21.5
+       ],
+       [
+        "arc",
+        30.0,
+        78.0
+       ],
+       [
+        "arc",
+        -16.538461538461537,
+        21.5
+       ]
+      ],
+      "start": [
+       -44.84251555210782,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange",
+     "flip": true
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       44.84251555210782,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    }
+   ]
+  },
+  "size": 10.0
+ },
+ "load": {
+  "type": "compression",
+  "ends": "free_tip"
+ },
+ "B": {
+  "step": 0.011394306684608302,
+  "max": 0.4557722673843321,
+  "amplitude": 0.008,
+  "control": "disp"
+ },
+ "mode_file": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\zz_smoketest_custom\\iterations\\it002\\buckling\\it002_CTM_r30p000_a1p3000_buck_mode.npz"
+}

@@ -1,0 +1,13 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe shell-assemble-run/assemble_run.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\convergence\case_fine.json" --laminate "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\lam.json"
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+100 x 251 mm shell, branched section: 4 branches, 2 web(s) with the doubled ({'json': 'F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_lit.json'}) laminate; 17 x 40 = 680 quads of 5.88 x 4.5-6.75 mm, 720 nodes
+1360 elements, 4332 DOFs; linear solved in 0.4 s
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\convergence\results\it001_CTM_r25p620_a1p5708_fine.npz
+report node 722: u = [0.0, -0.0, -0.001724, -0.0, 8e-06, -0.0]
+max |u| = 0.00174865 mm
+laminate piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\convergence\it001_CTM_r25p620_a1p5708_fine_code\laminate_code.py
+    mesh piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\convergence\it001_CTM_r25p620_a1p5708_fine_code\mesh_code.py
+      bc piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\convergence\it001_CTM_r25p620_a1p5708_fine_code\bc_code.py
+joined script: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-10-26 (Tara)\zz_smoketest_custom\iterations\it001\convergence\it001_CTM_r25p620_a1p5708_fine_opensees.py (1697 lines)
+it001_CTM_r25p620_a1p5708_fine_opensees.py ran in 1.3 s

@@ -1,0 +1,126 @@
+{
+ "name": "it001_CTM_r25p620_a1p5708_buck",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_eq.json"
+ },
+ "geometry": {
+  "L": 100.0,
+  "section": {
+   "type": "branched",
+   "web_stack": {
+    "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_eq.json"
+   },
+   "branches": [
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       -43.015406162205146,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        12.895406162464987,
+        20.256104
+       ],
+       [
+        "arc",
+        -25.62,
+        80.487792
+       ],
+       [
+        "arc",
+        12.895406162464987,
+        20.256104
+       ]
+      ],
+      "start": [
+       -38.515406162205146,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange"
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "arc",
+        -12.895406162464987,
+        20.256104
+       ],
+       [
+        "arc",
+        25.62,
+        80.487792
+       ],
+       [
+        "arc",
+        -12.895406162464987,
+        20.256104
+       ]
+      ],
+      "start": [
+       -38.515406162205146,
+       0.0
+      ],
+      "heading": 0.0
+     },
+     "laminate": "flange",
+     "flip": true
+    },
+    {
+     "section": {
+      "type": "segments",
+      "segments": [
+       [
+        "line",
+        4.5
+       ]
+      ],
+      "start": [
+       38.515406162205146,
+       0.0
+      ]
+     },
+     "laminate": "web"
+    }
+   ]
+  },
+  "size": 10.0
+ },
+ "load": {
+  "type": "compression",
+  "ends": "free_tip"
+ },
+ "A": {
+  "step": 0.014298940612751975,
+  "max": 0.14298940612751976,
+  "n_coarse": 8,
+  "n_rounds": 1,
+  "tol": 1e-06,
+  "max_iter": 30,
+  "workers": 16
+ },
+ "B_final_only": {
+  "step": 0.0023831567687919958,
+  "max": 0.14298940612751976,
+  "amplitude": 0.008,
+  "control": "disp"
+ }
+}

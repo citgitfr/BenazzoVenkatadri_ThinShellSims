@@ -1,0 +1,161 @@
+{
+ "case": {
+  "name": "it002_CTM_r30p000_a1p3000_buck",
+  "laminate": {
+   "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_shell_eq.json"
+  },
+  "geometry": {
+   "L": 100.0,
+   "section": {
+    "type": "branched",
+    "web_stack": {
+     "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-10-26 (Tara)\\laminates\\lam_web_eq.json"
+    },
+    "branches": [
+     {
+      "section": {
+       "type": "segments",
+       "segments": [
+        [
+         "line",
+         4.5
+        ]
+       ],
+       "start": [
+        -49.34251555210782,
+        0.0
+       ]
+      },
+      "laminate": "web"
+     },
+     {
+      "section": {
+       "type": "segments",
+       "segments": [
+        [
+         "arc",
+         16.538461538461537,
+         21.5
+        ],
+        [
+         "arc",
+         -30.0,
+         78.0
+        ],
+        [
+         "arc",
+         16.538461538461537,
+         21.5
+        ]
+       ],
+       "start": [
+        -44.84251555210782,
+        0.0
+       ],
+       "heading": 0.0
+      },
+      "laminate": "flange"
+     },
+     {
+      "section": {
+       "type": "segments",
+       "segments": [
+        [
+         "arc",
+         -16.538461538461537,
+         21.5
+        ],
+        [
+         "arc",
+         30.0,
+         78.0
+        ],
+        [
+         "arc",
+         -16.538461538461537,
+         21.5
+        ]
+       ],
+       "start": [
+        -44.84251555210782,
+        0.0
+       ],
+       "heading": 0.0
+      },
+      "laminate": "flange",
+      "flip": true
+     },
+     {
+      "section": {
+       "type": "segments",
+       "segments": [
+        [
+         "line",
+         4.5
+        ]
+       ],
+       "start": [
+        44.84251555210782,
+        0.0
+       ]
+      },
+      "laminate": "web"
+     }
+    ]
+   },
+   "size": 10.0
+  },
+  "load": {
+   "type": "compression",
+   "ends": "free_tip"
+  },
+  "A": {
+   "step": 0.014298737800292772,
+   "max": 0.1429873780029277,
+   "n_coarse": 8,
+   "n_rounds": 1,
+   "tol": 1e-06,
+   "max_iter": 30,
+   "workers": 16
+  },
+  "B_final_only": {
+   "step": 0.0023831229667154617,
+   "max": 0.1429873780029277,
+   "amplitude": 0.008,
+   "control": "disp"
+  }
+ },
+ "A": {
+  "critical_load": 433.2208551384291,
+  "critical_param": 0.037981022282027675,
+  "evaluations": [
+   [
+    -1.4298737800292772e-10,
+    1.5997658929440852e-06,
+    0.206744619929019
+   ],
+   [
+    -0.017873422250365964,
+    203.89300915802698,
+    0.17821049932419603
+   ],
+   [
+    -0.03574684450073193,
+    407.74829051540956,
+    0.08991938267876186
+   ],
+   [
+    -0.0368639333913798,
+    420.48494541858884,
+    0.0533417184117715
+   ],
+   [
+    -0.037981022282027675,
+    433.2208551384291,
+    0.011239831367785686
+   ]
+  ],
+  "time": 197.20702350046486,
+  "workers": 16
+ }
+}

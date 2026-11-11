@@ -1,0 +1,21 @@
+# === OpenSeesPy piece: laminate (written by the laminate-properties skill) ===
+# [45/0/45] h = 0.08 mm, CF T800/ThinPreg402 (L&P 2020 T1)
+# 2 section(s): one coincident ASDShellQ4 per facet and distinct ply angle
+# provides: SECTIONS [(section tag, ply angle from the facet x axis)], LAMINATE (JSON, results file)
+# needs:    a model with 6 DOFs per node: ops.model('basic', '-ndm', 3, '-ndf', 6)
+LAMINATE = '{"kind": "laminate", "name": "[45GFPW/0CF/45GFPW] literal", "n_sub": 10, "merge": true, "G_out": null, "materials": [{"E1": 128000.0, "E2": 6500.0, "E3": 6500.0, "nu12": 0.35, "nu13": 0.35, "nu23": 0.35, "G12": 7600.0, "G13": 7600.0, "G23": 2407.4074074074074, "rho": 1.56e-09, "nu23_assumed": true, "nu21": 0.0177734375, "nu31": 0.0177734375, "nu32": 0.35, "Xt": 2598.0, "Xc": 1537.0, "Yt": 60.8, "Yc": 216.0, "S": 68.9, "name": "CF T800/ThinPreg402 (L&P 2020 T1)", "t_ply": 0.03}, {"E1": 23800.0, "E2": 23800.0, "E3": 23800.0, "nu12": 0.17, "nu13": 0.17, "nu23": 0.17, "G12": 3300.0, "G13": 3300.0, "G23": 10170.940170940172, "rho": 1.91e-09, "nu23_assumed": true, "nu21": 0.17, "nu31": 0.17, "nu32": 0.17, "Xt": 765.92, "Xc": 482.89, "Yt": 58.29, "Yc": 114.16, "S": 34.24, "name": "GFPW 1067/PMT-F4 (L&P 2020 T1)", "t_ply": 0.025}], "plies": [{"theta": 45.0, "t": 0.025, "mat": 1}, {"theta": 0.0, "t": 0.03, "mat": 0}, {"theta": 45.0, "t": 0.025, "mat": 1}]}'
+
+# --- ply materials: ElasticOrthotropic -> PlaneStress -> PlateFromPlaneStress ---
+ops.nDMaterial('ElasticIsotropic', 1, 0.0, 0.0)
+ops.nDMaterial('ElasticOrthotropic', 2, 128000.0, 6500.0, 6500.0, 0.35, 0.35, 0.0177734375, 7600.0, 2407.4074074074074, 7600.0, 1.56e-09)
+ops.nDMaterial('PlaneStress', 3, 2)
+ops.nDMaterial('PlateFromPlaneStress', 4, 3, 7600.0)
+ops.nDMaterial('ElasticOrthotropic', 5, 23800.0, 23800.0, 23800.0, 0.17, 0.17, 0.17, 3300.0, 10170.940170940172, 3300.0, 1.91e-09)
+ops.nDMaterial('PlaneStress', 6, 5)
+ops.nDMaterial('PlateFromPlaneStress', 7, 6, 3300.0)
+
+# --- shell sections, layers bottom (-z) to top (+z): material, thickness ---
+ops.section('LayeredShell', 1, 30, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 1, 0.003, 1, 0.003, 1, 0.003, 1, 0.003, 1, 0.003, 1, 0.003, 1, 0.003, 1, 0.003, 1, 0.003, 1, 0.003, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025, 7, 0.0025)
+ops.section('LayeredShell', 2, 30, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 4, 0.003, 4, 0.003, 4, 0.003, 4, 0.003, 4, 0.003, 4, 0.003, 4, 0.003, 4, 0.003, 4, 0.003, 4, 0.003, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025, 1, 0.0025)
+
+SECTIONS = [(1, 45.0), (2, 0.0)]

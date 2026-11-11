@@ -1,0 +1,90 @@
+{
+ "study": "Code for Project/11-10-26 (Tara)/zz_smoketest_custom",
+ "created": "2026-11-10T12:15:04",
+ "req_hash": "596d42f5a5ab",
+ "phase": "closed",
+ "iteration": 2,
+ "max_iterations": 3,
+ "steps": [
+  "laminate",
+  "model",
+  "visualize",
+  "failure",
+  "buckling",
+  "objcon"
+ ],
+ "iter_steps_done": [
+  "laminate",
+  "model",
+  "visualize",
+  "failure",
+  "buckling",
+  "objcon"
+ ],
+ "designs": {
+  "CTM/r1=25.620/alpha=1.5708": {
+   "iter": 1,
+   "feasible": false,
+   "objective": null,
+   "sanity": true
+  },
+  "CTM/r1=30.000/alpha=1.3000": {
+   "iter": 2,
+   "feasible": true,
+   "objective": 433.2208551384291,
+   "sanity": true
+  }
+ },
+ "best": null,
+ "best_history": [
+  null,
+  null
+ ],
+ "calib": {
+  "k": [],
+  "b": []
+ },
+ "verification": {
+  "min": 1,
+  "max": 2,
+  "records": [
+   {
+    "iter": 2,
+    "design": "CTM/r1=30.000/alpha=1.3000",
+    "type": "OM",
+    "status": "pending",
+    "verdict": null,
+    "requested": "2026-11-10T12:42:17",
+    "k_ratio": 0.29415188232041123,
+    "objective": 433.2208551384291,
+    "instructions": "Code for Project/11-10-26 (Tara)/zz_smoketest_custom/iterations/it002/abaqus_it002_CTM_r30p000_a1p3000_instructions.txt"
+   }
+  ]
+ },
+ "verification_due": null,
+ "convergence_due": null,
+ "converged": {
+  "1": {
+   "ok": true,
+   "size": 10.0,
+   "fine": 6.0,
+   "dk": 0.0013345243563402942,
+   "dF": 0.030845333100749772
+  }
+ },
+ "stop": {
+  "recommended": false
+ },
+ "regression_record": "  FAILED T12 5 mm: max |h/L - saved| over all steps: got 0.00409636, ref 0, err 4.10e-03, tol 1e-06",
+ "custom": true,
+ "custom_stop": {
+  "window": 4,
+  "min_iterations": 8,
+  "tol": 0.01
+ },
+ "verification_schedule": "final_only",
+ "closed": {
+  "time": "2026-11-10T13:21:31",
+  "reason": "smoke test of the custom-design mode finished (all steps incl. verify ran)"
+ }
+}

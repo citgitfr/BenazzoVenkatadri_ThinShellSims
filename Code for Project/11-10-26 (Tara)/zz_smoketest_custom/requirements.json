@@ -1,0 +1,62 @@
+{
+ "_help": "Written by the orchestrator from the user's prompt (PROTOCOL.md step 1), then checked by study.py init. Units N, mm. Remove the requirements the user did not give; keep their words in each 'text'. Keys starting with _ are ignored.",
+ "prompt": "SMOKE TEST of the custom-design mode (not a study): CTM, axial buckling.",
+ "study_name": "zz_smoketest_custom",
+ "length_mm": 100,
+ "section_classes": [
+  "OM"
+ ],
+ "objective": {
+  "sense": "maximize",
+  "quantity": "buckling"
+ },
+ "requirements": {
+  "buckling": {
+   "text": "max axial",
+   "load": "compression",
+   "ends": "free_tip",
+   "range_estimate": 545,
+   "units": "N"
+  },
+  "coiling": {
+   "text": "hub 100",
+   "hub_radius_mm": 100
+  }
+ },
+ "max_iterations": 3,
+ "verification": {
+  "min": 1,
+  "max": 2
+ },
+ "custom_design": {
+  "family": "CTM",
+  "laminate_json": "Code for Project/11-10-26 (Tara)/laminates/lam_shell_lit.json",
+  "web_laminate_json": "Code for Project/11-10-26 (Tara)/laminates/lam_web_lit.json",
+  "buckling_laminate_json": "Code for Project/11-10-26 (Tara)/laminates/lam_shell_eq.json",
+  "buckling_web_laminate_json": "Code for Project/11-10-26 (Tara)/laminates/lam_web_eq.json",
+  "h_mm": 130,
+  "w_mm": 4.5,
+  "bounds": {
+   "r1": [
+    12,
+    50
+   ],
+   "alpha": [
+    0.6283185307,
+    1.5707963268
+   ],
+   "r2": [
+    12,
+    50
+   ]
+  },
+  "mesh_size_mm": 10,
+  "buckling_objective": "A",
+  "verification": "final_only",
+  "stop": {
+   "window": 4,
+   "min_iterations": 8,
+   "tol": 0.01
+  }
+ }
+}
