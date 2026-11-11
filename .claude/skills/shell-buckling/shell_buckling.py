@@ -267,6 +267,7 @@ def stability_path(control, step, max_steps=200, n_eig=4, stop_after=0, rel_tol=
     return dict(history=np.array(rows), critical=crit, eig0=eig0)
 
 
+LAST_PATH_STOP = None    # why the last imperfect_path ended (see its docstring)
 GROW_ITERS = 3      # a step that converged in <= this many iterations lets the next one double (up to max_step)
 
 
@@ -493,7 +494,7 @@ def lba(build, lam_small, n_modes=3, max_dofs=8000, verbose=True):
 
 def imperfect_path(control, step, n_steps, record=None, tol=1e-8, max_iter=100, max_cuts=6,
                    algorithm='KrylovNewton', min_step=None, max_step=None, fine_from=None, max_param=None,
-                   max_load=None, verbose=True):
+                   max_load=None, pass_load=None, stall_steps=2, stall_frac=0.75, verbose=True):
     """Method (B): path of the current (imperfect) model, no eigen calls.
     control: {'type': 'disp', 'node', 'dof'} (rotation/displacement of a
     LOADED DOF: limit points, snap-through) or {'type': 'load'} (bifurcation
@@ -508,15 +509,25 @@ def imperfect_path(control, step, n_steps, record=None, tol=1e-8, max_iter=100, 
     ends the path there (the n_steps budget then only bounds the count).
     max_load: stop once |load factor| reaches it (threshold cutoff; the
     last point is then the peak, still rising).
+    pass_load: once |load factor| >= pass_load (the requirement), stop after
+    stall_steps consecutive HARD steps (step cut, or >= stall_frac x max_iter
+    iterations): the design has passed and the solver is only crawling
+    (ASDShellQ4 near its residual floor); the last point is a lower bound.
+    LAST_PATH_STOP tells why the last path ended ('cutoff', 'stall_passed',
+    'no_convergence', 'range', 'steps').
     Returns (rows [param, load factor, record()..., iterations], peak
     |load factor|, its row index)."""
     record = record or (lambda: [])
     _setup(tol, max_iter)
     ops.algorithm(algorithm)
+    global LAST_PATH_STOP
+    LAST_PATH_STOP = 'steps'
     rows = [[_param(control), ops.getLoadFactor(1), *record(), 0]]
     d = step
+    hard = 0
     for k in range(n_steps if not max_param else 100 * n_steps):
         if max_param and abs(rows[-1][0]) >= abs(max_param) * (1 - 1e-9):
+            LAST_PATH_STOP = 'range'
             break
         if max_param:                                      # do not pass the end of the range
             d = math.copysign(min(abs(d), abs(max_param) - abs(rows[-1][0])), step)
@@ -526,6 +537,7 @@ def imperfect_path(control, step, n_steps, record=None, tol=1e-8, max_iter=100, 
         if taken is None:
             if verbose:
                 print(f'  stopped: no convergence beyond load factor {rows[-1][1]:.5g}')
+            LAST_PATH_STOP = 'no_convergence'
             break
         rows.append([_param(control), ops.getLoadFactor(1), *record(), ops.testIter()])
         if verbose:
@@ -534,7 +546,17 @@ def imperfect_path(control, step, n_steps, record=None, tol=1e-8, max_iter=100, 
         if max_load and abs(rows[-1][1]) >= abs(max_load):
             if verbose:
                 print(f'  cutoff: load factor {rows[-1][1]:.6g} >= {max_load:g}, path stopped', flush=True)
+            LAST_PATH_STOP = 'cutoff'
             break
+        if pass_load and abs(rows[-1][1]) >= abs(pass_load):
+            hard = hard + 1 if (abs(taken) < abs(d) * (1 - 1e-9) or ops.testIter() >= stall_frac * max_iter) else 0
+            if hard >= stall_steps:
+                if verbose:
+                    print(f'  stall after passing {pass_load:g}: {hard} hard steps in a row (cut or >= '
+                          f'{stall_frac:g} x {max_iter} iterations) at load factor {rows[-1][1]:.6g}; path stopped '
+                          f'(lower bound)', flush=True)
+                LAST_PATH_STOP = 'stall_passed'
+                break
         if k == 0:      # ASDShellQ4 converges slowly at any step size (8-9 iterations from the start):
             grow = max(GROW_ITERS, ops.testIter() + 2)    # "easy" = as easy as the first step
         d = _next_step(d, taken, step, max_step, grow)

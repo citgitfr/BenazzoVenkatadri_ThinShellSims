@@ -138,8 +138,15 @@ def insert_keyword(mdl, text, before=None, after=None):
 
 
 def buckle_step(mdl, name, previous):
-    mdl.BuckleStep(name=name, previous=previous, numEigen=B['n_modes'], vectors=B['n_modes'] + 8,
-                   maxIterations=300)
+    if B.get('eigensolver', 'subspace').lower() == 'lanczos':
+        # clustered local modes (thin closed/branched booms): subspace iteration may not converge
+        from abaqusConstants import LANCZOS
+        mdl.BuckleStep(name=name, previous=previous, numEigen=B['n_modes'], eigensolver=LANCZOS, minEigen=0.0,
+                       maxEigen=B.get('max_eigen'))
+    else:
+        # vectors: a larger subspace separates clustered local modes (default n_modes + 8, as before)
+        mdl.BuckleStep(name=name, previous=previous, numEigen=B['n_modes'],
+                       vectors=B.get('vectors', B['n_modes'] + 8), maxIterations=B.get('max_iterations', 300))
 
 
 def new_model(name):
@@ -322,7 +329,8 @@ def generate(case_path, out=None, element='S4R'):
         f'Buckling: {json.dumps(case["buckling"])}',
         f'Reference values: {json.dumps(case.get("reference", {}))}'])
     text = (_PREFIX + _BUCKLE) % dict(
-        name=name, case_file=Path(case_path).name, summary=summary, script=out.name, size=mesh.size,
+        name=name, source='a shell-buckling case', extractor=ca._extractor(),   # keys of the shared template
+        case_file=Path(case_path).name, summary=summary, script=out.name, size=mesh.size,
         element=element, job=name.replace('-', '_')[:24], model=ca._literal(model), ref='{}',
         buckling=ca._literal(bk), reference=ca._literal(case.get('reference', {})))
     out.write_text(text, encoding='utf-8')

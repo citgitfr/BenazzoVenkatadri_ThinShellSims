@@ -84,3 +84,40 @@ Claude (for Federico)
 - Regression suite with the SuperLU fallback in place: 359 checks, 359 passed, 0 failed (432 s; log
   perf/regression_2026-11-10.log). Tool, protocol and log changes committed and merged into main for Tara
   (Federico's request); study folders and the staged verification fixes not included.
+- Step B stop after passing the requirement (Federico's decision, 11/10/26). it004 (L011/Y002/M008, [0/30/0];
+  step A skipped because ShellNLDKGQ takes 0/90 plies only) ran B for 18 h: the load rose linearly
+  (~3750 N/mm) to 644 N > 500 N required, but from 590 N every step needed 33-40 KrylovNewton iterations
+  (residual stuck near 5e-5 vs tol 1e-6) and was cut to ~0.0002 mm, so it never reached the 750 N cutoff.
+  shell_buckling.imperfect_path option pass_load (+ stall_steps 2, stall_frac 0.75): once |load| >= pass_load,
+  2 consecutive HARD steps (cut, or >= 0.75 x max_iter iterations) stop the path; the last point is a lower
+  bound. shell_buckling.LAST_PATH_STOP records why a path ended; boom_buckling passes case 'B_pass' and
+  stores B['stop']. study.py sets B_pass = the required load for threshold requirements, does not widen on
+  this stop, and records "B LOWER BOUND: path passed the requirement ... then the solver crawled".
+  Tested (perf/ex): tape-spring compression with B_pass 20 N unchanged (cutoff 32.2 N, 5 steps); forced
+  (stall_frac 0.01, B_pass 10 N) stops at 23.6 N with stop = stall_passed. Old it004 log kept as
+  logs/buckling_Bonly_crawl_18h.log; it004 buckling restarted with the new stop. Not committed.
+
+11/11/26
+Claude (for Federico)
+- Wrap-up of the study (Federico: "Yes, wrap up now"): Abaqus verifications of it005, it004, it003, it002 requested
+  (with it001: 5, the protocol minimum); the protocol's >= 5-iteration spacing and 20-iteration minimum were not
+  followed, by Federico's decision (no lighter design is predicted feasible after it005).
+- buckling_to_abaqus.py: generate() failed with KeyError 'source' because the shared abaqus-export template
+  (case_to_abaqus.ABAQUS) gained %(source)s / %(extractor)s placeholders; it now passes source and extractor.
+  Checked with --mock on the it005 pin/pin compression case (model, *BUCKLE and Riks steps built, 122 API calls).
+- buckling_to_abaqus.py: option "eigensolver": "lanczos" in the case's buckling block (default unchanged:
+  subspace, max_iterations 300). Reason: on it005 (OM M008, [0/30/0], 52780 S4R) the subspace *BUCKLE converged
+  only 2 of 4 eigenvalues in 300 iterations (both 1.093 x 500 N = 546.6 N; >10 local modes within 1.4% above),
+  so no mode was written and the Riks job could not start ("no valid frames on the previous results file").
+- Comparator verdicts it002-it005: all agree (tip displacement within 0.16%, peak ply stresses within 0.6%).
+  Tool issues they reported, not fixed: the Abaqus script's own "top-ply top-surface" check uses the last section
+  point of the model (a web point when the web is the doubled laminate) against the OpenSees flange peak, so it
+  prints false CHECK lines; compare_results.py prints a huge rel. RMS % where the OpenSees field is exactly 0
+  (verdict still PASS ~0).
+- buckling_to_abaqus.py: options "vectors" (subspace size, default n_modes + 8 as before) and "max_eigen" (Lanczos
+  upper bound). it005 runs: Lanczos accepted 0 eigenvalues (its automatic interval was scaled at 2e-6 while the
+  buckling factors are ~1.09); subspace with 30 vectors / 1000 iterations converged: Abaqus LBA mode 1 = 546.55 N
+  (OpenSees B lower bound 528.7 N: +3.4%; requirement 500 N: +9.3%). The Riks step then stopped at LPF 1.9e-4
+  (0.1 N; arc-length increment cut to the 1e-8 minimum): not a strength, a Riks set-up problem still to solve.
+  This export's Riks step had never been run in real Abaqus before (the 10-29-26 results files are --mock runs).
+- Regression after the B stop and buckling_to_abaqus changes: 359/359 passed (390 s; perf/regression_2026-11-11.log).
