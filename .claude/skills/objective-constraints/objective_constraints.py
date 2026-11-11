@@ -266,7 +266,8 @@ def quantities(res, a):
     meta, geom = res['meta'], fc.case_geometry(res)
     case = meta.get('case') or {}
     lam = lp.Laminate.load(a.laminate) if a.laminate else lp.Laminate.from_dict(res['laminate'])
-    groups, web, boom, web_note = fc.facet_groups(res, lam, a.boom, a.web, a.web_stack)
+    groups, web, boom, web_note = fc.facet_groups(res, lam, a.boom, a.web, a.web_stack,
+                                                  lp.Laminate.load(a.web_laminate) if a.web_laminate else None)
     notes = [web_note] if web.any() or boom else []
     Q = {}
 
@@ -390,6 +391,7 @@ def main():
     g.add_argument('--criterion', choices=('hashin', 'tsai-hill'), default='hashin')
     g.add_argument('--S23', type=float)
     g.add_argument('--laminate', help='laminate JSON (default: the one stored in the results)')
+    g.add_argument('--web-laminate', help='web laminate JSON for the web facets (default: the model\'s)')
     g.add_argument('--at', choices=('gauss', 'centroid'), default='gauss')
     for k in fc.STRENGTHS:
         g.add_argument(f'--{k}', type=float)

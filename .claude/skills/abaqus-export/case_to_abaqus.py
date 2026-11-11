@@ -230,6 +230,11 @@ from abaqusConstants import (ANALYSIS, AXIS_1, AXIS_3, CARTESIAN, CENTROID, CLOC
 import mesh
 import regionToolset
 import section
+for _mod in ('part', 'material', 'assembly', 'step', 'interaction', 'load', 'job'):
+    try:                                # real Abaqus/CAE: importing a module registers its Model methods
+        __import__(_mod)                # (e.g. interaction -> Model.Coupling); added 11/10/26 after the first
+    except ImportError:                 # real-Abaqus run failed with "'Model' object has no attribute
+        pass                            # 'Coupling'". The stand-in mock API has none of these modules.
 from odbAccess import openOdb
 
 # --- Inputs (from the OpenSeesPy case; do not edit by hand, regenerate instead) ---

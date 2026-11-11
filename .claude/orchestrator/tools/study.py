@@ -11,6 +11,7 @@ ACTION; the orchestrator follows that line (PROTOCOL.md).
     study.py status [<study>] [--brief]            phase, iteration, best design, verifications, next action
     study.py candidates [<study>] [--n 10]         untried designs, calibrated estimates (choose from these)
     study.py choose --material L### --geometry T### --layup Y### --reason "..." [--override "..."]
+    study.py choose --r1 R1 --alpha ALPHA --reason "..."      (custom-design mode, see below)
     study.py run <iter> --step laminate|model|visualize|failure|buckling|objcon|all
     study.py record <iter>                         sanity checks, ledger, calibration, verification/stop decisions
     study.py converge <iter>                       mesh-convergence rerun (element size x 0.6)
@@ -21,6 +22,20 @@ ACTION; the orchestrator follows that line (PROTOCOL.md).
 
 <study> defaults to the active study (.claude/orchestrator/ACTIVE_STUDY).
 Units: N, mm, MPa; mass kg.
+
+Custom-design mode (added 11/10/26, Tara, user-approved): requirements.json "custom_design" fixes the
+material and layup to user-given laminate JSONs (not catalog rows) and makes the geometry a continuous
+parametric family; the orchestrator chooses each design's parameters (study.py choose --r1 --alpha) from
+the ledger instead of from the catalog screen. Family "CTM": Palmeri & Laurenzi (2024) collapsible tubular
+mast, two omega shells (edge arc r2, central arc r1 over 2 alpha, edge arc r2) bonded on flat tabs of width
+w; r2 = (h - 2 w - 2 r1 alpha) / (2 alpha) (their Eq. 4). Keys:
+  family, laminate_json, web_laminate_json (static model + failure: the real plies),
+  buckling_laminate_json, buckling_web_laminate_json (same ABD with 0/90 plies only, for ShellNLDKGQ),
+  failure_laminate_json, failure_web_laminate_json (optional: physical plies for Hashin and coiling when the
+  model laminates are an equivalent section), abd_target {flange|web: {A: 3x3, D: 3x3}} (optional: the
+  laminate step reports the model ABD against it and requires a match to 1e-6),
+  h_mm, w_mm, bounds {r1: [lo, hi], alpha: [lo, hi], r2: [lo, hi]}, mesh_size_mm,
+  stop {window, min_iterations, tol}, verification "final_only" | "schedule".
 """
 import argparse
 import csv
@@ -49,7 +64,7 @@ LEDGER_COLS = ('iter', 'material', 'layup', 'geometry', 'type', 'h_mm', 'size_mm
                'k_ratio', 'buckling_fe', 'buckling_kind', 'buckling_est', 'F_sim', 'F_flat', 'F_hub',
                'F_governing', 'feasible', 'objective', 'sanity', 'override', 'reason')
 K_TOL = 0.15            # FE tip stiffness vs thin-walled beam theory (rigid-end tape spring: 0.4% in v2.0 tests)
-CONV_TOL = dict(k=0.02, F=0.10)
+CONV_TOL = dict(k=0.02, F=0.10, buckling=0.05)   # buckling: custom mode (objective = buckling value)
 # Buckling path cutoff (threshold requirements only): path B stops once it carries this multiple of the required
 # load and the value is recorded as a lower bound (the design passes with that margin). Override per study with
 # requirements.json "buckling": {"cutoff_factor": ...}; 0 or null = no cutoff. Added 2026-11-06 at the user's request.
@@ -103,6 +118,84 @@ def iter_dir(sd, i):
     return sd / 'iterations' / f'it{i:03d}'
 
 
+def _repo_path(p):
+    p = Path(p)
+    return p if p.is_absolute() else REPO / p
+
+
+# --- custom-design mode (CTM family) ------------------------------------------------------
+
+def ctm_r2(cd, r1, a):
+    """Palmeri & Laurenzi (2024) Eq. (4)."""
+    return (cd['h_mm'] - 2 * cd['w_mm'] - 2 * r1 * a) / (2 * a)
+
+
+def ctm_section(cd, r1, a, web_json):
+    """shell-mesh 'branched' spec of the CTM: left tab, upper shell, lower shell, right tab (tabs = web
+    laminate {'json': web_json}); each shell = arc r2 (alpha), arc -r1 (2 alpha), arc r2 (alpha), tangent,
+    starting and ending flat at the tabs (z = 0). Shell normals: upper as listed, lower flipped
+    (boom_section convention)."""
+    r2, w = ctm_r2(cd, r1, a), cd['w_mm']
+    c = 2 * (r1 + r2) * math.sin(a)
+    arcs = [(r2, r2 * a), (-r1, 2 * r1 * a), (r2, r2 * a)]
+    seg = lambda sg: {'type': 'segments', 'segments': [['arc', sg * R, ln] for R, ln in arcs],
+                      'start': [-c / 2, 0.0], 'heading': 0.0}
+    return {'type': 'branched', 'web_stack': {'json': str(_repo_path(web_json))},
+            'branches': [{'section': {'type': 'segments', 'segments': [['line', w]], 'start': [-c / 2 - w, 0.0]},
+                          'laminate': 'web'},
+                         {'section': seg(1), 'laminate': 'flange'},
+                         {'section': seg(-1), 'laminate': 'flange', 'flip': True},
+                         {'section': {'type': 'segments', 'segments': [['line', w]], 'start': [c / 2, 0.0]},
+                          'laminate': 'web'}]}, r2, c
+
+
+def custom_section_props(spec, lam_f, lam_w, n=200):
+    """Thin-walled properties with the smeared axial stiffness Ex h = 1 / a11 of each branch's laminate:
+    EA, EI for deflection along z (bending about y) and along y (bending about z), centroid, b."""
+    sys.path.insert(0, str(SKILLS / 'shell-mesh'))
+    sys.path.insert(0, str(SKILLS / 'laminate-properties'))
+    import numpy as np
+    import shell_mesh as sm
+    sec = sm.CrossSection.from_spec(spec)
+    P, W = [], []
+    for br, lab in zip(sec.branches, sec.labels):
+        lam = lam_w if lab == 'web' else lam_f
+        exh = 1.0 / np.linalg.inv(lam.abd()[:3, :3])[0, 0]
+        s = np.linspace(0, br.b, n + 1)
+        X = np.array([br.point(x) for x in s])
+        P.append(0.5 * (X[1:] + X[:-1]))
+        W.append(exh * np.linalg.norm(np.diff(X, axis=0), axis=1))
+    P, W = np.vstack(P), np.concatenate(W)
+    yc, zc = W @ P[:, 0] / W.sum(), W @ P[:, 1] / W.sum()
+    return dict(EA=float(W.sum()), EIz=float(W @ (P[:, 1] - zc) ** 2), EIy=float(W @ (P[:, 0] - yc) ** 2),
+                yc=float(yc), zc=float(zc), b=float(sec.b),
+                height=float(P[:, 1].max() - P[:, 1].min()), width=float(P[:, 0].max() - P[:, 0].min()))
+
+
+def custom_coiling(lam, radii, R_hub):
+    """Exact CLT Hashin of the flange laminate flattened from each radius (dk_y = -+1/r) and, with a hub,
+    bent onto it (k_x = +-1/R_hub; 4 sign combinations). Returns F_flat, F_hub and the governing case."""
+    sys.path.insert(0, str(SKILLS / 'failure-check'))
+    import numpy as np
+    import failure_check as fc
+    K = lam.abd()
+
+    def F_of(kx, ky):
+        k = np.array([kx, ky, 0.0])
+        e0 = -np.linalg.solve(K[:3, :3], K[:3, 3:] @ k)
+        E = np.zeros((1, 1, 8))
+        E[0, 0, :3], E[0, 0, 3:6] = e0, k
+        F, mode, *_ = fc.failure_index(E, lam)
+        i = np.unravel_index(np.argmax(F), F.shape)
+        return float(F[i]), fc.MODES[int(mode[i])], int(i[2]) + 1
+    flat = max((F_of(0.0, sy / r) + (r,) for r in radii for sy in (1, -1)), key=lambda t: t[0])
+    hub = None
+    if R_hub:
+        hub = max((F_of(sx / R_hub, sy / r) + (r,) for r in radii for sx in (1, -1) for sy in (1, -1)),
+                  key=lambda t: t[0])
+    return flat, hub
+
+
 def run_cmd(args, log, cwd=SKILLS, timeout=None):
     """Run a skill script with the same python; output to log; returns (code, text)."""
     cmd = [PY] + [str(a) for a in args]
@@ -127,6 +220,9 @@ def next_action(st):
             return f'study.py verify {st["verification_due"]}  (Abaqus verification due), then continue'
         if i >= st['max_iterations']:
             return 'iteration budget used: study.py finalize'
+        if st.get('custom'):
+            return ('study.py candidates  ->  choose the next (r1, alpha) from the ledger  ->  '
+                    'study.py choose --r1 .. --alpha ..')
         return 'study.py candidates  ->  choose material, then geometry, then layup  ->  study.py choose ...'
     if ph.startswith('step:'):
         done = ph.split(':', 1)[1]
@@ -181,17 +277,35 @@ def validate_requirements(req):
         if not s.get('min_N_per_mm', 0) > 0:
             errs.append('bending_stiffness.min_N_per_mm must be > 0')
     b = rq.get('buckling')
+    maxb = obj.get('quantity') == 'buckling' and obj.get('sense') == 'maximize'
     if b:
         if b.get('load') == 'bending':
-            if b.get('sense') not in ('opposite', 'equal') or b.get('axis', 'y') != 'y':
-                errs.append('buckling (bending): axis "y" and sense opposite|equal required')
+            if b.get('axis', 'y') not in ('y', 'z') or (b.get('axis', 'y') == 'y' and
+                                                          b.get('sense') not in ('opposite', 'equal')):
+                errs.append('buckling (bending): axis "y" with sense opposite|equal, or axis "z"')
         elif b.get('load') == 'compression':
-            if b.get('ends', 'clamped') not in ('clamped', 'pinned'):
-                errs.append('buckling (compression): ends clamped|pinned')
+            if b.get('ends', 'clamped') not in ('clamped', 'pinned', 'free_tip'):
+                errs.append('buckling (compression): ends clamped|pinned|free_tip')
         else:
             errs.append('buckling.load must be bending or compression')
-        if not b.get('min_value', 0) > 0:
-            errs.append('buckling.min_value must be > 0')
+        if not b.get('min_value', 0) > 0 and not maxb:
+            errs.append('buckling.min_value must be > 0 (or the objective must be maximize buckling)')
+        if maxb and not b.get('min_value') and not b.get('range_estimate'):
+            errs.append('maximize buckling without min_value: give buckling.range_estimate (sizes the path range)')
+    cd = req.get('custom_design')
+    if cd:
+        if cd.get('family') != 'CTM':
+            errs.append('custom_design.family: only "CTM" (Palmeri & Laurenzi omega mast) is implemented')
+        for k in ('laminate_json', 'web_laminate_json', 'buckling_laminate_json', 'buckling_web_laminate_json'):
+            if not cd.get(k) or not _repo_path(cd[k]).exists():
+                errs.append(f'custom_design.{k}: laminate JSON file required (laminate-properties --save-json)')
+        bd = cd.get('bounds', {})
+        for k in ('r1', 'alpha', 'r2'):
+            if len(bd.get(k) or []) != 2 or not bd[k][0] < bd[k][1]:
+                errs.append(f'custom_design.bounds.{k}: [lower, upper] required')
+        for k in ('h_mm', 'w_mm'):
+            if not cd.get(k, 0) > 0:
+                errs.append(f'custom_design.{k} must be > 0')
     c = rq.get('coiling')
     if c and not c.get('hub_radius_mm', 0) > 0:
         errs.append('coiling.hub_radius_mm must be > 0')
@@ -221,13 +335,22 @@ def constraints_from(req):
         out.append({'name': 'bending stiffness', 'text': s.get('text', ''), 'expr': f'abs(force_{d}) / abs(tip_u{d})',
                     'op': '>=', 'limit': s['min_N_per_mm'], 'units': 'N/mm'})
     b = rq.get('buckling')
-    if b:
+    if b and b.get('min_value'):
         out.append({'name': 'buckling', 'text': b.get('text', ''), 'expr': 'buckling_load', 'op': '>=',
                     'limit': b['min_value'], 'units': b.get('units', 'N mm' if b['load'] == 'bending' else 'N')})
     c = rq.get('coiling')
     if c:
         out.append({'name': 'coiling on hub', 'text': c.get('text', ''), 'expr': 'F_hub', 'op': '<', 'limit': 1,
                     'units': '-'})
+    cd = req.get('custom_design')
+    if cd:
+        for k, u in (('r1', 'mm'), ('alpha', 'rad'), ('r2', 'mm')):
+            lo, hi = cd['bounds'][k]
+            src = ' (Eq. 4 of Palmeri & Laurenzi 2024)' if k == 'r2' else ''
+            out.append({'name': f'{k} lower bound', 'text': f'{k} >= {lo:g} {u}{src}', 'expr': k, 'op': '>=',
+                        'limit': lo, 'units': u})
+            out.append({'name': f'{k} upper bound', 'text': f'{k} <= {hi:g} {u}{src}', 'expr': k, 'op': '<=',
+                        'limit': hi, 'units': u})
     lim = req.get('limits', {})
     for key, expr, nm in (('max_thickness_mm', 'h_max', 'laminate thickness'),
                           ('max_width_mm', 'section_width', 'section width'),
@@ -248,9 +371,15 @@ def cmd_init(a):
         die(f'another study is active ({ACTIVE.read_text().strip()}): finalize or close it first')
     jsave(sd / 'requirements.clean.json', req)
     jsave(sd / 'constraints.json', constraints_from(req))
-    import design_screen as ds
-    rows, summary = ds.screen(req)
     (sd / 'screen').mkdir(exist_ok=True)
+    if req.get('custom_design'):
+        rows, summary = [], dict(evaluated=0, screen_ok=0, screen_ok_fe=0, screen_ok_by_type={},
+                                 rejections='custom-design mode: no catalog screen (material, layup and the '
+                                            'geometry family are fixed by requirements.json custom_design)',
+                                 materials_skipped=[], custom_design=True)
+    else:
+        import design_screen as ds
+        rows, summary = ds.screen(req)
     if rows:
         with open(sd / 'screen' / 'screen.csv', 'w', newline='') as f:
             w = csv.DictWriter(f, fieldnames=list(rows[0]))
@@ -268,7 +397,9 @@ def cmd_init(a):
               verification=dict(min=req.get('verification', {}).get('min', 5),
                                 max=req.get('verification', {}).get('max', 10), records=[]),
               verification_due=None, convergence_due=None, converged={}, stop={},
-              regression_record=reg_line[:200])
+              regression_record=reg_line[:200], custom=bool(req.get('custom_design')),
+              custom_stop=(req.get('custom_design') or {}).get('stop'),
+              verification_schedule=(req.get('custom_design') or {}).get('verification', 'schedule'))
     save_state(sd, st)
     with open(sd / 'ledger.csv', 'w', newline='') as f:
         csv.writer(f).writerow(LEDGER_COLS)
@@ -280,7 +411,7 @@ def cmd_init(a):
     print(f'rejections: {summary["rejections"]}')
     if summary['materials_skipped']:
         print(f'materials skipped: {summary["materials_skipped"]}')
-    if summary['screen_ok_fe'] == 0:
+    if summary['screen_ok_fe'] == 0 and not req.get('custom_design'):
         print('WARNING: no FE-supported design passes the screening estimates. Tell the user which '
               'requirement rejects them (rejections above) and ask whether to relax it; do not start the loop.')
     print('\nNEXT: ' + next_action(st))
@@ -370,9 +501,48 @@ def candidate_list(sd, st, n=10):
     return top, explore, ck, cb
 
 
+def custom_candidates(sd, st):
+    """Custom mode: no catalog list. Shows the design space (r1 range allowed by the r2 bounds at each alpha)
+    and the ledger sorted by objective; the orchestrator chooses the next (r1, alpha) from them."""
+    req = jload(sd / 'requirements.clean.json')
+    cd = req['custom_design']
+    (r1lo, r1hi), (alo, ahi), (r2lo, r2hi) = cd['bounds']['r1'], cd['bounds']['alpha'], cd['bounds']['r2']
+    H2w = cd['h_mm'] - 2 * cd['w_mm']
+    print(f'custom design space ({cd["family"]}): r1 in [{r1lo:g}, {r1hi:g}] mm, alpha in [{alo:.4f}, {ahi:.4f}] rad, '
+          f'r2 = (h - 2w - 2 r1 alpha)/(2 alpha) in [{r2lo:g}, {r2hi:g}] mm')
+    print('alpha [rad]   feasible r1 range [mm]')
+    for k in range(9):
+        al = alo + (ahi - alo) * k / 8
+        lo = max(r1lo, (H2w - 2 * r2hi * al) / (2 * al))
+        hi = min(r1hi, (H2w - 2 * r2lo * al) / (2 * al))
+        print(f'  {al:.4f}      ' + (f'[{lo:.3f}, {hi:.3f}]' if lo <= hi else 'none'))
+    rows = []
+    for k, v in st['designs'].items():
+        f = iter_dir(sd, v['iter']) / 'design.json'
+        if f.exists():
+            d = jload(f)
+            rows.append((v.get('objective'), v['iter'], d.get('r1'), d.get('alpha'), d.get('r2'), v.get('feasible'),
+                         v.get('sanity'), d.get('buckling_A'), d.get('buckling_B')))
+    obj = req.get('objective', {})
+    sgn = -1 if obj.get('sense') == 'maximize' else 1
+    rows.sort(key=lambda r: (r[0] is None, sgn * (r[0] or 0)))
+
+    def g(x, f):
+        return 'None' if x is None else format(x, f)
+    print(f'\nevaluated designs, best first ({obj.get("sense")} {obj.get("quantity")}):')
+    print('iter  r1       alpha    r2       objective    A_est        B_peak       feasible  sanity')
+    for o, i, r1, al, r2, fe, sa, A, B in rows:
+        print(f'{i:<5d} {r1:<8.3f} {al:<8.4f} {r2:<8.3f} {g(o, ".6g"):<12} {g(A, ".6g"):<12} {g(B, ".6g"):<12} '
+              f'{str(fe):<9} {sa}')
+    jsave(sd / 'screen' / 'last_candidates.json', dict(top=[], explore=[], iteration=st['iteration'], custom=True))
+    print('\nNEXT: study.py choose --r1 R1 --alpha ALPHA --reason "<why this point, from the ledger>"')
+
+
 def cmd_candidates(a):
     sd = study_dir(a.study)
     st = load_state(sd)
+    if st.get('custom'):
+        return custom_candidates(sd, st)
     top, explore, ck, cb = candidate_list(sd, st, a.n)
     print(f'calibration (median FE/estimate): stiffness x{ck:.3g} ({len(st["calib"]["k"])} runs), '
           f'buckling x{cb:.3g} ({len(st["calib"]["b"])} runs)')
@@ -421,6 +591,97 @@ def mesh_size(b, L):
     return max(0.5, round(s, 1))
 
 
+def custom_choose(a, sd, st):
+    import numpy as np
+    req = jload(sd / 'requirements.clean.json')
+    cd = req['custom_design']
+    if a.r1 is None or a.alpha is None:
+        die('custom-design mode: give --r1 and --alpha (no catalog IDs)')
+    if not a.reason or len(a.reason) < 20:
+        die('--reason must say why this (r1, alpha), citing the ledger, in a sentence or more')
+    r1, al = float(a.r1), float(a.alpha)
+    r2 = ctm_r2(cd, r1, al)
+    bd = cd['bounds']
+    bad = [f'{k} = {v:.4g} outside [{bd[k][0]:g}, {bd[k][1]:g}]' for k, v in (('r1', r1), ('alpha', al), ('r2', r2))
+           if not bd[k][0] - 1e-5 <= v <= bd[k][1] + 1e-5]
+    if bad:
+        die('design outside the design space: ' + '; '.join(bad))
+    r1 = min(max(r1, bd['r1'][0]), bd['r1'][1])            # values within 1e-5 of a bound (rounding): on it
+    al = min(max(al, bd['alpha'][0]), bd['alpha'][1])
+    r2 = ctm_r2(cd, r1, al)
+    if not bd['r2'][0] - 1e-5 <= r2 <= bd['r2'][1] + 1e-5:
+        die(f'r2 = {r2:.6g} outside [{bd["r2"][0]:g}, {bd["r2"][1]:g}] after rounding to the bounds')
+    for k, v in st['designs'].items():
+        f = iter_dir(sd, v['iter']) / 'design.json'
+        if f.exists():
+            o = jload(f)
+            if abs(o['r1'] - r1) < 0.01 and abs(o['alpha'] - al) < 1e-4:
+                die(f'(r1, alpha) = ({r1}, {al}) was already evaluated (iteration {v["iter"]}); pick another point')
+    if st.get('model_trust', {}).get('ok') is False:
+        die('an Abaqus verification disagreed: report it to the user and wait for instructions')
+    sys.path.insert(0, str(SKILLS / 'laminate-properties'))
+    import laminate_properties as lp
+    lam_f = lp.Laminate.load(_repo_path(cd['laminate_json']))
+    lam_w = lp.Laminate.load(_repo_path(cd['web_laminate_json']))
+    lam_fail = lp.Laminate.load(_repo_path(cd['failure_laminate_json'])) if cd.get('failure_laminate_json') else lam_f
+    i = st['iteration'] + 1
+    idir = iter_dir(sd, i)
+    idir.mkdir(parents=True, exist_ok=True)
+    section, _, chord = ctm_section(cd, r1, al, cd['web_laminate_json'])
+    bsection, _, _ = ctm_section(cd, r1, al, cd['buckling_web_laminate_json'])
+    sp = custom_section_props(section, lam_f, lam_w)
+    L = float(req['length_mm'])
+    size = float(cd.get('mesh_size_mm', 5.0))
+    hub = (req['requirements'].get('coiling') or {}).get('hub_radius_mm')
+    flat, hubc = custom_coiling(lam_fail, (r1, r2), hub)
+    s = req['requirements'].get('bending_stiffness') or {'direction': 'z', 'sign': -1, 'load_N': 1.0}
+    F = [0.0, 0.0, 0.0]
+    F['xyz'.index(s['direction'])] = s['sign'] * reference_load(s, L)
+    name = f'it{i:03d}_CTM_r{r1:.3f}_a{al:.4f}'.replace('.', 'p')
+    key = f'CTM/r1={r1:.3f}/alpha={al:.4f}'
+    case = {'name': name, 'laminate': {'json': 'lam.json'},
+            'geometry': {'L': L, 'section': section, 'size': size},
+            'element': {'type': 'ASDShellQ4', 'corotational': False},
+            'supports': [{'rigid_end': 'x0', 'dofs': [1, 1, 1, 1, 1, 1]}, {'rigid_end': 'xL'}],
+            'loads': [{'node': {'rigid': 'xL'}, 'force': F}],
+            'analysis': {'type': 'linear'}, 'report_node': {'rigid': 'xL'}}
+    jsave(idir / 'case.json', case)
+    Ex = 1.0 / (lam_f.h * np.linalg.inv(lam_f.abd()[:3, :3])[0, 0])
+    design = dict(iter=i, key=key, custom=True, family=cd['family'], r1=r1, alpha=al, r2=r2, chord=chord,
+                  material='custom', layup='custom', layup_str=lam_f.name, geometry=f'CTM(r1={r1:.3f},a={al:.4f})',
+                  type='OM', section=section, buckling_section=bsection, R=min(r1, r2), b=sp['b'], L=L, size=size,
+                  name=name, reason=a.reason, override='', screen_rank=0, h_mm=lam_f.h, h_web_mm=lam_w.h,
+                  k_est=None, buckling_est=None, Ex=Ex,
+                  EIz=sp['EIz'], EIy=sp['EIy'], EA=sp['EA'], section_height=sp['height'], section_width=sp['width'],
+                  F_flat=flat[0], F_flat_case=dict(mode=flat[1], ply=flat[2], r=flat[3]),
+                  F_hub=None if hubc is None else hubc[0],
+                  F_hub_case=None if hubc is None else dict(mode=hubc[1], ply=hubc[2], r=hubc[3], R_hub=hub),
+                  r_min=min(r1, r2), cross_ply=True,
+                  buckling_laminate=str(_repo_path(cd['buckling_laminate_json'])),
+                  flange_laminate=str(_repo_path(cd['laminate_json'])),
+                  web_laminate=str(_repo_path(cd['web_laminate_json'])),
+                  buckling_objective=cd.get('buckling_objective', 'B'),
+                  failure_laminate=str(_repo_path(cd['failure_laminate_json'])) if cd.get('failure_laminate_json') else None,
+                  failure_web_laminate=(str(_repo_path(cd['failure_web_laminate_json']))
+                                        if cd.get('failure_web_laminate_json') else None),
+                  abd_target=cd.get('abd_target'))
+    bq = req['requirements'].get('buckling')
+    if bq:
+        design['buckling_est_cal'] = bq.get('range_estimate') or bq.get('min_value')
+        jsave(idir / 'buckling.json', buckling_case(design, bq))
+    jsave(idir / 'design.json', design)
+    st['designs'][key] = dict(iter=i)
+    st.update(iteration=i, phase='chosen', iter_steps_done=[])
+    save_state(sd, st)
+    print(f'iteration {i}: {key}  r2 = {r2:.4f} mm (Eq. 4), chord {chord:.3f} mm, height {sp["height"]:.3f} mm, '
+          f'section mid-line {sp["b"]:.2f} mm, L {L:g} mm, element size {size} mm')
+    print(f'EA {sp["EA"]:.5g} N, EI (z-deflection, about y) {sp["EIz"]:.5g} N mm2, EI (about z) {sp["EIy"]:.5g} N mm2; '
+          f'coiling: F_flat {flat[0]:.3f} ({flat[1]}, ply {flat[2]}, r {flat[3]:.3f} mm)'
+          + (f', F_hub {hubc[0]:.3f} ({hubc[1]}, ply {hubc[2]}, r {hubc[3]:.3f} mm, R_hub {hub:g} mm)' if hubc else ''))
+    print(f'case: {rel(idir / "case.json")}')
+    print('NEXT: ' + next_action(st))
+
+
 def cmd_choose(a):
     sd = study_dir(a.study)
     st = load_state(sd)
@@ -434,6 +695,10 @@ def cmd_choose(a):
     if st.get('verification_due'):
         die(f'an Abaqus verification of iteration {st["verification_due"]} is due first: study.py verify '
             f'{st["verification_due"]} (it only writes the script; the loop goes on while the user runs Abaqus)')
+    if st.get('custom'):
+        return custom_choose(a, sd, st)
+    if not (a.material and a.geometry and a.layup):
+        die('give --material, --geometry and --layup (catalog IDs)')
     key = f'{a.material}/{a.layup}/{a.geometry}'
     if key in st['designs']:
         die(f'{key} was already evaluated (iteration {st["designs"][key]["iter"]}); pick another design')
@@ -516,16 +781,27 @@ def buckling_case(d, bq):
     case = {'name': d['name'] + '_buck', 'laminate': {'json': 'lam.json'},
             'geometry': {'L': d['L'], 'section': d.get('section') or {'type': 'arc', 'R': d['R'], 'b': round(d['b'], 6)},
                          'size': d['size']}}
-    est = max(d.get('buckling_est_cal') or 0, bq['min_value'])   # range from the calibrated estimate
+    est = max(d.get('buckling_est_cal') or 0, bq.get('min_value') or 0)   # range from the calibrated estimate
+    if d.get('custom'):            # custom mode: the exact 0/90 twin laminate (same ABD) for ShellNLDKGQ
+        case['laminate'] = {'json': d['buckling_laminate']}
+        case['geometry']['section'] = d['buckling_section']
     if bq['load'] == 'bending':
-        case['load'] = {'type': 'bending', 'axis': 'y', 'sign': 1 if bq['sense'] == 'opposite' else -1}
-        th = 4 * est * d['L'] / d['EIz']
-        mx = min(max(th, 0.05), 1.0)
+        ax = bq.get('axis', 'y')
+        case['load'] = {'type': 'bending', 'axis': ax,
+                        'sign': 1 if bq.get('sense', 'opposite') == 'opposite' else -1}
+        th = 4 * est * d['L'] / (d['EIz'] if ax == 'y' else d['EIy'])
+        mx = min(th, 1.0) if d.get('custom') else min(max(th, 0.05), 1.0)
     else:
         case['load'] = {'type': 'compression', 'ends': bq.get('ends', 'clamped')}
-        mx = 3 * est * d['L'] / (d['Ex'] * d['h_mm'] * d['b'])   # 3 x end shortening at P_est
+        EA = d.get('EA') or d['Ex'] * d['h_mm'] * d['b']
+        mx = 3 * est * d['L'] / EA                                  # 3 x end shortening at P_est
     case['A'] = {'step': mx / 60, 'max': mx, 'n_coarse': 8}
     case['B'] = {'step': mx / 60, 'max': mx, 'amplitude': round(0.1 * d['h_mm'], 6), 'control': 'disp'}
+    if d.get('buckling_objective') == 'A':
+        # custom option: the objective is method A (perfect geometry, tangent-stiffness zero crossing along the
+        # nonlinear path = Palmeri & Laurenzi's "nonlinear buckling load"); B runs only for the final design
+        case['A'].update(step=mx / 10, n_rounds=1, max_cuts=2)   # a point that cannot advance (limit point) is unstable: do not creep
+        case['B_final_only'] = case.pop('B')
     return solver_settings(case)
 
 
@@ -579,6 +855,96 @@ def cmd_run(a):
     print('NEXT: ' + next_action(st))
 
 
+def _boom_args(d):
+    return [] if d.get('custom') else ['--boom', d['geometry']]
+
+
+def _fail_args(d):
+    """custom mode: physical plies for the ply stresses (the model may use an equivalent section)"""
+    out = []
+    if d.get('failure_laminate'):
+        out += ['--laminate', d['failure_laminate']]
+    if d.get('failure_web_laminate'):
+        out += ['--web-laminate', d['failure_web_laminate']]
+    return out
+
+
+def _custom_values(d):
+    return sum((['--value', f'{k}={d[k]}'] for k in ('r1', 'alpha', 'r2')), []) if d.get('custom') else []
+
+
+def midpoint_abd(lam):
+    """ABD with each ply split into lam.n_sub equal layers integrated at their mid-planes: exactly what
+    OpenSees LayeredShell computes (A, B exact; D low by the sum of t_layer^3 / 12 Q_bar)."""
+    import numpy as np
+    sys.path.insert(0, str(SKILLS / 'laminate-properties'))
+    import laminate_properties as lp
+    K = np.zeros((6, 6))
+    for q in lam.plies:
+        Q = lp.q_bar(lam.materials[q['mat']], q['theta'])
+        t = (q['z1'] - q['z0']) / lam.n_sub
+        for k in range(lam.n_sub):
+            z = q['z0'] + (k + 0.5) * t
+            K[:3, :3] += Q * t
+            K[:3, 3:] += Q * t * z
+            K[3:, 3:] += Q * t * z * z
+    K[3:, :3] = K[:3, 3:].T
+    return K
+
+
+def custom_abd_check(idir):
+    """Custom mode laminate step (run as a subprocess, own OpenSees domain): for the flange, web and buckling-
+    twin laminates, the OpenSees-measured ABD (laminate-properties measure_abd) against CLT (A, B: ~1e-15) and
+    against the mid-plane-layer integral (D: exact, ~1e-15; the D difference from CLT is reported); the twin
+    must have the flange ABD. Copies the laminates into the iteration (lam.json, lam_web.json,
+    lam_buckling.json)."""
+    import numpy as np
+    sys.path.insert(0, str(SKILLS / 'laminate-properties'))
+    import laminate_properties as lp
+    idir = Path(idir)
+    d = jload(idir / 'design.json')
+    runs, ok, lams = [], True, {}
+    items = [('flange', d['flange_laminate'], 'lam.json'), ('web', d['web_laminate'], 'lam_web.json'),
+             ('buckling twin', d['buckling_laminate'], 'lam_buckling.json')]
+    items += [(t, d[k], f) for t, k, f in (('failure plies', 'failure_laminate', 'lam_failure.json'),
+                                           ('failure web plies', 'failure_web_laminate', 'lam_failure_web.json'))
+              if d.get(k)]
+    tgt = d.get('abd_target') or {}
+    for tag, src, dst in items:
+        lam = lp.Laminate.load(src)
+        lam.save(idir / dst)
+        lams[tag] = lam
+        K, Km, Kmid = lam.abd(), lam.measure_abd(), midpoint_abd(lam)
+        e = lp.block_errors(Km, K)
+        eD = lp.block_errors(Km, Kmid)['D']
+        good = e['A'] < 1e-10 and e['B'] < 1e-10 and eD < 1e-8
+        ok &= good
+        T = tgt.get({'flange': 'flange', 'buckling twin': 'flange', 'failure plies': 'flange', 'web': 'web',
+                     'failure web plies': 'web'}[tag])
+        terr = None
+        if T:
+            A0, D0 = np.array(T['A'], float), np.array(T['D'], float)
+            nz = lambda X, X0: np.abs(X - X0)[X0 != 0] / np.abs(X0[X0 != 0])
+            terr = dict(A=float(nz(Km[:3, :3], A0).max()), D=float(nz(Km[3:, 3:], D0).max()))
+            model_lam = not tag.startswith('failure')
+            if model_lam:
+                good &= max(terr.values()) < 1e-6
+                ok &= good
+            print(f'    vs target ABD (requirements custom_design.abd_target): max rel. error A {terr["A"]:.2e}, '
+                  f'D {terr["D"]:.2e}{"" if model_lam else " (failure plies: information only)"}')
+        runs.append(dict(laminate=tag, file=str(src), n_layers=lam.n_sub * len(lam.plies), A=e['A'], B=e['B'],
+                         D_vs_CLT=e['D'], D_vs_midpoint_layers=eD, vs_target=terr, ok=good))
+        print(f'{tag}: {lam.name}, h {lam.h:g} mm, {lam.n_sub * len(lam.plies)} layers: OpenSees vs CLT A {e["A"]:.1e}, '
+              f'B {e["B"]:.1e}, D {e["D"]:.1e} (mid-plane layer integration); D vs the exact layer integral '
+              f'{eD:.1e} -> {"OK" if good else "FAIL"}')
+    twin = float(np.abs(lams['buckling twin'].abd() - lams['flange'].abd()).max() / np.abs(lams['flange'].abd()).max())
+    ok &= twin < 1e-9
+    d['abd_check'] = dict(ok=bool(ok), twin_rel_diff=twin, runs=runs)
+    jsave(idir / 'design.json', d)
+    print(f'buckling twin (0/90 plies) ABD vs flange ABD: {twin:.1e}')
+    print(f'custom laminates: ABD check {"OK" if ok else "FAIL: stop (PROTOCOL.md section 5)"}')
+
+
 def run_step(sd, st, i, step):
     idir = iter_dir(sd, i)
     d = jload(idir / 'design.json')
@@ -586,6 +952,11 @@ def run_step(sd, st, i, step):
     logs = idir / 'logs'
     logs.mkdir(exist_ok=True)
     log = logs / f'{step}.log'
+    if step == 'laminate' and d.get('custom'):
+        code, out = run_cmd([HERE / 'study.py', '_custom_abd_check', idir], log, cwd=REPO)
+        dd = jload(idir / 'design.json')
+        return code == 0 and dd.get('abd_check', {}).get('ok', False), out.strip().splitlines()[-1] + \
+            f' (log {rel(log)})'
     if step == 'laminate':
         code, out = run_cmd(['laminate-properties/laminate_properties.py', '--catalog', d['material'],
                              '--layup', d['layup_str'], '--check', '--save-json', idir / 'lam.json'], log)
@@ -606,13 +977,13 @@ def run_step(sd, st, i, step):
                    f'({"OK" if ok else "FAILED"}; log {rel(log)})'
     if step == 'visualize':
         png = idir / 'results' / f'{d["name"]}.png'
-        code, _ = run_cmd(['shell-visualize/shell_visualize.py', npz, '--png', png, '--no-gui', '--boom',
-                           d['geometry']], log)
+        code, _ = run_cmd(['shell-visualize/shell_visualize.py', npz, '--png', png, '--no-gui'] + _boom_args(d)
+                          + _fail_args(d), log)
         return code == 0 and png.exists(), f'picture {rel(png)}: READ IT before going on (deformed shape, ' \
                                            f'supports, load direction)'
     if step == 'failure':
-        code, out = run_cmd(['failure-check/failure_check.py', npz, '--boom', d['geometry'], '--flatten-radius',
-                             d['r_min']], log)
+        code, out = run_cmd(['failure-check/failure_check.py', npz] + _boom_args(d) + _fail_args(d) +
+                            ['--flatten-radius', d['r_min']], log)
         m = re.search(r'GOVERNING F[^0-9]*([\d.]+(?:e[+-]?\d+)?)', out)
         d['failure_log'] = rel(log)
         d['F_governing_fc'] = float(m.group(1)) if m else None
@@ -621,9 +992,9 @@ def run_step(sd, st, i, step):
     if step == 'buckling':
         # buckling paths cost tens of minutes: skip them for designs already infeasible without buckling
         pre = idir / 'objcon_pre.json'
-        vals = ['--value', f'F_hub={d["F_hub"]}'] if d.get('F_hub') is not None else []
-        run_cmd(['objective-constraints/objective_constraints.py', npz, '--constraints', sd / 'constraints.json',
-                 '--boom', d['geometry'], '--flatten-radius', d['r_min'], '--json', pre] + vals,
+        vals = (['--value', f'F_hub={d["F_hub"]}'] if d.get('F_hub') is not None else []) + _custom_values(d)
+        run_cmd(['objective-constraints/objective_constraints.py', npz, '--constraints', sd / 'constraints.json']
+                + _boom_args(d) + _fail_args(d) + ['--flatten-radius', d['r_min'], '--json', pre] + vals,
                 logs / 'objcon_pre.log')
         if pre.exists() and jload(pre).get('feasible') is False:
             bad = [c['name'] for c in jload(pre)['constraints'] if c.get('status') == 'VIOLATED']
@@ -632,13 +1003,13 @@ def run_step(sd, st, i, step):
             return True, f'buckling skipped: the design already violates {", ".join(bad)} (saves the path run)'
         return run_buckling(idir, d, logs, req=_clean(jload(sd / 'requirements.json')))
     if step == 'objcon':
-        vals = []
+        vals = _custom_values(d)
         if d.get('F_hub') is not None:
             vals += ['--value', f'F_hub={d["F_hub"]}']
         if d.get('buckling_value') is not None:
             vals += ['--value', f'buckling_load={d["buckling_value"]}']
         code, out = run_cmd(['objective-constraints/objective_constraints.py', npz, '--constraints',
-                             sd / 'constraints.json', '--boom', d['geometry'], '--flatten-radius', d['r_min'],
+                             sd / 'constraints.json'] + _boom_args(d) + _fail_args(d) + ['--flatten-radius', d['r_min'],
                              '--json', idir / 'objcon.json'] + vals, log)
         return code == 0 and (idir / 'objcon.json').exists(), f'objective-constraints -> {rel(idir / "objcon.json")}'
     return False, f'unknown step {step}'
@@ -783,6 +1154,13 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
             return False, f'boom_buckling failed (log {rel(lg)})'
         r = jload(rf)
         B = r.get('B') or {}
+        if 'B' not in case:                                # objective = A (custom option): widen only if no crossing
+            if (r.get('A') or {}).get('critical_load'):
+                break
+            if k < max_widen:
+                notes.append(f'A scan range doubled to {case["A"]["max"] * 2:g} (no crossing yet)')
+                _widen(case)
+            continue
         if B.get('peak_load') is not None and not B.get('peak_is_last_point'):
             break
         if cut and B.get('peak_load') is not None and B['peak_load'] >= cut:
@@ -802,6 +1180,9 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
             kind = 'B peak (limit point reached, path stalled there: falling branch not traced; Abaqus Riks to confirm)'
     elif B.get('peak_load') is not None:
         val, kind = B['peak_load'], 'B LOWER BOUND (path stopped while rising)'
+    elif A and 'B_final_only' in case:
+        val, kind = A, ('A: perfect-geometry nonlinear buckling (K_T zero crossing on the nonlinear path; '
+                        'objective by user choice, B for the final design)')
     elif A:
         val, kind = A, 'A estimate only'
     else:
@@ -847,8 +1228,12 @@ def cmd_record(a):
     Fg = (oc.get('failure') or {}).get('F_governing', Q.get('F_governing'))
     if Fg is None or (isinstance(Fg, float) and not math.isfinite(Fg)):
         sanity.append('no failure index')
-    if d.get('buckling_kind', '').startswith('B LOWER') and (d.get('buckling_value') or 0) <             req['requirements']['buckling']['min_value']:
+    bq_ = req['requirements'].get('buckling') or {}
+    if d.get('buckling_kind', '').startswith('B LOWER') and (d.get('buckling_value') or 0) < (bq_.get('min_value') or 0):
         sanity.append('buckling path stopped while rising below the requirement (lower bound only)')
+    if (d.get('buckling_kind', '').startswith('B LOWER') and req.get('objective', {}).get('quantity') == 'buckling'
+            and req.get('objective', {}).get('sense') == 'maximize'):
+        sanity.append('buckling objective is only a lower bound (B path stopped while rising)')
     if 'no imperfection' in d.get('buckling_kind', ''):
         sanity.append('buckling path without imperfection: a bifurcation may have been missed')
     if d.get('buckling_A') and d.get('buckling_B') and d['buckling_B'] > 1.5 * d['buckling_A']:
@@ -894,6 +1279,8 @@ def cmd_record(a):
     st['designs'][d['key']].update(feasible=feasible, objective=objective, sanity=bool(sanity))
     st['phase'] = 'recorded'
     st['convergence_due'] = i if (better or i == 1) and not st['converged'].get(str(i)) else None
+    if st.get('custom') and i != 1:     # continuous search: nearly every step is a new best; the final best is
+        st['convergence_due'] = None    # converged before finalize (finalize enforces it)
     st['verification_due'] = verification_due(st, i, better, bool(sanity))
     st['stop'] = stop_decision(st, sd)
     save_state(sd, st)
@@ -912,6 +1299,8 @@ def cmd_record(a):
 
 def verification_due(st, i, better, flagged):
     V = st['verification']
+    if st.get('verification_schedule') == 'final_only':
+        return None                    # user decision: Abaqus scripts only for the optimum (study.py verify <best>)
     n = len(V['records'])
     if n >= V['max']:
         return None
@@ -939,6 +1328,17 @@ def stop_decision(st, sd):
     i = st['iteration']
     if i >= st['max_iterations']:
         return dict(recommended=True, why=f'{st["max_iterations"]} iterations')
+    if st.get('custom'):
+        cs = st.get('custom_stop') or {}
+        win, mn, tol = cs.get('window', NO_IMPROVE_WINDOW), cs.get('min_iterations', MIN_ITERS_BEFORE_STOP), \
+            cs.get('tol', IMPROVE_TOL)
+        h = st['best_history']
+        if i >= mn and h and h[-1] is not None and len(h) > win:
+            ref = h[-1 - win]
+            if ref is not None and abs(h[-1] - ref) <= tol * abs(ref):
+                return dict(recommended=True, why=f'best improved < {100 * tol:g}% over the last {win} iterations '
+                                                  '(diminishing returns)')
+        return dict(recommended=False)
     top, _, _, _ = candidate_list(sd, st, 1)
     if not top:
         return dict(recommended=True, why='no untried candidate left')
@@ -978,9 +1378,10 @@ def cmd_converge(a):
     npz = cdir / 'results' / f'{case["name"]}.npz'
     if code or not npz.exists():
         die(f'fine-mesh run failed (log {rel(cdir / "model.log")})')
-    code, _ = run_cmd(['objective-constraints/objective_constraints.py', npz, '--constraints', sd / 'constraints.json',
-                       '--boom', d['geometry'], '--flatten-radius', d['r_min'], '--json', cdir / 'objcon_fine.json']
-                      + (['--value', f'F_hub={d["F_hub"]}'] if d.get('F_hub') is not None else []), cdir / 'objcon.log')
+    code, _ = run_cmd(['objective-constraints/objective_constraints.py', npz, '--constraints', sd / 'constraints.json']
+                      + _boom_args(d) + _fail_args(d) + ['--flatten-radius', d['r_min'], '--json', cdir / 'objcon_fine.json']
+                      + (['--value', f'F_hub={d["F_hub"]}'] if d.get('F_hub') is not None else []) + _custom_values(d),
+                      cdir / 'objcon.log')
     oc = jload(cdir / 'objcon_fine.json')
     Q = {k: (v.get('value') if isinstance(v, dict) else v) for k, v in oc.get('quantities', {}).items()}
     req = jload(sd / 'requirements.clean.json')
@@ -992,7 +1393,30 @@ def cmd_converge(a):
     F1 = F1.get('value') if isinstance(F1, dict) else F1
     dF = abs(F1 / F0 - 1) if F0 else 0.0
     ok = dk <= CONV_TOL['k'] and dF <= CONV_TOL['F']
-    st['converged'][str(i)] = dict(ok=ok, size=d['size'], fine=fine, dk=dk, dF=dF)
+    conv = dict(ok=ok, size=d['size'], fine=fine, dk=dk, dF=dF)
+    if d.get('custom') and d.get('buckling_value') and (idir / 'buckling.json').exists():
+        # custom mode: the objective is the buckling value, so it is converged too (A and B on the fine mesh)
+        bc = solver_settings(jload(idir / 'buckling.json'))
+        bc = {k: v for k, v in bc.items() if k not in ('A_known', 'mode_file', 'B_cutoff')}
+        bc['name'] = bc['name'] + '_fine'
+        bc['geometry']['size'] = fine
+        jsave(cdir / 'buckling_fine.json', bc)
+        code, _ = run_cmd([SKILLS / 'shell-buckling' / 'boom_buckling.py', cdir / 'buckling_fine.json', '--out',
+                           cdir / 'buckling'], cdir / 'buckling_fine.log', cwd=cdir)
+        rf = cdir / 'buckling' / f'{bc["name"]}.json'
+        if code or not rf.exists():
+            die(f'fine-mesh buckling run failed (log {rel(cdir / "buckling_fine.log")})')
+        r = jload(rf)
+        A1, B1 = (r.get('A') or {}).get('critical_load'), (r.get('B') or {}).get('peak_load')
+        v1 = B1 if B1 is not None and not (r.get('B') or {}).get('peak_is_last_point') else A1
+        db = abs(v1 / d['buckling_value'] - 1) if v1 else float('inf')
+        conv.update(buckling_coarse=d['buckling_value'], buckling_fine=v1, A_fine=A1, B_fine=B1, dbuckling=db,
+                    buckling_tol=CONV_TOL['buckling'])
+        ok = ok and db <= CONV_TOL['buckling']
+        conv['ok'] = ok
+        print(f'buckling on the fine mesh: {v1} vs {d["buckling_value"]} ({100 * db:.1f}%, tol '
+              f'{100 * CONV_TOL["buckling"]:.0f}%; A {A1}, B {B1})')
+    st['converged'][str(i)] = conv
     if st.get('convergence_due') == i:
         st['convergence_due'] = None
     if not ok and st['best'] and st['best']['iter'] == i:
@@ -1011,6 +1435,82 @@ def cmd_converge(a):
     print('NEXT: ' + next_action(st))
 
 
+def final_B(idir, d):
+    """Custom option buckling_objective 'A': method B (imperfect ASDShellQ4 path, mode A at 0.1 t) for the
+    final design, so the report has the imperfect strength too. Range: 1.5 x A's critical end rotation /
+    shortening, doubled while the path is still rising (up to 3 times)."""
+    bc = jload(idir / 'buckling.json')
+    if 'B_final_only' not in bc or d.get('buckling_B') is not None:
+        return None
+    mf = idir / 'buckling' / f'{bc["name"]}_mode.npz'
+    if not mf.exists():
+        return 'final B not run: no A mode file'
+    rf = idir / 'buckling' / f'{bc["name"]}.json'
+    A = jload(rf).get('A') or {}
+    b = dict(bc['B_final_only'])
+    pc = A.get('critical_param') or b['max']
+    b.update(max=1.5 * pc, step=1.5 * pc / 40)
+    case = {k: v for k, v in bc.items() if k not in ('B_final_only', 'A', 'A_known')}
+    case.update(name=bc['name'] + '_finalB', B=b, mode_file=str(mf))
+    for k in range(4):
+        jsave(idir / 'buckling_finalB.json', case)
+        lg = idir / 'logs' / f'buckling_finalB_{k}.log'
+        code, _ = run_cmd([SKILLS / 'shell-buckling' / 'boom_buckling.py', idir / 'buckling_finalB.json', '--out',
+                           idir / 'buckling', '--only', 'B'], lg, cwd=idir)
+        r = jload(idir / 'buckling' / f'{case["name"]}.json') if code == 0 else {}
+        B = r.get('B') or {}
+        if code or B.get('peak_load') is None or not B.get('peak_is_last_point'):
+            break
+        case['B'] = dict(case['B'], max=2 * case['B']['max'], step=2 * case['B']['step'])
+    d.update(buckling_B=B.get('peak_load'), buckling_B_kind=(None if not B else 'B LOWER BOUND (path stopped while rising)'
+                                                              if B.get('peak_is_last_point') else 'B peak'),
+             buckling_amplitude=B.get('amplitude'), buckling_imperfection=B.get('imperfection'))
+    jsave(idir / 'design.json', d)
+    return f'final B (imperfect strength): {d["buckling_B_kind"]} = {d["buckling_B"]} (A {A.get("critical_load")})'
+
+
+def abaqus_buckling_script(idir, d):
+    """shell-buckling buckling_to_abaqus.py script of the design's buckling case (LBA, Palmeri & Laurenzi /
+    Leclerc & Pellegrino preload + *BUCKLE, imperfect Riks), with the real laminate (lam.json: off-axis plies
+    as such) and the OpenSees A and B values as references. Added 11/10/26 (custom mode; works for any study)."""
+    bc = jload(idir / 'buckling.json')
+    ld = bc['load']
+    if ld['type'] == 'bending':
+        dof = 5 if ld.get('axis', 'y') == 'y' else 6
+        tipfix = [0, 1, 0, 1, 0, 1] if dof == 5 else [0, 0, 1, 1, 1, 0]
+        mom = [0, ld.get('sign', 1), 0] if dof == 5 else [0, 0, ld.get('sign', 1)]
+        loads = [{'node': {'rigid': 'xL'}, 'moment': mom}]
+    else:
+        dof = 1
+        tipfix = {'free_tip': [0, 0, 0, 1, 0, 0], 'clamped': [0, 1, 1, 1, 1, 1]}.get(ld.get('ends', 'clamped'))
+        if tipfix is None:
+            return None, 'Abaqus buckling script not written: pinned ends are not mapped (supports differ at the root)'
+        loads = [{'node': {'rigid': 'xL'}, 'force': [-1, 0, 0]}]
+    A, B = d.get('buckling_A'), d.get('buckling_B')
+    scale = A or B or d.get('buckling_value')
+    sec = d.get('section') or bc['geometry']['section']
+    case = {'name': d['name'] + '_buck', 'laminate': {'json': str((idir / 'lam.json').resolve())},
+            'geometry': {'L': d['L'], 'section': sec, 'size': d['size']},
+            'supports': [{'rigid_end': 'x0', 'dofs': [1, 1, 1, 1, 1, 1]}, {'rigid_end': 'xL', 'dofs': tipfix}],
+            'loads': loads,
+            'buckling': {'scale': scale, 'n_modes': 4, 'preload_fractions': [0.5, 0.8, 0.95],
+                         'riks': {'amplitude': (bc.get('B') or bc.get('B_final_only') or {}).get('amplitude', 0.1 * d['h_mm']),
+                                  'control': {'rigid': 'xL', 'dof': dof}, 'max_disp': 2 * bc['A']['max'],
+                                  'max_lpf': 2.0, 'max_inc': 300},
+                         'monitor': {'rigid': 'xL', 'dof': dof}},
+            'reference': {k: v for k, v in (('OpenSees A (ShellNLDKGQ K_T eigen, perfect)', A),
+                                            ('OpenSees B (ASDShellQ4 imperfect path peak)', B)) if v}}
+    cf = idir / 'abaqus_buckling_case.json'
+    jsave(cf, case)
+    out = idir / f'abaqus_{d["name"]}_buckling.py'
+    code, txt = run_cmd([SKILLS / 'shell-buckling' / 'buckling_to_abaqus.py', cf, '--out', out, '--mock'],
+                        idir / 'logs' / 'abaqus_buckling.log')
+    if code or not out.exists():
+        return None, f'Abaqus buckling script FAILED (log {rel(idir / "logs" / "abaqus_buckling.log")})'
+    return out, (f'Abaqus buckling script {rel(out)} (model part checked on the mock API; run: '
+                 f'abaqus cae noGUI={out.name} in {rel(idir)})')
+
+
 def cmd_verify(a):
     sd = study_dir(a.study)
     st = load_state(sd)
@@ -1027,6 +1527,12 @@ def cmd_verify(a):
     instr = idir / f'abaqus_{d["name"]}_instructions.txt'
     if code:
         die(f'opensees-to-abaqus model check FAILED: do not hand the script out (log {rel(idir / "logs/abaqus.log")})')
+    if (idir / 'buckling.json').exists() and d.get('buckling_value') is not None:
+        fb = final_B(idir, d)
+        if fb:
+            print(fb)
+        bscript, bmsg = abaqus_buckling_script(idir, d)
+        print(bmsg)
     V['records'].append(dict(iter=i, design=d['key'], type=d['type'], status='pending', verdict=None,
                              requested=dt.datetime.now().isoformat(timespec='seconds'), k_ratio=d.get('k_ratio'),
                              objective=d.get('objective'), instructions=rel(instr)))
@@ -1090,7 +1596,9 @@ def cmd_finalize(a):
         for f in [idir / 'case.json', idir / 'lam.json', idir / 'design.json', idir / 'objcon.json',
                   idir / f'{d["name"]}_opensees.py', idir / 'results' / f'{d["name"]}.png',
                   idir / f'abaqus_{d["name"]}.py', idir / f'abaqus_{d["name"]}_instructions.txt',
-                  idir / 'buckling.json', idir / 'buckling' / f'{d["name"]}_buck.png']:
+                  idir / 'buckling.json', idir / 'buckling' / f'{d["name"]}_buck.png',
+                  idir / f'abaqus_{d["name"]}_buckling.py', idir / 'abaqus_buckling_case.json',
+                  idir / 'lam_web.json', idir / 'lam_buckling.json']:
             if f.exists():
                 shutil.copy2(f, fin / f.name)
         files.append(fin)
@@ -1151,6 +1659,8 @@ def cmd_close(a):
 
 
 def main():
+    if len(sys.argv) == 3 and sys.argv[1] == '_custom_abd_check':      # internal: laminate step of custom mode
+        return custom_abd_check(sys.argv[2])
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sp = ap.add_subparsers(dest='cmd', required=True)
     p = sp.add_parser('new')
@@ -1173,7 +1683,9 @@ def main():
     p = sp.add_parser('choose')
     p.add_argument('--study')
     for k in ('material', 'geometry', 'layup'):
-        p.add_argument(f'--{k}', required=True, type=str.upper)
+        p.add_argument(f'--{k}', type=str.upper)
+    p.add_argument('--r1', type=float, help='custom-design mode (CTM): central arc radius [mm]')
+    p.add_argument('--alpha', type=float, help='custom-design mode (CTM): subtended angle [rad]')
     p.add_argument('--reason', required=True)
     p.add_argument('--override')
     p.set_defaults(f=cmd_choose)

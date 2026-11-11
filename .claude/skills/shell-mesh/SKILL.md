@@ -49,7 +49,9 @@ shares (junctions collect every strip's share); shell-bc-load uses them.
 Web laminate: web / tab facets get `laminate_properties.doubled_laminate(lam,
 web_stack)` (default mirror: the tape turned over, plies reversed with negated
 angles, bonded under the tape; z from the bond plane, which is the shell
-mid-surface; no adhesive, no +-h/2 offset of the tapes). Its nDMaterial and
+mid-surface; no adhesive, no +-h/2 offset of the tapes; or `web_stack: {"json":
+"web.json"}` for a user-given web laminate, e.g. two tapes plus a bonding ply,
+Palmeri & Laurenzi 2024, added 11/10/26). Its nDMaterial and
 section tags are the flange tags + `sm.WEB_TAG_OFFSET` (1000). Tape normals
 point away from the bonded faces (flange A and the lower shell are
 `flip`ped), i.e. the flange layup is read from the bond outward. The results

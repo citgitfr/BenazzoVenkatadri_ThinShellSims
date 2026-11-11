@@ -139,6 +139,35 @@ verification-requested, and at least `min` (5) verifications. Complete the
 TODO sections of `REPORT.md`, report to the user (section 7), and commit
 (section 6) once the user agrees.
 
+### 3a. Custom-design mode (only when the user fixes the material/layup and asks for a continuous geometry)
+
+Added 11/10/26 (Tara, user-approved). requirements.json gets a `custom_design`
+block (see the study.py docstring): the material and layup are the user's
+laminate JSONs (made with laminate-properties from the source the user named,
+not invented), and the geometry is a parametric family (implemented: `CTM`,
+the Palmeri & Laurenzi omega mast, design variables r1 and alpha, r2 from
+their Eq. 4). Differences from the catalog loop:
+- `init` does no catalog screen; `candidates` shows the feasible (r1, alpha)
+  range and the ledger; `choose --r1 .. --alpha .. --reason ".."` (the reason
+  cites the ledger: why this point, e.g. a bracket, a line search or a
+  boundary probe). Points outside the bounds (incl. the r2 bounds) are refused.
+- The orchestrator itself does the continuous search (expert choice from the
+  ledger; no separate optimizer). Change one variable at a time when you can,
+  probe the bounds (optima often sit on them), and refine around the best.
+- `laminate` checks the OpenSees ABD of the flange, web and buckling-twin
+  laminates: A, B against CLT and D against the exact mid-plane-layer
+  integral (hybrid laminates exceed the 1/layers^2 rule of thumb), and that
+  the twin (0/90-only plies, used by ShellNLDKGQ) has the flange's ABD.
+- Webs/tabs carry the user's web laminate (`web_stack: {"json": ..}`).
+- `buckling_objective: "A"` makes method A (perfect geometry: P&L's "nonlinear
+  buckling load") the objective; B (the imperfect strength) is then run for
+  the design `verify` is called on, and reported next to A.
+- `verification: "final_only"`: no scheduled Abaqus checks; `verify <best>`
+  before finalize writes the static and the buckling Abaqus scripts.
+- Convergence: iteration 1 and the final best (finalize enforces it); in
+  custom mode `converge` also reruns the buckling value (tolerance 5%).
+- Stop: `stop {window, min_iterations, tol}` from the block, or 100 iterations.
+
 ## 4. What the tools cannot do (say so; never work around it silently)
 
 - **FE geometry: TS, TRAC, OM and CO.** shell-mesh builds a catalog row

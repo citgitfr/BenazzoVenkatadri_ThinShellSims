@@ -254,7 +254,7 @@ def case_geometry(res):
     return (res['meta'].get('case') or {}).get('geometry') or {}
 
 
-def facet_groups(res, lam, boom=None, web=None, stack='mirror'):
+def facet_groups(res, lam, boom=None, web=None, stack='mirror', web_lam=None):
     """Flange and web facets of a results file. boom: catalog ID (default: case
     geometry "boom"); web: [(s0, s1), ...] (default: from the case / boom).
     Returns groups [(label, laminate, facet indices)], web mask, boom row, note."""
@@ -268,19 +268,25 @@ def facet_groups(res, lam, boom=None, web=None, stack='mirror'):
         mask = (lab == 'web')[np.arange(len(res['faces'])) // meta['nx']]
         note = (f'web facets: {mask.sum()} of {len(mask)} (the web facets of the FE model, which carry the doubled '
                 f'{stack} laminate)')
-        return [('flange', lam, np.flatnonzero(~mask)), ('web', doubled_laminate(lam, stack), np.flatnonzero(mask))],             mask, row, note
+        wl = web_lam or doubled_laminate(lam, stack)       # web_lam: --web-laminate (added 11/10/26)
+        return [('flange', lam, np.flatnonzero(~mask)), ('web', wl, np.flatnonzero(mask))],             mask, row, note
     ranges, src = web_ranges(geom, row, web)
     mask = web_mask(res, ranges) if ranges else np.zeros(len(res['faces']), bool)
     note = (f'web facets: {mask.sum()} of {len(mask)} ({src}'
             f'{"; s = " + ", ".join(f"{s0:g}..{s1:g}" for s0, s1 in ranges) + " mm" if ranges else ""})')
     groups = [('flange', lam, np.flatnonzero(~mask))]
     if mask.any():
-        groups.append(('web', doubled_laminate(lam, stack), np.flatnonzero(mask)))
+        groups.append(('web', web_lam or doubled_laminate(lam, stack), np.flatnonzero(mask)))
     return groups, mask, row, note
 
 
-def tape_ply(n, p, stack='mirror'):
-    """Flange ply index of ply p of the doubled (web) laminate of an n-ply flange."""
+def tape_ply(n, p, stack='mirror', m=None):
+    """Flange ply index of ply p of the doubled (web) laminate of an n-ply flange.
+    Custom web stacks ({'json': ...}, m plies: tape, bond plies, tape): the
+    outer n plies on each side map to the tapes' plies, bond plies to None."""
+    if isinstance(stack, dict):
+        m = m or 2 * n
+        return p if p < n else p - (m - n) if p >= m - n else None
     return p - n if p >= n else n - 1 - p if stack == 'mirror' else p
 
 
@@ -377,6 +383,8 @@ def main():
     ap.add_argument('--S23', type=float, help='transverse shear strength for Hashin matrix compression [MPa] '
                                                '(default Yc/2)')
     ap.add_argument('--laminate', help='laminate JSON (default: the one stored in the results)')
+    ap.add_argument('--web-laminate', help='web (tab) laminate JSON for the web facets (default: the model\'s '
+                    'web laminate); e.g. physical plies when the model uses an equivalent section')
     ap.add_argument('--at', choices=('gauss', 'centroid'), default='gauss')
     ap.add_argument('--top', type=int, default=10)
     ap.add_argument('--csv', help='per-facet max F, its ply and mode, CSV')
@@ -402,7 +410,8 @@ def main():
         print(f'S23 = {"Yc/2 (default)" if a.S23 is None else f"{a.S23:g} MPa"}')
 
     # flange and web facets
-    groups, web, boom, note = facet_groups(res, lam, a.boom, a.web, a.web_stack)
+    groups, web, boom, note = facet_groups(res, lam, a.boom, a.web, a.web_stack,
+                                           lp.Laminate.load(a.web_laminate) if a.web_laminate else None)
     if boom:
         print(f'boom {boom["id"]} ({boom["type"]})')
     print(note)
