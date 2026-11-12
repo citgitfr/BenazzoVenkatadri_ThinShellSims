@@ -1,0 +1,14 @@
+{
+ "iteration": 4,
+ "design": "L001/Y003/T003",
+ "P_N": 10.0,
+ "model_ok": true,
+ "failure_ok": true,
+ "F_axial": 5.887e-06,
+ "verdict": "no failure predicted",
+ "mode": "matrix tension",
+ "tip": null,
+ "npz": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-11-26 (Tara)\\toy_orch\\Code for Project\\11-11-26 (Tara)\\ts_toy_minmass\\iterations\\it004\\axial_check\\results\\it004_L001_Y003_T003_axial.npz",
+ "failure_log": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-11-26 (Tara)\\toy_orch\\Code for Project\\11-11-26 (Tara)\\ts_toy_minmass\\iterations\\it004\\axial_check\\failure.log",
+ "passes": true
+}

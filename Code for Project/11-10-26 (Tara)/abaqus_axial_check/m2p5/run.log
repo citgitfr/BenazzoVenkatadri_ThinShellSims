@@ -1,0 +1,18 @@
+Successfully checked out QAE/1 from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+Successfully checked out QAX/1 from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+Abaqus License Manager checked out the following license:
+"QAE" from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+<8 out of 11 licenses remain available>.
+shell normal flipped on the face through [-40.7654962282387, 0.0]
+shell normal flipped on the face through [40.7654962282387, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0.008 mm); scale S = 500
+   shape written: ctm_axial_2p5_shape_LBA_mode1.csv
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+   mode 1: eigenvalue 0.61098 -> 305.49
+   mode 2: eigenvalue 0.61098 -> 305.49
+   mode 3: eigenvalue 0.611 -> 305.5
+   mode 4: eigenvalue 0.611 -> 305.5
+
+=== 2. NLB (nonlinear preload f x LBA, then *BUCKLE about the deformed state)
+   f = 0.50: preload 152.745 + perturbation [] -> critical nan

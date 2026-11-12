@@ -1,0 +1,8 @@
+{
+ "name": "tape_spring_compression_L300",
+ "laminate": {"isotropic": {"E": 131000, "nu": 0.3, "t": 0.1}},
+ "geometry": {"L": 300, "section": {"type": "arc", "R": 13.3, "b": 24.605}, "size": 2},
+ "load": {"type": "compression", "ends": "clamped"},
+ "A": {"step": 0.002, "max": 0.06, "n_coarse": 6},
+ "B": {"step": 0.002, "max": 0.08, "amplitude": 0.01, "control": "disp"}
+}

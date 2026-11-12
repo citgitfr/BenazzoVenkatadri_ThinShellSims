@@ -1,0 +1,59 @@
+{
+ "iter": 6,
+ "key": "L002/Y001/T003",
+ "material": "L002",
+ "layup": "Y001",
+ "layup_str": "[0/0/0]",
+ "geometry": "T003",
+ "type": "TS",
+ "section": {
+  "type": "arc",
+  "R": 200,
+  "b": 628.318531
+ },
+ "R": 200,
+ "b": 628.3185307179587,
+ "L": 1000.0,
+ "size": 5.0,
+ "name": "it006_L002_Y001_T003",
+ "reason": "Best remaining untried TOP design by mass. Material L002: L001 with 1000x density, so the mechanics equal L001/Y001/T003 already run and the mass is 1000x. Geometry T003: passes the hub. Layup Y001: the next untried layup on L002/T003.",
+ "override": "",
+ "screen_rank": 6,
+ "h_mm": 0.10499999999999998,
+ "k_est": 118.69767957308567,
+ "buckling_est": 12.341369379147444,
+ "Ex": 158499.99999999997,
+ "EIz": 39565893191.02856,
+ "EIy": 208867231386.82465,
+ "F_flat": 0.0013628755044870285,
+ "F_hub": 0.014970222637453342,
+ "r_min": 200.0,
+ "cross_ply": true,
+ "buckling_est_cal": 12.341369379147444,
+ "abd_check": {
+  "A": 6.8e-18,
+  "B": 1.1e-17,
+  "D": 0.0044,
+  "D_expected": 0.0044,
+  "ok": true
+ },
+ "failure_log": "Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it006/logs/failure.log",
+ "F_governing_fc": 0.001363,
+ "buckling_value": 1501.8508717580164,
+ "buckling_kind": "B LOWER BOUND: path passed the cutoff 1000 (= 1 x requirement) still rising; stopped there by design [perfect boom (zero imperfection amplitude), B only: user request]",
+ "buckling_A": null,
+ "buckling_B": 1501.8508717580164,
+ "buckling_amplitude": 0.0,
+ "buckling_imperfection": "none",
+ "buckling_notes": [
+  "phase A not run and no imperfection: phase B on the perfect boom (user request)"
+ ],
+ "k_fe": 62.0681520330853,
+ "k_beam": 118.69767957308567,
+ "k_ratio": 0.5229095653455307,
+ "sanity": [
+  "tip stiffness -47.7% from thin-walled beam theory (tolerance 15%)"
+ ],
+ "feasible": true,
+ "objective": 104.23534425230648
+}

@@ -1,0 +1,65 @@
+{
+ "_help": "Toy demo study (11-11-26, Tara): catalogs = 'Tape Spring Baseline' toy catalogs, copied into this sandbox's .claude/memory.*. Units N, mm.",
+ "prompt": "Objective: Find a boom with minimum mass\nConstraints:\n- Tape spring cross section\n- 1 meter length\n- Cantilever boom (clamped at one end, free at the other)\n- Must withstand a transverse tip load of 1 N in opposite-sense bending with a maximum tip deflection of 2 cm and no material failure - if you end up doing a buckling analysis to determine whether the boom will buckle under these loads, do phase B of the buckling analysis only on the perfect boom with no imperfections, and I don't need to know the buckling moment (I only need to know whether the 1 N load will induce buckling, so if you get past 1 N without buckling and therefore with the tip deflection satisfying the requirement, you can stop the buckling analysis)\n- Must withstand an axial extension load of 10 N without material failure\n- Must coil around a hub with a 4 cm radius without material failure (the code for this should be in the failure-check skill)\n- Choose from the materials, layups, and geometries in the Tape Spring Baseline folder only - do not try any others",
+ "study_name": "ts_toy_minmass",
+ "length_mm": 1000,
+ "section_classes": [
+  "TS"
+ ],
+ "objective": {
+  "sense": "minimize",
+  "quantity": "mass"
+ },
+ "requirements": {
+  "bending_stiffness": {
+   "text": "transverse tip load of 1 N in opposite-sense bending with a maximum tip deflection of 2 cm (k >= 1 N / 20 mm = 0.05 N/mm), no material failure",
+   "direction": "z",
+   "sign": -1,
+   "min_N_per_mm": 0.05,
+   "load_N": 1.0
+  },
+  "buckling": {
+   "text": "the 1 N opposite-sense tip load must not induce buckling: root moment 1 N x 1000 mm = 1000 N mm; phase B only, perfect boom, stop once past it",
+   "load": "bending",
+   "axis": "y",
+   "sense": "opposite",
+   "min_value": 1000,
+   "units": "N mm",
+   "cutoff_factor": 1.0,
+   "perfect_B_only": true,
+   "screen_reject": false,
+   "_screen_note": "user decision 11-11-26: the fold-moment estimate (lower bound) does not reject; the phase-B FE run decides"
+  },
+  "coiling": {
+   "text": "must coil around a hub with a 4 cm radius without material failure",
+   "hub_radius_mm": 40
+  }
+ },
+ "_axial_note": "Axial extension 10 N without material failure: not a study.py load case; checked separately for each design that passes the loop (shell-assemble-run axial case + failure-check), see axial_checks/.",
+ "extra_constraints": [],
+ "limits": {
+  "max_thickness_mm": null,
+  "max_width_mm": null,
+  "max_height_mm": null
+ },
+ "materials": {
+  "allow": "all",
+  "exclude": [],
+  "allow_caution": false
+ },
+ "layups": {
+  "allow": "all",
+  "min_plies": 1,
+  "max_plies": 10,
+  "cross_ply_only": false
+ },
+ "geometries": {
+  "allow": "all",
+  "exclude": []
+ },
+ "max_iterations": 100,
+ "verification": {
+  "min": 5,
+  "max": 10
+ }
+}

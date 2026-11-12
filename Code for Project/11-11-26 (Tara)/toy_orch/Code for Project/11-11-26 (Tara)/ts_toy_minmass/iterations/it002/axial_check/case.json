@@ -1,0 +1,54 @@
+{
+ "name": "it002_L001_Y001_T003_axial",
+ "laminate": {
+  "json": "lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "arc",
+   "R": 200,
+   "b": 628.318531
+  },
+  "size": 5.0,
+  "boom": "T003"
+ },
+ "element": {
+  "type": "ASDShellQ4",
+  "corotational": false
+ },
+ "supports": [
+  {
+   "rigid_end": "x0",
+   "dofs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "rigid_end": "xL"
+  }
+ ],
+ "loads": [
+  {
+   "node": {
+    "rigid": "xL"
+   },
+   "force": [
+    10.0,
+    0.0,
+    0.0
+   ]
+  }
+ ],
+ "analysis": {
+  "type": "linear"
+ },
+ "report_node": {
+  "rigid": "xL"
+ }
+}

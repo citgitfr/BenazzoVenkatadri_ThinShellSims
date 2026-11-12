@@ -1,0 +1,25 @@
+Analysis initiated from SIMULIA established products
+Abaqus JOB it001_L001_Y001_T001_buc_LBA
+Abaqus 2026
+Successfully checked out QFT/55 from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+Successfully checked out QXT/55 from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+Successfully checked out QPL for 6 cpu(s)
+Abaqus License Manager checked out the following licenses:
+Abaqus/Foundation checked out 55 tokens from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com.
+<617 out of 1200 licenses remain available>.
+Begin Analysis Input File Processor
+11/11/2026 1:37:54 PM
+Run pre.exe
+11/11/2026 1:38:02 PM
+End Analysis Input File Processor
+Begin Abaqus/Standard Analysis
+11/11/2026 1:38:02 PM
+Run standard.exe
+11/11/2026 1:38:19 PM
+End Abaqus/Standard Analysis
+Begin SIM Wrap-up
+11/11/2026 1:38:19 PM
+Run SMASimUtility.exe
+11/11/2026 1:38:19 PM
+End SIM Wrap-up
+Abaqus JOB it001_L001_Y001_T001_buc_LBA COMPLETED

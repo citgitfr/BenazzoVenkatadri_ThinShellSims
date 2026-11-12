@@ -1,0 +1,80 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe laminate-properties/laminate_properties.py --catalog L002 --layup [0/0/0/0/0/0/0/0/0/0] --check --save-json "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it008\lam.json"
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+Ply material: L002 IM7 / Hexcel HexPly 8552 epoxy (TOY rho x1000)  (N, mm, MPa)
+E1          158500 MPa     input
+E2            8950 MPa     input
+E3            8950 MPa     = E2
+G12           4670 MPa     input
+G13           4670 MPa     = G12
+G23        3086.21 MPa     = E2 / (2 (1 + nu23))
+nu12         0.316         input
+nu13         0.316         = nu12
+nu23          0.45         input
+nu21     0.0178435         = nu12 E2 / E1
+nu31     0.0178435         = nu13 E3 / E1 (OpenSees vzx)
+nu32          0.45         = nu23 E3 / E2
+rho              0 t/mm^3  input
+Xt            2501 MPa     strength
+Xc            1716 MPa     strength
+Yt              64 MPa     strength
+Yc           285.7 MPa     strength
+S             91.1 MPa     strength
+t_ply        0.035 mm      catalog ply thickness
+NOTE: nu23 is an estimate (* in the catalog)
+NOTE: G23_catalog is an estimate (* in the catalog)
+
+Layup bottom (-z) to top (+z): [0/0/0/0/0/0/0/0/0/0] h = 0.35 mm, 2 layers per ply (20 through h)
+ply   theta        t        z0        z1  element
+  1       0    0.035    -0.175     -0.14  1
+  2       0    0.035     -0.14    -0.105  1
+  3       0    0.035    -0.105     -0.07  1
+  4       0    0.035     -0.07    -0.035  1
+  5       0    0.035    -0.035 4.163e-17  1
+  6       0    0.035 4.163e-17     0.035  1
+  7       0    0.035     0.035      0.07  1
+  8       0    0.035      0.07     0.105  1
+  9       0    0.035     0.105      0.14  1
+ 10       0    0.035      0.14     0.175  1
+1 coincident ASDShellQ4 per facet (one per distinct angle), each "-noeas" and "-local" at its angle
+
+Q11 = 159399, Q22 = 9000.75, Q12 = 2844.24, Q66 = 4670 MPa
+
+ABD from classical lamination theory:
+A [N/mm]  (N = A eps + B k)
+               eps_xx       eps_yy       gam_xy
+Nxx           55789.6      995.483            0
+Nyy           995.483      3150.26            0
+Nxy                 0            0       1634.5
+B [N]
+                 k_xx         k_yy         k_xy
+Nxx       2.38742e-12  4.61853e-14            0
+Nyy       4.61853e-14  1.49214e-13            0
+Nxy                 0            0  7.81597e-14
+D [N mm]  (M = B eps + D k)
+                 k_xx         k_yy         k_xy
+Mxx           569.519      10.1622            0
+Myy           10.1622      32.1589            0
+Mxy                 0            0      16.6855
+(CLT with Q_bar from rotation vs Tsai-Pagano invariants: max rel. difference 6.5e-17)
+
+ABD measured from OpenSeesPy (one facet, imposed strains, work):
+A [N/mm]  (N = A eps + B k)
+               eps_xx       eps_yy       gam_xy
+Nxx           55789.6      995.483            0
+Nyy           995.483      3150.26            0
+Nxy                 0            0       1634.5
+B [N]
+                 k_xx         k_yy         k_xy
+Nxx      -5.96311e-13 -2.20229e-14            0
+Nyy      -2.03288e-14 -7.45389e-14            0
+Nxy                 0            0 -2.03288e-14
+D [N mm]  (M = B eps + D k)
+                 k_xx         k_yy         k_xy
+Mxx           568.095      10.1368            0
+Myy           10.1368      32.0785            0
+Mxy                 0            0      16.6438
+
+OpenSeesPy vs CLT, max relative difference: A 2.6e-16, B 5.3e-16, D 2.5e-03   (expect A, B ~1e-15; D ~1/(layers)^2 = 2.5e-03, OpenSees lower)
+
+Laminate definition saved to F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it008\lam.json

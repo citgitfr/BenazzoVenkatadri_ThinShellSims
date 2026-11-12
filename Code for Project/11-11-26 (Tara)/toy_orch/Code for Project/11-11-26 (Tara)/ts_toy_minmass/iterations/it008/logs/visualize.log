@@ -1,0 +1,7 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe shell-visualize/shell_visualize.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it008\results\it008_L002_Y002_T003.npz" --png "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it008\results\it008_L002_Y002_T003.png" --no-gui --boom T003
+
+web facets: 0 of 25200 (no web (T003 is a TS))
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it008\results\it008_L002_Y002_T003.vtp: 25200 facets, 25529 nodes
+k_xx [1/mm]: min -9.4615e-07, max 6.4594e-07
+hashin_max [-]: min 4.9756e-11, max 1.1553e-08
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it008\results\it008_L002_Y002_T003.png

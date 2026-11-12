@@ -1,0 +1,54 @@
+{
+ "name": "it001_L001_Y001_T001_fine",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-11-26 (Tara)\\toy_orch\\Code for Project\\11-11-26 (Tara)\\ts_toy_minmass\\iterations\\it001\\lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "arc",
+   "R": 20,
+   "b": 62.831853
+  },
+  "size": 3.0,
+  "boom": "T001"
+ },
+ "element": {
+  "type": "ASDShellQ4",
+  "corotational": false
+ },
+ "supports": [
+  {
+   "rigid_end": "x0",
+   "dofs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "rigid_end": "xL"
+  }
+ ],
+ "loads": [
+  {
+   "node": {
+    "rigid": "xL"
+   },
+   "force": [
+    0.0,
+    0.0,
+    -1.0
+   ]
+  }
+ ],
+ "analysis": {
+  "type": "linear"
+ },
+ "report_node": {
+  "rigid": "xL"
+ }
+}

@@ -1,0 +1,37 @@
+{
+ "evaluated": 27,
+ "screen_ok": 8,
+ "screen_ok_fe": 8,
+ "screen_ok_by_type": {
+  "TS": 8
+ },
+ "note": "only screen_ok rows are written; rejected combinations are counted in \"rejections\"",
+ "rejections": {
+  "F_flat >= 1": 17,
+  "F_hub >= 1": 17,
+  "stiffness estimate": 2
+ },
+ "materials_used": [
+  "L001",
+  "L002",
+  "L003"
+ ],
+ "materials_skipped": {},
+ "n_layups": 3,
+ "geometries": [
+  "T001",
+  "T002",
+  "T003"
+ ],
+ "fe_supported_types": [
+  "CO",
+  "OM",
+  "TRAC",
+  "TS"
+ ],
+ "ranking_key": "minimize mass_kg",
+ "margins": {
+  "stiffness": 0.85,
+  "buckling": 0.5
+ }
+}

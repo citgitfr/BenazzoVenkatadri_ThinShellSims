@@ -1,0 +1,25 @@
+{
+ "_help": "Written by the orchestrator from the user's prompt (PROTOCOL.md step 1), then checked by study.py init. Units N, mm. Remove the requirements the user did not give; keep their words in each 'text'. Keys starting with _ are ignored.",
+ "prompt": "<the user's prompt, verbatim>",
+ "study_name": "ts_example",
+ "length_mm": 1000,
+ "section_classes": ["TS", "TRAC", "OM", "CO"],
+ "objective": {"sense": "minimize", "quantity": "mass",
+               "_help": "Project default: minimize mass. Only if the user asks for it: maximize bending_stiffness or buckling."},
+ "requirements": {
+  "bending_stiffness": {"text": "tip stiffness at least 0.05 N/mm when bent downwards",
+                        "direction": "z", "sign": -1, "min_N_per_mm": 0.05, "load_N": 1.0,
+                        "_help": "cantilever (root clamped through a rigid end), tip load load_N along sign*direction; stiffness = |F| / |tip displacement| in that direction. EI given instead: min_N_per_mm = 3 EI / L^3."},
+  "buckling": {"text": "must carry 2 N m in opposite-sense bending without buckling",
+               "load": "bending", "axis": "y", "sense": "opposite", "min_value": 2000, "units": "N mm",
+               "_help": "load = bending (axis y; sense opposite = edges in tension, equal = edges in compression; min_value in N mm) or compression (ends clamped|pinned; min_value in N)."},
+  "coiling": {"text": "coils on a 40 mm radius hub", "hub_radius_mm": 40}
+ },
+ "extra_constraints": [],
+ "limits": {"max_thickness_mm": null, "max_width_mm": null, "max_height_mm": null},
+ "materials": {"allow": "all", "exclude": [], "allow_caution": false},
+ "layups": {"allow": "all", "min_plies": 3, "max_plies": 5, "cross_ply_only": false},
+ "geometries": {"allow": "all", "exclude": []},
+ "max_iterations": 100,
+ "verification": {"min": 5, "max": 10}
+}

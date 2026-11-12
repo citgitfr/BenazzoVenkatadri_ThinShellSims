@@ -1,0 +1,111 @@
+# -*- coding: mbcs -*-
+from mesh import *
+from interaction import *
+from step import *
+from load import *
+from job import *
+mdb.Model(name='ShellModel')
+del mdb.models['Model-1']
+mdb.models['ShellModel'].ConstrainedSketch(name='section', sheetSize=
+    251.327412)
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(0.0, 20.0)
+    , direction=COUNTERCLOCKWISE, point1=(-20.0, 19.9999999641021), point2=(
+    20.0, 19.9999999641021))
+mdb.models['ShellModel'].Part(dimensionality=THREE_D, name='Shell', type=
+    DEFORMABLE_BODY)
+mdb.models['ShellModel'].parts['Shell'].BaseShellExtrude(depth=1000.0, sketch=
+    mdb.models['ShellModel'].sketches['section'])
+mdb.models['ShellModel'].parts['Shell'].flipNormal(regions=Region(
+    side1Faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#1 ]', ), )))
+mdb.models['ShellModel'].Material(name='MAT0')
+mdb.models['ShellModel'].materials['MAT0'].Elastic(table=((158500.0, 8950.0, 
+    0.316, 4670.0, 4670.0, 3086.20689655172), ), type=LAMINA)
+mdb.models['ShellModel'].CompositeShellSection(idealization=NO_IDEALIZATION, 
+    integrationRule=SIMPSON, layup=(SectionLayer(thickness=0.035, 
+    material='MAT0', plyName='ply1'), SectionLayer(thickness=0.035, 
+    material='MAT0', plyName='ply2'), SectionLayer(thickness=0.035, 
+    material='MAT0', plyName='ply3')), name='Section', poissonDefinition=
+    DEFAULT, preIntegrate=OFF, symmetric=False, temperature=GRADIENT, 
+    thicknessType=UNIFORM)
+mdb.models['ShellModel'].parts['Shell'].SectionAssignment(offsetType=
+    MIDDLE_SURFACE, region=Region(
+    faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#1 ]', ), )), sectionName='Section', thicknessAssignment=
+    FROM_SECTION)
+mdb.models['ShellModel'].parts['Shell'].MaterialOrientation(
+    additionalRotationType=ROTATION_NONE, axis=AXIS_3, flipNormalDirection=
+    False, flipPrimaryDirection=False, normalAxisDefinition=SURFACE, 
+    normalAxisDirection=AXIS_3, normalAxisRegion=Region(
+    side1Faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#1 ]', ), )), orientationType=DISCRETE, primaryAxisDefinition=
+    VECTOR, primaryAxisDirection=AXIS_1, primaryAxisVector=(0.0, 0.0, 1.0), 
+    region=Region(
+    faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#1 ]', ), )), stackDirection=STACK_3)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#2 ]', ), ), number=200)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#8 ]', ), ), number=200)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#4 ]', ), ), number=13)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#1 ]', ), ), number=13)
+mdb.models['ShellModel'].parts['Shell'].setMeshControls(elemShape=QUAD, 
+    regions=mdb.models['ShellModel'].parts['Shell'].faces, technique=
+    STRUCTURED)
+mdb.models['ShellModel'].parts['Shell'].setElementType(elemTypes=(ElemType(
+    elemCode=S4R, elemLibrary=STANDARD), ), regions=Region(
+    faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#1 ]', ), )))
+mdb.models['ShellModel'].parts['Shell'].generateMesh()
+mdb.models['ShellModel'].rootAssembly.Instance(dependent=ON, name='Shell-1', 
+    part=mdb.models['ShellModel'].parts['Shell'])
+mdb.models['ShellModel'].rootAssembly.rotate(angle=120.0, axisDirection=(1.0, 
+    1.0, 1.0), axisPoint=(0.0, 0.0, 0.0), instanceList=('Shell-1', ))
+mdb.models['ShellModel'].rootAssembly.ReferencePoint(point=(0.0, 
+    -1.4432899320127e-15, 7.32962928615165))
+mdb.models['ShellModel'].rootAssembly.Set(name='RP-X0', referencePoints=(
+    mdb.models['ShellModel'].rootAssembly.referencePoints[3], ))
+mdb.models['ShellModel'].rootAssembly.Set(name='RIGID-X0', nodes=
+    mdb.models['ShellModel'].rootAssembly.instances['Shell-1'].nodes.getSequenceFromMask(
+    mask=('[#0:87 #3fff0000 ]', ), ))
+mdb.models['ShellModel'].Coupling(controlPoint=
+    mdb.models['ShellModel'].rootAssembly.sets['RP-X0'], couplingType=KINEMATIC
+    , influenceRadius=WHOLE_SURFACE, localCsys=None, name='Rigid-x0', surface=
+    mdb.models['ShellModel'].rootAssembly.sets['RIGID-X0'], u1=ON, u2=ON, u3=ON
+    , ur1=ON, ur2=ON, ur3=ON)
+mdb.models['ShellModel'].rootAssembly.ReferencePoint(point=(1000.0, 
+    -1.4432899320127e-15, 7.32962928615165))
+mdb.models['ShellModel'].rootAssembly.Set(name='RP-XL', referencePoints=(
+    mdb.models['ShellModel'].rootAssembly.referencePoints[6], ))
+mdb.models['ShellModel'].rootAssembly.Set(name='RIGID-XL', nodes=
+    mdb.models['ShellModel'].rootAssembly.instances['Shell-1'].nodes.getSequenceFromMask(
+    mask=('[#3fff ]', ), ))
+mdb.models['ShellModel'].Coupling(controlPoint=
+    mdb.models['ShellModel'].rootAssembly.sets['RP-XL'], couplingType=KINEMATIC
+    , influenceRadius=WHOLE_SURFACE, localCsys=None, name='Rigid-xL', surface=
+    mdb.models['ShellModel'].rootAssembly.sets['RIGID-XL'], u1=ON, u2=ON, u3=ON
+    , ur1=ON, ur2=ON, ur3=ON)
+mdb.models['ShellModel'].StaticStep(name='Load', nlgeom=OFF, previous=
+    'Initial')
+mdb.models['ShellModel'].DisplacementBC(createStepName='Initial', name='BC0', 
+    region=mdb.models['ShellModel'].rootAssembly.sets['RP-X0'], u1=0.0, u2=0.0, 
+    u3=0.0, ur1=0.0, ur2=0.0, ur3=0.0)
+mdb.models['ShellModel'].ConcentratedForce(cf3=-1.0, createStepName='Load', 
+    name='L0F', region=mdb.models['ShellModel'].rootAssembly.sets['RP-XL'])
+mdb.models['ShellModel'].fieldOutputRequests['F-Output-1'].setValues(frequency=
+    1, variables=('S', 'E', 'SE', 'SF', 'U', 'UR', 'RF'))
+mdb.models['ShellModel'].FieldOutputRequest(createStepName='Load', frequency=1, 
+    name='F-Output-PLIES-FLANGE', sectionPoints=(1, 2, 3, 4, 5, 6, 7, 8, 9), 
+    variables=('S', 'E'))
+mdb.Job(memory=90, memoryUnits=PERCENTAGE, model='ShellModel', name=
+    'it001_L001_Y001_T001_S4R_5mm', nodalOutputPrecision=SINGLE, numCpus=1, 
+    numDomains=1, type=ANALYSIS)
+mdb.jobs['it001_L001_Y001_T001_S4R_5mm'].submit(consistencyChecking=OFF)
+mdb.jobs['it001_L001_Y001_T001_S4R_5mm'].waitForCompletion()
+# Save by tvenkata on 2026_11_11-13.31.21; build 2026 2025_09_23-07.43.03 RELr428 206049

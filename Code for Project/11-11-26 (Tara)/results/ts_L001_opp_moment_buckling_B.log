@@ -1,0 +1,20 @@
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+  step   1: param  0.002, load factor  394.879, iters 12
+  step   2: param  0.004, load factor  789.478, iters 16
+  step   3: param  0.006, load factor  1183.53, iters 23
+  step   4: param  0.008, load factor  1576.79, iters 28
+  step   5: param  0.01, load factor  1968.98, iters 35
+  step   6: param  0.012, load factor  2359.8, iters 43
+  step   7: param  0.014, load factor  2748.89, iters 56
+  step   8: param  0.016, load factor  3135.77, iters 67
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 5.8707e-08 (max: 1e-08, Norm deltaR: 9.83779e-05)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 3519.63
+OpenSees > analyze failed, returned: -3 error flag
+  step   9: param  0.017, load factor  3328.15, iters 87
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 100 iterations  current Norm: 1.89582e-05 (max: 1e-08, Norm deltaR: 0.000145458)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 3709.89
+OpenSees > analyze failed, returned: -3 error flag

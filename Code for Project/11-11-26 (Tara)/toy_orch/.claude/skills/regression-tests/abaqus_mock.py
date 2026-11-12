@@ -1,0 +1,247 @@
+"""
+Stand-in for the Abaqus/CAE Python API, enough to execute the model-building
+part of a script written by abaqus-export/case_to_abaqus.py on this VM
+(no Abaqus here). Every call is recorded; the run stops at mdb.Job (nothing
+is solved, the ODB part is not exercised). Used by run_regression.py T20 to
+check that supports, loads, couplings, seeds and the layup match OpenSees.
+
+mesh nodes: the OpenSees grid of the same case (same structured mesh), with
+labels 1..n, in global coordinates (= Abaqus assembly coordinates after the
+instance rotation).
+"""
+import sys
+import types
+
+
+class StopAtJob(Exception):
+    pass
+
+
+# Abaqus Scripting Reference names the generated scripts may use; anything else
+# raises AttributeError, as in Abaqus (a misnamed method such as
+# rootAssembly.rotateInstance passed unnoticed before this list existed).
+KNOWN = {
+    'ArcByCenterEnds', 'BaseShellExtrude', 'BuckleStep', 'CompositeShellSection', 'ConcentratedForce',
+    'ConstrainedSketch', 'Coupling', 'DatumCsysByThreePoints', 'Density', 'DisplacementBC', 'Elastic', 'ElemType',
+    'FieldOutputRequest', 'Set',
+    'HistoryOutputRequest', 'HomogeneousShellSection', 'Line', 'Material', 'MaterialOrientation', 'Moment',
+    'Pressure', 'Region', 'SectionAssignment', 'SectionLayer', 'StaticRiksStep', 'StaticStep',
+    'flipNormal', 'generateMesh', 'seedEdgeByNumber', 'setElementType', 'setMeshControls', 'rotate', 'translate',
+    'keywordBlock', 'synchVersions', 'sieBlocks', 'insert', 'setValues', 'keys', 'values', 'items', 'sets',
+    'datums', 'name',
+}
+
+
+# Keyword arguments accepted by the main constructors (Abaqus Scripting Reference);
+# an unknown keyword raises TypeError "keyword error on <name>", as in Abaqus.
+_STEP = {'name', 'previous', 'description', 'maintainAttributes'}
+KWARGS = {
+    'Job': {'name', 'model', 'description', 'type', 'queue', 'waitHours', 'waitMinutes', 'atTime', 'echoPrint',
+            'contactPrint', 'modelPrint', 'historyPrint', 'scratch', 'userSubroutine', 'numCpus', 'memoryUnits',
+            'memory', 'explicitPrecision', 'nodalOutputPrecision', 'parallelizationMethodExplicit', 'numDomains',
+            'activateLoadBalancing', 'multiprocessingMode', 'licenseType', 'getMemoryFromAnalysis',
+            'resultsFormat', 'numGPUs'},
+    'StaticStep': _STEP | {'timePeriod', 'nlgeom', 'stabilizationMethod', 'stabilizationMagnitude', 'adiabatic',
+                           'timeIncrementationMethod', 'maxNumInc', 'initialInc', 'minInc', 'maxInc',
+                           'matrixSolver', 'matrixStorage', 'amplitude', 'extrapolation', 'fullyPlastic', 'noStop',
+                           'useLongTermSolution', 'solutionTechnique', 'reformKernel', 'convertSDI',
+                           'adaptiveDampingRatio', 'continueDampingFactors'},
+    'StaticRiksStep': _STEP | {'nlgeom', 'adiabatic', 'maxLPF', 'nodeOn', 'maximumDisplacement', 'dof', 'region',
+                               'timeIncrementationMethod', 'maxNumInc', 'totalArcLength', 'initialArcInc',
+                               'minArcInc', 'maxArcInc', 'matrixStorage', 'extrapolation', 'fullyPlastic', 'noStop',
+                               'useLongTermSolution', 'convertSDI'},
+    'BuckleStep': _STEP | {'numEigen', 'eigensolver', 'minEigen', 'maxEigen', 'vectors', 'maxIterations',
+                           'blockSize', 'maxBlocks', 'matrixStorage'},
+    'FieldOutputRequest': {'name', 'createStepName', 'region', 'variables', 'frequency', 'modes', 'timeInterval',
+                           'numIntervals', 'timeMarks', 'sectionPoints', 'rebar', 'filter', 'directions',
+                           'layupNames', 'layupLocationMethod', 'outputAtPlyTop', 'outputAtPlyMid',
+                           'outputAtPlyBottom', 'position', 'exteriorOnly'},
+    'HistoryOutputRequest': {'name', 'createStepName', 'region', 'variables', 'frequency', 'modes', 'timeInterval',
+                             'numIntervals', 'timeMarks', 'sectionPoints', 'rebar', 'filter', 'fasteners'},
+    'ConcentratedForce': {'name', 'createStepName', 'region', 'distributionType', 'field', 'cf1', 'cf2', 'cf3',
+                          'amplitude', 'follower', 'localCsys'},
+    'Moment': {'name', 'createStepName', 'region', 'distributionType', 'field', 'cm1', 'cm2', 'cm3', 'amplitude',
+               'follower', 'localCsys'},
+    'DisplacementBC': {'name', 'createStepName', 'region', 'fieldName', 'u1', 'u2', 'u3', 'ur1', 'ur2', 'ur3',
+                       'fixed', 'amplitude', 'distributionType', 'localCsys', 'buckleCase'},
+    'Coupling': {'name', 'surface', 'controlPoint', 'influenceRadius', 'couplingType', 'adjust', 'localCsys',
+                 'u1', 'u2', 'u3', 'ur1', 'ur2', 'ur3', 'weightingMethod'},
+}
+
+
+def check_kwargs(name, kw):
+    ok = KWARGS.get(name.split('.')[-1])
+    if name.endswith('FieldOutputRequest'):
+        bad = [v for v in kw.get('variables', ()) if v not in VALID_FIELD_OUTPUT]
+        if bad:
+            raise ValueError('Invalid variables are specified in an output request. (%s)' % ', '.join(bad))
+    for k in kw:
+        if ok is not None and k not in ok:
+            raise TypeError('keyword error on %s' % k)
+
+
+class Rec:
+    """Records attribute calls; returns new Rec objects."""
+
+    def __init__(self, log, name='obj'):
+        self._log, self._name = log, name
+
+    def __getattr__(self, item):
+        if item.startswith('__'):
+            raise AttributeError(item)
+        if item not in KNOWN:
+            raise AttributeError(f"'{self._name}' object has no attribute '{item}'")
+        return Rec(self._log, f'{self._name}.{item}')
+
+    def __call__(self, *args, **kw):
+        check_kwargs(self._name, kw)
+        self._log.append((self._name, args, kw))
+        return Rec(self._log, self._name + '()')
+
+    def __getitem__(self, k):
+        return Rec(self._log, f'{self._name}[{k!r}]')
+
+    def __iter__(self):
+        return iter(())
+
+
+# Field-output variable names confirmed to be accepted by Abaqus/CAE in a static/Riks step.
+# Any other name raises like Abaqus ("Invalid variables are specified in an output request"):
+# 'SM' was refused by Abaqus/CAE on 2026-11-06 (section moments come with 'SF'). Add a name here
+# only after it ran in Abaqus.
+VALID_FIELD_OUTPUT = {'S', 'E', 'SE', 'SF', 'U', 'UR', 'RF'}
+
+
+class FieldOutput(Rec):
+    """fieldOutputRequests[...]: setValues checks the variable names (whole request rejected)."""
+
+    def __init__(self, log):
+        super().__init__(log, 'fieldOutput')
+        self.variables = None
+
+    def setValues(self, **kw):
+        bad = [v for v in kw.get('variables', ()) if v not in VALID_FIELD_OUTPUT]
+        self._log.append(('fieldOutput.setValues', (), dict(kw, rejected=bad)))
+        if bad:
+            raise ValueError('Invalid variables are specified in an output request.  An output request '
+                             'cannot be created in a step where some variables are invalid. (%s)' % ', '.join(bad))
+        if 'variables' in kw:
+            self.variables = tuple(kw['variables'])
+
+
+class Face:
+    def __init__(self, normal):
+        self.normal = normal
+
+    def getNormal(self, point=None):
+        return self.normal
+
+
+class Faces(list):
+    def __init__(self, log, normal_of):
+        super().__init__()
+        self._log, self._normal_of = log, normal_of
+
+    def findAt(self, pts):
+        self._log.append(('part.faces.findAt', pts, {}))
+        return [Face(self._normal_of(pts[0]))]
+
+
+class Edges:
+    def __init__(self, log):
+        self._log = log
+
+    def findAt(self, pts):
+        self._log.append(('part.edges.findAt', pts, {}))
+        return ('EDGE', pts[0])
+
+
+class Node:
+    def __init__(self, label, xyz):
+        self.label, self.coordinates = label, tuple(xyz)
+
+
+class Nodes(list):
+    def sequenceFromLabels(self, labels):
+        return ('NODES', tuple(labels))
+
+
+def _kernel_sum(seq, *a):
+    # the Abaqus/CAE kernel's own sum: no generators (as reported by Abaqus 11/02/26)
+    if isinstance(seq, types.GeneratorType):
+        raise TypeError("arg1; found 'generator', expecting a recognized type")
+    return __builtins__['sum'](seq, *a) if isinstance(__builtins__, dict) else __builtins__.sum(seq, *a)
+
+
+def kernel_namespace():
+    """Globals for exec(): like 'abaqus cae noGUI', where sum is an Abaqus function."""
+    return {'__name__': '__main__', 'sum': _kernel_sum}
+
+
+def install(nodes_xyz, normal_of):
+    """Put fake abaqus modules in sys.modules. nodes_xyz: global coordinates
+    of the mesh nodes; normal_of(part_point): normal the fake face reports."""
+    log = []
+    consts = types.ModuleType('abaqusConstants')
+    consts.__getattr__ = lambda name: name                       # every constant is its own name
+    sys.modules['abaqusConstants'] = consts
+
+    class Part(Rec):
+        def __init__(self):
+            super().__init__(log, 'part')
+            self.faces = Faces(log, normal_of)
+            self.edges = Edges(log)
+            self.datums = {}
+
+    class Asm(Rec):
+        def __init__(self):
+            super().__init__(log, 'asm')
+            self.referencePoints = {}
+            self._n = 0
+
+        def Instance(self, **kw):
+            log.append(('asm.Instance', (), kw))
+            inst = Rec(log, 'inst')
+            inst.__dict__['nodes'] = Nodes(Node(k + 1, p) for k, p in enumerate(nodes_xyz))
+            inst.__dict__['faces'] = ('ALLFACES',)
+            return inst
+
+        def ReferencePoint(self, point):
+            self._n += 1
+            self.referencePoints[self._n] = ('RP', tuple(point))
+            log.append(('asm.ReferencePoint', (tuple(point),), {}))
+            return types.SimpleNamespace(id=self._n)
+
+        def Set(self, name, nodes=None, referencePoints=None):
+            s = ('SET', name, nodes[1] if nodes else referencePoints)
+            log.append(('asm.Set', (), dict(name=name, nodes=nodes, referencePoints=referencePoints)))
+            return s
+
+    class Model(Rec):
+        def __init__(self, name):
+            super().__init__(log, 'model')
+            self.rootAssembly = Asm()
+            self.fieldOutputRequests = {'F-Output-1': FieldOutput(log)}
+
+        def Part(self, **kw):
+            log.append(('model.Part', (), kw))
+            return Part()
+
+    class Mdb:
+        models = {}
+
+        def Model(self, name):
+            return Model(name)
+
+        def Job(self, **kw):
+            check_kwargs('Job', kw)
+            raise StopAtJob()
+
+    abaqus = types.ModuleType('abaqus')
+    abaqus.mdb = Mdb()
+    sys.modules['abaqus'] = abaqus
+    for name in ('mesh', 'regionToolset', 'section', 'interaction', 'step', 'load', 'job', 'odbAccess'):
+        mod = types.ModuleType(name)
+        mod.__getattr__ = (lambda n, _name=name: Rec(log, f'{_name}.{n}'))
+        sys.modules[name] = mod
+    return log

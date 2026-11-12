@@ -1,0 +1,1079 @@
+"""
+Regression tests for the v2.0 skills: re-runs the test cases of
+  Code for Project/10-22-26 (Federico)/SUMMARY.md   (smoke strip, Al plate tip load,
+                                                     large deflection vs elastica)
+  Code for Project/10-23-26 (Tara)/SUMMARY.txt       (Poisson convention, ply rotation,
+                                                     ABD of [90/0], L1-L4 and other layups,
+                                                     per-ply vs merged laminate at large deflection)
+  Code for Project/10-26-26 (Federico)/verify_mesh_bc_load.py    (flat, large deflection, curved strip)
+  Code for Project/10-26-26 (Federico and Tara)/plate_pure_moment_Mx.py, plate_tip_load_laminate.py
+with the laminate-properties, shell-mesh, shell-bc-load, shell-visualize and
+failure-check skills, and compares with the v1 numbers (SUMMARY files,
+the v1 scripts' printed output, the saved CSVs) and the analytical solutions.
+Plus new checks of the Hashin / Tsai-Hill skill against closed-form CLT ply stresses.
+
+Usage:
+  python run_regression.py                  # everything except the slow 1 mm / 5 mm runs
+  python run_regression.py --full           # also the 1 mm linear plate and the 5 mm large-deflection sweep
+  python run_regression.py --only T04 T12   # selected tests
+  python run_regression.py --log FILE       # also write the output to FILE
+Units: N, mm, MPa.
+"""
+import argparse
+import io
+import math
+import sys
+import time
+from contextlib import redirect_stdout
+from pathlib import Path
+
+import numpy as np
+import openseespy.opensees as ops
+
+SKILLS = Path(__file__).resolve().parents[1]
+REPO = SKILLS.parents[1]
+for _d in ('laminate-properties', 'shell-mesh', 'shell-bc-load', 'failure-check', 'shell-visualize'):
+    sys.path.insert(0, str(SKILLS / _d))
+import elastica                     # noqa: E402  (copy of 10-22-26 elastica.py, in shell-bc-load)
+import laminate_properties as lp    # noqa: E402
+import shell_bc_load as bc          # noqa: E402
+import shell_mesh as sm             # noqa: E402
+import failure_check as th          # noqa: E402
+
+RESULTS = REPO / 'Code for Project' / '10-22-26 (Federico)' / 'results'
+RECORD = []          # (test, name, value, ref, err, tol, ok)
+CURRENT = ['']
+
+
+def check(name, value, ref, tol, absolute=False):
+    """Relative error |value - ref| / |ref| < tol (absolute=True: |value - ref| < tol)."""
+    err = abs(value - ref) if absolute or ref == 0 else abs(value - ref) / abs(ref)
+    ok = bool(err <= tol)
+    RECORD.append((CURRENT[0], name, value, ref, err, tol, ok))
+    print(f"  [{'PASS' if ok else 'FAIL'}] {name:<58s} got {value:+.6g}  ref {ref:+.6g}  "
+          f"{'diff' if absolute or ref == 0 else 'err'} {err:.2e} (tol {tol:.0e})")
+    return ok
+
+
+def info(msg):
+    print(f'  (info) {msg}')
+
+
+# --- materials used in the SUMMARY files -----------------------------------------------
+P135 = lp.ply_properties(135000.0, 10000.0, 0.3, 5000.0)          # 10-23 agent examples
+P140 = lp.ply_properties(140000.0, 10000.0, 0.34, 6000.0)         # [90/0], 10-23 Part 3.1
+P139 = lp.ply_properties(139500.0, 6101.0, 0.275, 2574.0)         # L1-L4, 10-23 Part 3.2
+P80 = lp.ply_properties(80000.0, 2000.0, 0.25, 1000.0)            # [0_2/90_2]s, 10-26
+
+
+# =========================== laminate-properties ===========================
+
+def T01_poisson_convention():
+    """ElasticOrthotropic Poisson slots (10-23 takeaway 1): uniaxial stress on
+    one stdBrick in each direction; -eps_j/eps_i must equal nu_ij and E_i."""
+    p = lp.ply_properties(135000.0, 10000.0, 0.3, 5000.0, nu23=0.45)
+    E = [p['E1'], p['E2'], p['E3']]
+    nu = {(0, 1): p['nu12'], (0, 2): p['nu13'], (1, 2): p['nu23'], (1, 0): p['nu21'], (2, 0): p['nu31'],
+          (2, 1): p['nu32']}
+    X = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [0, 0, 1], [1, 0, 1], [1, 1, 1], [0, 1, 1]], float)
+    for i in range(3):
+        ops.wipe()
+        ops.model('basic', '-ndm', 3, '-ndf', 3)
+        for k, x in enumerate(X, 1):
+            ops.node(k, *x)
+        ops.nDMaterial('ElasticOrthotropic', 1, *lp.opensees_args(p))
+        ops.element('stdBrick', 1, *range(1, 9), 1)
+        for k, x in enumerate(X, 1):         # symmetric supports on the three faces through the origin
+            ops.fix(k, int(x[0] == 0), int(x[1] == 0), int(x[2] == 0))
+        ops.timeSeries('Constant', 1)
+        ops.pattern('Plain', 1, 1)
+        for k, x in enumerate(X, 1):
+            if x[i] == 1:
+                f = [0.0, 0.0, 0.0]
+                f[i] = 1.0 / 4                # unit stress on the unit face
+                ops.load(k, *f)
+        ops.system('UmfPack')
+        ops.numberer('Plain')
+        ops.constraints('Plain')
+        ops.integrator('LoadControl', 1.0)
+        ops.algorithm('Linear')
+        ops.analysis('Static')
+        ops.analyze(1)
+        eps = [ops.nodeDisp(7, d + 1) for d in range(3)]
+        check(f'E{i + 1} from uniaxial stress [MPa]', 1 / eps[i], E[i], 1e-9)
+        for j in range(3):
+            if j != i:
+                check(f'nu{i + 1}{j + 1} = -eps{j + 1}/eps{i + 1}', -eps[j] / eps[i], nu[(i, j)], 1e-9)
+    ops.wipe()
+
+
+def T02_ply_rotation():
+    """Ply at theta: OpenSees membrane stiffness = t Q_bar (10-23 2.1, machine
+    precision at 0, +-45, 90, 30, 17.3 deg); Q_bar rotation = invariants."""
+    for theta in (0, 45, -45, 90, 30, 17.3):
+        lam = lp.Laminate.from_layup([theta], 0.125, P135, n_sub=3)
+        A = lam.measure_abd()[:3, :3]
+        ref = 0.125 * lp.q_bar(P135, theta)
+        check(f'theta = {theta:g}: max|A_fe - t Q_bar| / max|t Q_bar|', np.abs(A - ref).max() / np.abs(ref).max(),
+              0.0, 1e-12, absolute=True)
+        check(f'theta = {theta:g}: Q_bar rotation vs Tsai-Pagano invariants',
+              np.abs(lp.q_bar(P135, theta) - lp.q_bar_invariants(P135, theta)).max() / np.abs(ref).max() * 0.125,
+              0.0, 1e-13, absolute=True)
+
+
+def T03_hand_check():
+    """Single 0-deg ply, t = 0.2 mm (10-23 'Hand check of CLT')."""
+    K = lp.Laminate.from_layup([0], 0.2, P135).abd()
+    check('A11 = Q11 t [N/mm]', K[0, 0], 27181.2, 5e-6)
+    check('D11 = Q11 t^3/12 [N mm]', K[3, 3], 90.604, 5e-6)
+
+
+def T04_90_0():
+    """[90/0], 1 mm plies, E1 = 140 GPa (10-23 Part 3.1)."""
+    lam = lp.Laminate.from_layup('[90/0]', 1.0, P140)
+    K, Kfe = lam.abd(), lam.measure_abd()
+    for name, (i, j), ref in (('A11', (0, 0), 151248.88), ('A22', (1, 1), 151248.88), ('A12', (0, 1), 6856.62),
+                              ('A66', (2, 2), 12000.0), ('B11', (0, 3), 65541.18), ('B22', (1, 4), -65541.18),
+                              ('D11', (3, 3), 50416.29), ('D22', (4, 4), 50416.29)):
+        check(f'CLT {name}', K[i, j], ref, 1e-6)        # SUMMARY values rounded to 0.01
+    check('OpenSees D11 (8 layers per ply) [N mm]', Kfe[3, 3], 50219.36, 2e-7)
+    check('OpenSees A, B vs CLT', max(lp.block_errors(Kfe, K)['A'], lp.block_errors(Kfe, K)['B']), 0.0, 1e-13, True)
+    nz = np.abs(K[3:, 3:]) > 1e-9 * np.abs(K[3:, 3:]).max()
+    check('OpenSees D: every term low by exactly 1/256 (16 layers)',
+          np.abs((K[3:, 3:] - Kfe[3:, 3:])[nz] / K[3:, 3:][nz] - 1 / 256).max(), 0, 1e-9, True)
+    lam32 = lp.Laminate.from_layup('[90/0]', 1.0, P140, n_sub=32)
+    check('--n-sub 32: D error ~0.02%', lp.block_errors(lam32.measure_abd(), K)['D'], 1 / 64**2, 1e-6)
+
+
+def T05_L1_L4():
+    """Four symmetric 4-ply layups, t = 0.054 mm, 8 layers per ply (10-23 Part 3.2)."""
+    ref = {'L1': ('[0/90/90/0]', 5.8e-4), 'L2': ('[90/0/0/90]', 5.8e-4), 'L3': ('[45/0/0/45]', 1.7e-3),
+           'L4': ('[-45/90/90/-45]', 1.7e-3)}
+    Ks = {}
+    for name, (lay, derr) in ref.items():
+        lam = lp.Laminate.from_layup(lay, 0.054, P139, n_sub=8)
+        K, Kfe = lam.abd(), lam.measure_abd()
+        Ks[name] = (K, Kfe)
+        e = lp.block_errors(Kfe, K)
+        check(f'{name} {lay}: A vs CLT', e['A'], 0.0, 1e-13, True)
+        check(f'{name} {lay}: B = 0 (symmetric)', e['B'], 0.0, 1e-13, True)
+        check(f'{name} {lay}: D error (SUMMARY {derr:.1e})', e['D'], derr, 0.05)
+        check(f'{name}: elements per facet = distinct angles', len(lam.groups()), 2, 0, True)
+    check('L1 CLT D11 [N mm]', Ks['L1'][0][3, 3], 103.49, 5e-5)
+    check('L2 CLT D11 [N mm]', Ks['L2'][0][3, 3], 19.19, 5e-4)
+    check('L3 CLT A16 = A26 [N/mm]', Ks['L3'][0][0, 2], 3613.73, 2e-6)
+    check('L3 CLT D16 = D26 [N mm]', Ks['L3'][0][3, 5], 24.59, 5e-4)
+    check('L1 OpenSees D11 (v1 output) [N mm]', Ks['L1'][1][3, 3], 103.432, 5e-6)
+    check('L3 OpenSees D11 (v1 output) [N mm]', Ks['L3'][1][3, 3], 43.9658, 5e-6)
+    P = np.diag([1, 1, -1])           # 90 deg rotation: swap 1 <-> 2, flip 16/26
+    S = np.array([[0, 1, 0], [1, 0, 0], [0, 0, 1]]) @ P
+    for blk, sl in (('A', np.s_[:3, :3]), ('D', np.s_[3:, 3:])):
+        rot = S @ Ks['L3'][0][sl] @ S.T
+        check(f'L4 = L3 rotated 90 deg ({blk})', np.abs(rot - Ks['L4'][0][sl]).max() / np.abs(rot).max(), 0, 1e-13,
+              True)
+
+
+def T06_other_layups():
+    """[0/45/-45/90], [0/+-45/90]s, [0/90/-30] (unequal t), single ply (10-23 'Verification done today')."""
+    for lay, t in (('[0/45/-45/90]', [0.125]), ('[0/±45/90]s', [0.125]), ('[0/90/-30]', [0.1, 0.2, 0.15]),
+                   ('[30]', [0.125])):
+        for merge in (True, False):
+            lam = lp.Laminate.from_layup(lay, t, P135, merge=merge)
+            e = lp.block_errors(lam.measure_abd(), lam.abd())
+            tag = f'{lay} t = {"/".join(f"{x:g}" for x in t)} {"merged" if merge else "per ply"}'
+            check(f'{tag}: A, B vs CLT', max(e['A'], e['B']), 0.0, 1e-13, True)
+            # SUMMARY: 'D within ~0.4%'; the [0/90/-30] thicknesses were not recorded, these are new
+            check(f'{tag}: D within 0.6% (~1/layers^2)', e['D'], 0.0, 6e-3, True)
+    check('expand [0/±45/90]s', float(lp.expand_layup('[0/±45/90]s') == [0, 45, -45, 90, 90, -45, 45, 0]), 1, 0, True)
+    check('expand [0_2/90_2]s', float(lp.expand_layup('[0_2/90_2]s') == [0, 0, 90, 90, 90, 90, 0, 0]), 1, 0, True)
+    check('expand [0/90]2', float(lp.expand_layup('[0/90]2') == [0, 90, 0, 90]), 1, 0, True)
+
+
+def T07_merged_vs_per_ply_large_deflection():
+    """Per-ply coincident elements vs merged same-angle elements, cantilever
+    strip 100 x 10 mm, 20 x 2 mesh, corotational, tip pushed to 0.6 L
+    (10-23: per-ply vs single-element agree to ~1e-14 for [0/90]s,
+    [0/90/0/90] and [30]4)."""
+    for lay in ('[0/90]s', '[0/90/0/90]', '[30]4'):
+        out = {}
+        for merge in (False, True):
+            lam = lp.Laminate.from_layup(lay, 0.125, P135, merge=merge)
+            mesh = sm.ShellMesh(100.0, sm.CrossSection.flat(10.0), 5.0)
+            sm.build_model(mesh, lam, corotational=True, eas=False)
+            bc.fix_edge(mesh, 'x0')
+            D11 = lam.abd()[3, 3]
+            bc.edge_load(mesh, 'xL', (0, 0, -10.0 * D11 / 100.0**2))
+            tip = mesh.node_tag(mesh.nx, mesh.ny // 2)
+            h = bc.displacement_control(tip, 3, -3.0, n_steps=20, verbose=False,
+                                        record=lambda: [ops.nodeDisp(tip, 3), ops.nodeDisp(tip, 1),
+                                                        ops.nodeDisp(mesh.node_tag(mesh.nx, 0), 3)])
+            out[merge] = (h, len(ops.getEleTags()))
+        (h0, n0), (h1, n1) = out[False], out[True]
+        n = min(len(h0), len(h1))
+        check(f'{lay}: steps converged (per ply / merged)', n, 21, 0, True)
+        check(f'{lay}: load factor, merged ({n1} el.) vs per ply ({n0} el.)',
+              np.abs(h1[:n, 0] - h0[:n, 0]).max() / np.abs(h0[:n, 0]).max(), 0, 1e-8, True)
+        check(f'{lay}: tip ux and corner uz, merged vs per ply',
+              np.abs(h1[:n, 2:4] - h0[:n, 2:4]).max() / 60.0, 0, 1e-8, True)
+        info(f'{lay}: at tip w = -60 mm (0.6 L): load factor {h1[n - 1, 0]:.5g}, tip ux {h1[n - 1, 2]:.4g} mm, '
+             f'corner w {h1[n - 1, 3]:.4g} mm (twist if != -60)')
+
+
+# =========================== isotropic shells (10-22, 10-26 Federico) ===========================
+
+def T08_smoke_strip():
+    """Steel strip 1000 x 30 x 0.1 mm, ShellMITC4 100 x 3 (10-22 smoke_shell.py)."""
+    E, nu, t, rho, P = 200000.0, 0.3, 0.1, 7.85e-9, 1e-5
+    I = 30 * t**3 / 12
+    out = {}
+    for name, lam in (('homogeneous', lp.Laminate.isotropic(E, nu, t, rho)),
+                      ('4 layers', lp.Laminate.from_layup([0] * 4, t / 4, lp.ply_properties(E, E, nu, E / 2.6, nu), n_sub=1)),
+                      ('20 layers', lp.Laminate.from_layup([0] * 20, t / 20, lp.ply_properties(E, E, nu, E / 2.6, nu), n_sub=1))):
+        mesh = sm.ShellMesh(1000.0, sm.CrossSection.flat(30.0), 10.0)
+        sm.build_model(mesh, lam, 'ShellMITC4')
+        bc.fix_edge(mesh, 'x0')
+        bc.edge_load(mesh, 'xL', (0, 0, P))
+        bc.linear_solve()
+        out[name] = np.mean([ops.nodeDisp(n, 3) for n in mesh.edge_nodes('xL')])
+    check('tip deflection, homogeneous [mm] (v1 6.643)', out['homogeneous'], 6.643, 1e-4)
+    check('tip deflection, homogeneous vs PL^3/3EI', out['homogeneous'], P * 1000.0**3 / (3 * E * I), 0.0036)
+    check('4-layer LayeredShell = homogeneous / (1 - 1/16) (v1 7.0858)', out['4 layers'], out['homogeneous'] / (1 - 1 / 16), 1e-3)
+    check('20-layer LayeredShell (v1 6.6598)', out['20 layers'], 6.6598, 1e-4)
+    mesh = sm.ShellMesh(1000.0, sm.CrossSection.flat(30.0), 10.0)
+    sm.build_model(mesh, lp.Laminate.isotropic(E, nu, t, rho), 'ShellMITC4')
+    bc.fix_edge(mesh, 'x0')
+    f1_ref = 1.875104**2 / (2 * math.pi * 1000.0**2) * math.sqrt(E * I / (rho * 30 * t))
+    f1 = bc.modal(1)[0]
+    check('first frequency [Hz] (v1 0.08173)', f1, 0.08173, 1e-4)
+    check('first frequency vs beam theory', f1, f1_ref, 0.003)
+
+
+def _flat_al(size, element, corot=False):
+    lam = lp.Laminate.isotropic(69000.0, 0.33, 0.1, 2.7e-9)
+    mesh = sm.ShellMesh(1000.0, sm.CrossSection.flat(100.0), size)
+    sm.build_model(mesh, lam, element, corot)
+    bc.fix_edge(mesh, 'x0')
+    return mesh, lam
+
+
+def T09_al_plate_1mm():
+    """Al plate 1000 x 100 x 0.1 mm, 1 x 1 mm ShellMITC4 (606k DOFs), P = 1e-5 N
+    (10-22 plate_tip_load.py). Slow (--full)."""
+    mesh, lam = _flat_al(1.0, 'ShellMITC4')
+    bc.edge_load(mesh, 'xL', (0, 0, -1e-5))
+    t0 = time.perf_counter()
+    bc.linear_solve()
+    info(f'linear solve {time.perf_counter() - t0:.1f} s ({6 * len(ops.getNodeTags())} DOFs)')
+    I = 100 * 0.1**3 / 12
+    jm = mesh.ny // 2
+    for x, v1 in ((250, -0.48412), (500, -1.7786), (750, -3.6168), (1000, -5.7271)):
+        w = ops.nodeDisp(mesh.node_tag(x, jm), 3)
+        check(f'w(x = {x}) [mm] vs v1', w, v1, 1e-4)
+        check(f'w(x = {x}) vs beam theory (v1: 1.2-2.8%)', w, -1e-5 * x**2 * (3000 - x) / (6 * 69000 * I), 0.03)
+    S = th.surface_fields(bc.facet_strains(mesh), lam)['sigma_xx_top']
+    for x, v1 in ((250, 0.044991), (500, 0.029987), (750, 0.014975)):
+        s = S[jm * mesh.nx + x]
+        check(f'top sigma_xx(x = {x}) [MPa] vs v1', s, v1, 1e-4)
+        check(f'top sigma_xx(x = {x}) vs Mc/I', s, 1e-5 * (1000 - x - 0.5) * 0.05 / I, 0.001)
+
+
+def T10_flat_linear_5mm():
+    """verify_mesh_bc_load.py check 1 (ShellMITC4, 5 mm)."""
+    mesh, lam = _flat_al(5.0, 'ShellMITC4')
+    bc.edge_load(mesh, 'xL', (0, 0, -1e-5))
+    bc.linear_solve()
+    I = 100 * 0.1**3 / 12
+    w = ops.nodeDisp(mesh.node_tag(mesh.nx, mesh.ny // 2), 3)
+    check('tip deflection mid-width [mm] (v1 -5.72296)', w, -5.72296, 1e-5)
+    check('tip deflection vs PL^3/3EI (v1 1.28%)', w, -1e-5 * 1000**3 / (3 * 69000 * I), 0.03)
+    S = th.surface_fields(bc.facet_strains(mesh), lam)['sigma_xx_top']
+    k = (mesh.ny // 2) * mesh.nx + mesh.nx // 2
+    xc = (mesh.nx // 2 + 0.5) * 5.0
+    check('top sigma_xx at mid-span [MPa] (v1 +0.029848)', S[k], 0.029848, 1e-4)
+    check('top sigma_xx at mid-span vs Mc/I', S[k], 1e-5 * (1000 - xc) * 0.05 / I, 0.002)
+
+
+def _large_deflection(size, alpha_max=7.0):
+    mesh, lam = _flat_al(size, 'ASDShellQ4', True)
+    EI = 69000.0 * 100 * 0.1**3 / 12
+    bc.edge_load(mesh, 'xL', (0, 0, -EI / 1000.0**2))
+    tip = mesh.node_tag(mesh.nx, mesh.ny // 2)
+    t0 = time.perf_counter()
+    h = bc.displacement_control(tip, 3, -0.02 * 1000.0, stop=lambda a: a >= alpha_max, verbose=False,
+                                record=lambda: [-ops.nodeDisp(tip, 3) / 1000.0, -ops.nodeDisp(tip, 1) / 1000.0])
+    info(f'{size:g} mm sweep: {len(h) - 1} steps, {int(h[:, -1].sum())} Newton iterations, '
+         f'{time.perf_counter() - t0:.0f} s, alpha_max reached {h[-1, 0]:.4f}')
+    return mesh, lam, h
+
+
+def _compare_saved(h, csv, size):
+    saved = np.loadtxt(csv, delimiter=',', skiprows=1)
+    n = min(len(h), len(saved))
+    check(f'{size:g} mm: number of steps (saved {len(saved) - 1})', len(h) - 1, len(saved) - 1, 0, True)
+    # Steps are halved where Newton fails near the convergence limit; compare the
+    # steps that reached the same controlled displacement, report where paths split.
+    same = np.flatnonzero(np.abs(h[:n, 1] - saved[:n, 1]) < 1e-9)
+    split = next((k for k in range(n) if k not in set(same)), None)
+    if split is not None:
+        info(f'{size:g} mm: step-halving path differs from step {split} on '
+             f'(v/L {h[split, 1]:.4f} vs saved {saved[split, 1]:.4f}; final alpha {h[-1, 0]:.4f} vs saved {saved[-1, 0]:.4f})')
+    check(f'{size:g} mm: steps on the same path as the saved run', len(same), n - (0 if split is None else n - split), 0, True)
+    for k, name in ((0, 'alpha'), (2, 'h/L')):
+        check(f'{size:g} mm: max |{name} - saved| on those steps', np.abs(h[same, k] - saved[same, k]).max(), 0, 1e-6, True)
+    nu = 0.33
+    for alpha, ref_err in ((0.5, 0.021), (1.0, 0.013), (2.0, 0.007), (3.0, 0.004), (5.0, 0.002)):
+        v = np.interp(alpha, h[:, 0], h[:, 1])
+        vp = elastica.tip(alpha * (1 - nu**2))[0]
+        check(f'{size:g} mm: v/L at alpha = {alpha:g} vs wide-plate elastica (5 mm: +{ref_err:.1%})', v, vp,
+              ref_err + 0.004)
+
+
+def T11_large_deflection_10mm():
+    """Al plate, ASDShellQ4 -corotational, displacement control to alpha = 7
+    (10-22 plate_large_deflection.py --size 10; saved CSV; verify_mesh_bc_load check 2)."""
+    mesh, lam, h = _large_deflection(10.0)
+    _compare_saved(h, RESULTS / 'large_deflection_ASDShellQ4-corot_10mm.csv', 10.0)
+    # mid-span stress vs statics on the deformed shape (10-22: within ~1%)
+    jm, im = mesh.ny // 2, mesh.nx // 2
+    xd = lambda i: ops.nodeCoord(mesh.node_tag(i, jm), 1) + ops.nodeDisp(mesh.node_tag(i, jm), 1)
+    P = h[-1, 0] * 69000.0 * 100 * 0.1**3 / 12 / 1000.0**2
+    st = P * (xd(mesh.nx) - 0.5 * (xd(im) + xd(im + 1))) * 0.05 / (100 * 0.1**3 / 12)
+    s = th.surface_fields(bc.facet_strains(mesh), lam)['sigma_xx_top'][jm * mesh.nx + im]
+    check(f'mid-span top sigma_xx at alpha = {h[-1, 0]:.3g} vs statics on deformed shape', s, st, 0.015)
+
+
+def T12_large_deflection_5mm():
+    """Same at 5 mm (the SUMMARY table). Slow (--full, ~15-25 min)."""
+    _, _, h = _large_deflection(5.0)
+    _compare_saved(h, RESULTS / 'large_deflection_ASDShellQ4-corot_5mm.csv', 5.0)
+
+
+def T13_curved_strip():
+    """Arc R = 50 mm, b = 100 mm, Al t = 0.1, tip load 1 N through a rigid end
+    (verify_mesh_bc_load.py check 3); and the free-edge load warning (8%)."""
+    lam = lp.Laminate.isotropic(69000.0, 0.33, 0.1)
+    mesh = sm.ShellMesh(1000.0, sm.CrossSection.arc(50.0, 100.0), 5.0)
+    sm.build_model(mesh, lam, 'ShellMITC4')
+    bc.fix_edge(mesh, 'x0')
+    tip = bc.rigid_end(mesh, 'xL')
+    bc.point_load(tip, (0, 0, -1.0))
+    bc.linear_solve()
+    zc, I = sm.arc_section_inertia(50.0, 100.0, 0.1)
+    check('arc I [mm^4] (v1 481.285)', I, 481.285, 1e-5)
+    check('tip deflection, rigid end [mm] (v1 -9.99961)', ops.nodeDisp(tip, 3), -9.99961, 1e-5)
+    check('tip deflection vs PL^3/3EI (v1 0.38%)', ops.nodeDisp(tip, 3), -1000.0**3 / (3 * 69000 * I), 0.005)
+    for x, v1 in ((250, -0.8608), (500, -3.12704), (750, -6.32981)):
+        w = np.mean([ops.nodeDisp(mesh.node_tag(x // 5, j), 3) for j in range(mesh.ny + 1)])
+        check(f'section-average w(x = {x}) [mm] vs v1', w, v1, 1e-4)
+        check(f'section-average w(x = {x}) vs beam theory', w, -x**2 * (3000 - x) / (6 * 69000 * I), 0.005)
+    E = bc.facet_strains(mesh)
+    _, sxy, _ = th.ply_stresses(E, lam, 'centroid')
+    i = mesh.nx // 2
+    M = 1000.0 - (i + 0.5) * 5.0
+    for j in (0, mesh.ny // 2):
+        zm = 0.5 * (mesh.coords(0, j)[2] + mesh.coords(0, j + 1)[2])
+        check(f'mid-surface sigma_xx at x = 502.5, j = {j} vs M (z - z_c) / I', sxy[mesh.facet_index(i, j), 0, 0, 1, 0],
+              M * (zm - zc) / I, 0.01)
+    # free edge loaded directly: tip too flexible (v1 rule: ~8%)
+    sm.build_model(mesh, lam, 'ShellMITC4')
+    bc.fix_edge(mesh, 'x0')
+    bc.edge_load(mesh, 'xL', (0, 0, -1.0))
+    bc.linear_solve()
+    w = np.mean([ops.nodeDisp(n, 3) for n in mesh.edge_nodes('xL')])
+    info(f'load spread on the free arc edge instead: section-average tip w = {w:.5g} mm, '
+         f'{w / (-1000.0**3 / (3 * 69000 * I)) - 1:+.1%} vs beam theory (v1 rule: ~8% too flexible)')
+
+
+# =========================== laminated plates (10-26 Federico and Tara) ===========================
+
+LAM_0090S = dict(angles='[0_2/90_2]s', t=1.0, n_sub=4)
+Q11_80, Q12_80 = 80125.2, 500.782
+
+
+def T14_pure_moment():
+    """Free [0_2/90_2]s plate 100 x 100 x 8 mm, Mx = 50 N mm/mm (plate_pure_moment_Mx.py)."""
+    lam = lp.Laminate.from_layup('[0_2/90_2]s', 1.0, P80, n_sub=4)
+    d = np.linalg.inv(lam.abd())
+    kref = d[3:, 3:] @ np.array([50.0, 0, 0])
+    check('CLT kx [1/mm] (v1 1.66605e-5)', kref[0], 1.66605e-5, 2e-6)
+    check('CLT ky [1/mm] (v1 -7.0896e-7)', kref[1], -7.0896e-7, 2e-5)
+    for size in (10.0, 5.0):
+        mesh = sm.ShellMesh(100.0, sm.CrossSection.flat(100.0), size)
+        sm.build_model(mesh, lam)
+        ops.fix(mesh.node_tag(0, 0), 1, 1, 1, 0, 0, 0)
+        ops.fix(mesh.node_tag(mesh.nx, 0), 0, 1, 1, 0, 0, 0)
+        ops.fix(mesh.node_tag(0, mesh.ny), 0, 0, 1, 0, 0, 0)
+        bc.edge_load(mesh, 'xL', (0, 0, 0), (0, 50.0 * 100, 0))
+        bc.edge_load(mesh, 'x0', (0, 0, 0), (0, -50.0 * 100, 0))
+        bc.linear_solve()
+        E = bc.facet_strains(mesh)
+        kx, ky, kxy = E[:, :, 3].mean(), E[:, :, 4].mean(), E[:, :, 5].mean()
+        check(f'{size:g} mm: kx from element strains (v1 fit +1.666999e-05)', kx, 1.666999e-05, 1e-6)
+        check(f'{size:g} mm: ky (v1 fit -7.110915e-07)', ky, -7.110915e-07, 1e-6)
+        check(f'{size:g} mm: kx vs CLT (v1 +0.057%)', kx, kref[0], 1e-3)
+        check(f'{size:g} mm: kxy = 0', kxy, 0.0, 1e-15, True)
+        # uz quadratic fit, as v1
+        tags = [mesh.node_tag(i, j) for j in range(mesh.ny + 1) for i in range(mesh.nx + 1)]
+        xyz = np.array([ops.nodeCoord(n) for n in tags])
+        w = np.array([ops.nodeDisp(n, 3) for n in tags])
+        A = np.column_stack([np.ones(len(xyz)), xyz[:, 0], xyz[:, 1], xyz[:, 0]**2, xyz[:, 0] * xyz[:, 1], xyz[:, 1]**2])
+        c = np.linalg.lstsq(A, w, rcond=None)[0]
+        check(f'{size:g} mm: kx from the uz fit = from element strains', -2 * c[3], kx, 1e-9)
+        info(f'{size:g} mm: {len(ops.getEleTags())} elements ({len(ops.getEleTags()) // (mesh.nx * mesh.ny)} per facet; v1 used 8)')
+    s = th.surface_fields(E, lam)['sigma_xx_top']
+    check('top sigma_xx [MPa] (v1 +5.3413)', s.mean(), 5.3413, 2e-5)
+    check('top sigma_xx vs CLT (Q11 kx + Q12 ky) h/2', s.mean(), (Q11_80 * kref[0] + Q12_80 * kref[1]) * 4, 1e-3)
+    check('top sigma_xx uniform', np.ptp(s) / s.mean(), 0, 1e-9, True)
+
+
+def T15_tip_load_laminate():
+    """[0_2/90_2]s cantilever 1000 x 100 x 8 mm, P = -5 N on the free edge,
+    10, 5, 2.5 mm (plate_tip_load_laminate.py)."""
+    lam = lp.Laminate.from_layup('[0_2/90_2]s', 1.0, P80, n_sub=4)
+    D = lam.abd()[3:5, 3:5]
+    d = np.linalg.inv(D)
+    EI = 100 / d[0, 0]
+    wb = lambda x: -5.0 * x**2 * (3000 - x) / (6 * EI)
+    sb = lambda x: (Q11_80 * (d @ (5.0 * (1000 - x) / 100, 0))[0] + Q12_80 * (d @ (5.0 * (1000 - x) / 100, 0))[1]) * 4
+    v1 = {10.0: (-5.56263, (3.9794, 2.644, 1.3086), (-0.47925, -1.7396, -3.5209)),
+          5.0: (-5.56274, (3.9928, 2.6573, 1.322), (-0.47927, -1.7396, -3.521)),
+          2.5: (-5.56277, (3.9995, 2.664, 1.3287), (-0.47928, -1.7397, -3.521))}
+    for size, (wtip, sig, ws) in v1.items():
+        mesh = sm.ShellMesh(1000.0, sm.CrossSection.flat(100.0), size)
+        sm.build_model(mesh, lam)
+        bc.fix_edge(mesh, 'x0')
+        bc.edge_load(mesh, 'xL', (0, 0, -5.0))
+        t0 = time.perf_counter()
+        bc.linear_solve()
+        info(f'{size:g} mm: {len(ops.getEleTags())} elements (v1: {8 * mesh.nx * mesh.ny}), '
+             f'solve {time.perf_counter() - t0:.1f} s')
+        jm = mesh.ny // 2
+        w = ops.nodeDisp(mesh.node_tag(mesh.nx, jm), 3)
+        check(f'{size:g} mm: tip w mid-width [mm] (v1 {wtip})', w, wtip, 2e-6)
+        check(f'{size:g} mm: tip w vs laminated beam b/d11 (v1 +0.16%)', w, wb(1000.0), 0.0025)
+        for x, wv in zip((250, 500, 750), ws):
+            check(f'{size:g} mm: w(x = {x}) vs v1', ops.nodeDisp(mesh.node_tag(round(x / size), jm), 3), wv, 2e-4)
+        S = th.surface_fields(bc.facet_strains(mesh), lam)['sigma_xx_top']
+        for x, sv in zip((250, 500, 750), sig):
+            k = jm * mesh.nx + round(x / size)
+            check(f'{size:g} mm: top sigma_xx(x = {x}) [MPa] vs v1', S[k], sv, 2e-4)
+            check(f'{size:g} mm: top sigma_xx(x = {x}) vs beam', S[k], sb(x + size / 2), 0.001)
+
+
+# =========================== new: curved laminate orientation, failure criteria ===========================
+
+def T16_orientation_on_curved_facets():
+    """Per-facet '-local' on an arc: the fibre axis must lie in the facet at
+    theta from the facet x axis. Compares with the v1 global (cos, sin, 0)."""
+    mesh = sm.ShellMesh(100.0, sm.CrossSection.arc(50.0, 100.0), 5.0)
+    lam = lp.Laminate.from_layup('[45/-45]', 0.1, P135)
+    sm.build_model(mesh, lam)
+    worst, v1_worst = 0.0, 0.0
+    for k in range(len(mesh.facets)):
+        e1, e2, nrm = mesh.frames[k]
+        # the '-local' vector create_elements gives a 45-deg ply on this facet
+        ax =math.cos(math.radians(45)) * e1 + math.sin(math.radians(45)) * e2
+        worst = max(worst, abs(ax @ nrm), abs(math.degrees(math.atan2(ax @ e2, ax @ e1)) - 45))
+        g = np.array([math.cos(math.radians(45)), math.sin(math.radians(45)), 0.0])
+        gp = g - (g @ nrm) * nrm
+        v1_worst = max(v1_worst, abs(math.degrees(math.atan2(gp @ e2, gp @ e1)) - 45))
+    check('per-facet axis: in-plane and at 45.000 deg from facet x (max error)', worst, 0.0, 1e-9, True)
+    info(f'v1 global (cos, sin, 0) projected on the arc facets: ply angle off by up to {v1_worst:.1f} deg '
+         '(at the arc edges, 57 deg from horizontal)')
+    E = bc.facet_strains(mesh)
+    check('strain recovery runs on oriented curved facets (finite)', float(np.isfinite(E).all()), 1, 0, True)
+
+
+def T17_failure_unit():
+    """Closed-form cases of the Hashin 2D (AIAA 2025-0188 Eq. 3) and Tsai-Hill indices."""
+    X = dict(Xt=1500.0, Xc=1200.0, Yt=50.0, Yc=200.0, S=80.0)
+    for s, name, mode in (((1500, 0, 0), 's1 = Xt', 0), ((-1200, 0, 0), 's1 = -Xc', 1), ((0, 50, 0), 's2 = Yt', 2),
+                          ((0, -200, 0), 's2 = -Yc', 3), ((0, 0, 80), 't12 = S', 0), ((0, 0, -80), 't12 = -S', 0)):
+        F, m = th.hashin(*np.array(s, float), **X)
+        check(f'Hashin F = 1 at {name}', float(F), 1.0, 1e-12)
+        check(f'Hashin mode at {name}: {th.MODES[mode]}', float(m), mode, 0, True)
+        check(f'Tsai-Hill FI = 1 at {name}', float(th.tsai_hill(*np.array(s, float), **X)), 1.0, 1e-12)
+    s1, t = 600.0, 30.0
+    check('Hashin fibre tension (s1 > 0): (s1/Xt)^2 + (t12/S)^2', float(th.hashin(s1, 20.0, t, **X)[0]),
+          max((s1 / 1500)**2 + (t / 80)**2, (20 / 50)**2 + (t / 80)**2), 1e-12)
+    check('Hashin matrix tension wins (s2 = 40)', float(th.hashin(100.0, 40.0, t, **X)[0]), (40 / 50)**2 + (t / 80)**2, 1e-12)
+    check('Hashin fibre compression ignores shear', float(th.hashin(-600.0, 0.0, t, **X)[0]), max((600 / 1200)**2, 0.0), 1e-12)
+    S23 = 70.0
+    s2 = -100.0
+    ref = (s2 / (2 * S23))**2 + ((200 / (2 * S23))**2 - 1) * s2 / 200 + (t / 80)**2
+    check('Hashin matrix compression, S23 = 70 (Hashin 1980 form)', float(th.hashin(-1.0, s2, t, **X, S23=S23)[0]),
+          max(ref, (1 / 1200)**2), 1e-12)
+    check('s1 = 0 counts as fibre tension: F = max(F_ft, F_mc)', float(th.hashin(0.0, s2, t, **X, S23=S23)[0]),
+          max(ref, (t / 80)**2), 1e-12)
+    check('Hashin matrix compression, S23 = Yc/2: (s2/Yc)^2 + (t12/S)^2', float(th.hashin(0.0, s2, t, **X)[0]),
+          (s2 / 200)**2 + (t / 80)**2, 1e-12)
+    a, b = th.hashin_modes(0.0, s2, t, **X, S23=S23)
+    R = float(th.strength_ratio(a, b))
+    check('strength ratio R: F(R stresses) = 1 (with the linear term)', float(th.hashin(0.0, R * s2, R * t, **X, S23=S23)[0]),
+          1.0, 1e-12)
+    rng = np.random.default_rng(1)
+    s = rng.normal(0, 100, (1000, 3))
+    sy = 250.0
+    vm = np.sqrt(s[:, 0]**2 - s[:, 0] * s[:, 1] + s[:, 1]**2 + 3 * s[:, 2]**2)
+    fi = th.tsai_hill(*s.T, sy, sy, sy, sy, sy / math.sqrt(3))
+    check('Tsai-Hill isotropic X = Y = sy, S = sy/sqrt3: FI = (von Mises / sy)^2', np.abs(fi - (vm / sy)**2).max(), 0, 1e-12, True)
+
+
+def T18_failure_vs_clt():
+    """L024 CFRP (catalog, all strengths) [0/±45/90]s plate under pure Mx and under
+    combined N + M: FE ply stresses and Hashin index at every ply vs closed-form CLT."""
+    mat, _ = lp.catalog_material('L024')
+    lam = lp.Laminate.from_layup('[0/±45/90]s', mat['t_ply'], mat, n_sub=8)
+    K = lam.abd()
+    for name, NM in (('pure Mx = 1 N mm/mm', np.array([0, 0, 0, 1.0, 0, 0])),
+                     ('Nx = 20 N/mm + Mx = 1 + My = -0.5 N mm/mm', np.array([20.0, 0, 0, 1.0, -0.5, 0]))):
+        mesh = sm.ShellMesh(40.0, sm.CrossSection.flat(40.0), 4.0)
+        sm.build_model(mesh, lam)
+        ops.fix(mesh.node_tag(0, 0), 1, 1, 1, 0, 0, 0)
+        ops.fix(mesh.node_tag(mesh.nx, 0), 0, 1, 1, 0, 0, 0)
+        ops.fix(mesh.node_tag(0, mesh.ny), 0, 0, 1, 0, 0, 0)
+        b = 40.0
+        bc.edge_load(mesh, 'xL', (NM[0] * b, 0, 0), (0, NM[3] * b, 0))
+        bc.edge_load(mesh, 'x0', (-NM[0] * b, 0, 0), (0, -NM[3] * b, 0))
+        # M_yy on the edge y = b (outward normal +y): moment vector along -x
+        bc.edge_load(mesh, 'yb', (0, 0, 0), (-NM[4] * b, 0, 0))
+        bc.edge_load(mesh, 'y0', (0, 0, 0), (NM[4] * b, 0, 0))
+        bc.linear_solve()
+        E = bc.facet_strains(mesh)
+        # closed form: generalized strains from the CLT ABD, then the stresses by hand
+        e_ref = np.linalg.solve(K, NM)
+        F_fe, mode_fe, R_fe, s_fe, _, _ = th.failure_index(E, lam, at='centroid')
+        c = mesh.facet_index(mesh.nx // 2, mesh.ny // 2)
+        st = th.strengths_of(lam)
+        F_cl, s_cl = np.zeros((len(lam.plies), 3)), np.zeros((len(lam.plies), 3, 3))
+        for p, q in enumerate(lam.plies):
+            Qb = lp.q_bar_invariants(lam.materials[q['mat']], q['theta'])
+            for iz, z in enumerate((q['z0'], (q['z0'] + q['z1']) / 2, q['z1'])):
+                sxy = Qb @ (e_ref[:3] + z * e_ref[3:])
+                s_cl[p, iz] = lp.stress_rotation(q['theta']) @ sxy
+                F_cl[p, iz] = th.hashin(*s_cl[p, iz], *st[p])[0]
+        check(f'{name}: central facet ply stresses vs CLT (max rel.)',
+              np.abs(s_fe[c, 0] - s_cl).max() / np.abs(s_cl).max(), 0, 2e-3, True)
+        check(f'{name}: max Hashin F, FE (all facets) vs CLT', F_fe.max(), F_cl.max(), 4e-3)
+        p, iz = np.unravel_index(F_cl.argmax(), F_cl.shape)
+        pf, izf = np.unravel_index(F_fe[c, 0].argmax(), F_fe[c, 0].shape)
+        check(f'{name}: critical ply/position FE = CLT (ply {p + 1}, {th.Z_POINTS[iz]})', float((pf, izf) == (p, iz)), 1, 0, True)
+        info(f'{name}: max Hashin F {F_cl.max():.4g} ({th.MODES[mode_fe[c, 0, pf, izf]]}), '
+             f'R = {R_fe[c].min():.4g} -> failure at {R_fe[c].min():.4g} x this load (linear)')
+
+
+def T19_case_file_and_viewer():
+    """Example case files run end to end (JSON -> npz -> Hashin -> PNG)."""
+    import json
+    import tempfile
+    import shell_visualize as sv
+    ex = SKILLS / 'shell-bc-load' / 'examples'
+    with tempfile.TemporaryDirectory() as tmp:
+        case = json.loads((ex / 'plate_tip_load_laminate.json').read_text())
+        with redirect_stdout(io.StringIO()):
+            mesh, res = bc.run_case(case, tmp, verbose=False)
+        check('plate_tip_load_laminate.json: tip w [mm] (v1 10 mm -5.56263)',
+              ops.nodeDisp(mesh.node_tag(mesh.nx, mesh.ny // 2), 3), -5.56263, 2e-6)
+        r2 = bc.load_results(Path(tmp) / 'plate_tip_load_laminate.npz')
+        check('results file round trip (strains)', np.abs(r2['strains'] - res['strains']).max(), 0, 1e-15, True)
+        case = json.loads((ex / 'tape_spring_L024_tip_load.json').read_text())
+        with redirect_stdout(io.StringIO()):
+            bc.run_case(case, tmp, verbose=False)
+            r = bc.load_results(Path(tmp) / 'tape_spring_L024_tip_load.npz')
+            pd = sv.to_polydata(r)
+            sv.show(pd, ['k_xx', 'hashin_max'], png=str(Path(tmp) / 'ts.png'), gui=False)
+        check('tape spring: hashin_max field present and finite', float(np.isfinite(pd.cell_data['hashin_max']).all()), 1, 0, True)
+        check('tape spring: PNG written', float((Path(tmp) / 'ts.png').stat().st_size > 10000), 1, 0, True)
+
+
+T20_CASE = {
+    'name': 'trac_like_combination',
+    'laminate': {'catalog': 'L024', 'layup': '[45/-45]s'},
+    'geometry': {'L': 200, 'section': {'type': 'segments', 'segments': [['line', 15], ['arc', 20, 25], ['line', 15]],
+                                       'center': True}, 'size': 5},
+    'element': {'type': 'ASDShellQ4', 'corotational': True},
+    'supports': [{'rigid_end': 'x0', 'dofs': [1, 1, 1, 1, 1, 1]}, {'edge': 'y0', 'dofs': [0, 1, 0, 0, 0, 0]}],
+    'loads': [{'edge': 'xL', 'force': [0, 0, -0.2], 'moment': [0, 5, 0]}, {'pressure': 1e-5, 'factor': 2.0},
+              {'node': {'x': 100, 's': 30}, 'force': [0, 0.05, 0]}],
+    'analysis': {'type': 'displacement_control', 'node': 'tip', 'dof': 3, 'step': -0.5, 'n_steps': 4},
+}
+
+
+def T20_abaqus_export():
+    """abaqus-export: run the generated Abaqus scripts on a stand-in Abaqus API
+    and check supports, couplings, loads, seeds and layup against OpenSees."""
+    import json
+    import os
+    import tempfile
+    sys.path.insert(0, str(SKILLS / 'abaqus-export'))
+    sys.path.insert(0, str(Path(__file__).parent))
+    import abaqus_mock
+    import case_to_abaqus as c2a
+    ex = SKILLS / 'shell-bc-load' / 'examples'
+    with tempfile.TemporaryDirectory() as tmp:
+        (Path(tmp) / 'c.json').write_text(json.dumps(T20_CASE))
+        for k, c in enumerate((BOOM_TRAC_CASE, BOOM_OMEGA_CASE)):
+            (Path(tmp) / f'boom{k}.json').write_text(json.dumps(c))
+        for path in (ex / 'plate_tip_load_laminate.json', ex / 'tape_spring_L024_tip_load.json', Path(tmp) / 'c.json',
+                     Path(tmp) / 'boom0.json', Path(tmp) / 'boom1.json'):
+            case = json.loads(path.read_text())
+            with redirect_stdout(io.StringIO()):
+                script, M, ref = c2a.generate(path, Path(tmp) / f'abaqus_{case["name"]}.py')
+            # the stand-in API has no geometry: check that every sketched arc (from p0 around the
+            # centre in the given direction to p1) passes through its face's probe point
+            arcs = [(pc, f[0]) for pc, f in zip(M['pieces'], M['faces']) if pc[0] == 'arc']
+            for (_, p0, p1, c, ccw), q in arcs:
+                ang = lambda p: np.arctan2(p[1] - c[1], p[0] - c[0])
+                sweep = lambda p: ((ang(p) - ang(p0)) if ccw else (ang(p0) - ang(p))) % (2 * np.pi)
+                check(f'{case["name"]}: sketched arc ({"CCW" if ccw else "CW"}) contains the face midpoint',
+                      float(sweep(q) < sweep(p1)), 1, 0, True)
+            # OpenSees side: record nodal loads and fixities as the skills apply them
+            lam = lp.laminate_from_spec(case['laminate'])
+            mesh = sm.build_from_spec(case['geometry'])
+            sm.build_model(mesh, lam)
+            rec = {'load': [], 'fix': [], 'rigidLink': []}
+            real = {k: getattr(ops, k) for k in rec}
+            for k in rec:
+                setattr(ops, k, (lambda name: lambda *a: (rec[name].append(a), real[name](*a))[1])(k))
+            try:
+                bc.apply_supports(mesh, case.get('supports', []))
+                bc.apply_loads(mesh, [l for l in case.get('loads', []) if 'pressure' not in l])   # Abaqus: Pressure load
+            finally:
+                for k, fn in real.items():
+                    setattr(ops, k, fn)
+            key = lambda xyz: tuple(round(float(v), 6) for v in xyz)
+            os_load, os_fix = {}, {}
+            for node, *v in rec['load']:
+                os_load[key(ops.nodeCoord(node))] = os_load.get(key(ops.nodeCoord(node)), np.zeros(6)) + np.array(v)
+            for node, *v in rec['fix']:
+                os_fix[key(ops.nodeCoord(node))] = tuple(v)
+            os_links = {key(ops.nodeCoord(m)): set() for m, *_ in []}
+            for _, m, s in rec['rigidLink']:
+                os_links.setdefault(key(ops.nodeCoord(m)), set()).add(key(ops.nodeCoord(s)))
+            grid = [mesh.coords(i, j) for j in range(mesh.ny + 1) for i in range(mesh.nx + 1)]
+            for flip in (False, True):
+                want = {key(abaqus_mock_P((M['L'] / 2, f[0][0], f[0][1]))): f[1] for f in M['faces']}
+
+                def normal_of(pt, flip=flip):
+                    w = want[key(pt)]
+                    n = abaqus_mock_P(w)
+                    return tuple(-x for x in n) if flip else n
+                log = abaqus_mock.install(grid, normal_of)
+                cwd = os.getcwd()
+                os.chdir(tmp)
+                ns = abaqus_mock.kernel_namespace()
+                try:
+                    sys.argv = [script.name]
+                    exec(compile(script.read_text(), str(script), 'exec'), ns)
+                    stopped = False
+                except abaqus_mock.StopAtJob:
+                    stopped = True
+                except ValueError as err:                       # e.g. an invalid field-output name
+                    print(f'      script stopped: {err}')
+                    stopped = False
+                finally:
+                    if 'REPORT' in ns:
+                        ns['REPORT'].close()
+                    os.chdir(cwd)
+                    for m in ('abaqus', 'abaqusConstants', 'mesh', 'regionToolset', 'section', 'interaction', 'step', 'load',
+                              'job', 'odbAccess'):
+                        sys.modules.pop(m, None)
+                tag = f'{case["name"]}{" (normals flipped)" if flip else ""}'
+                check(f'{tag}: script runs up to the job', float(stopped), 1, 0, True)
+                # field output: only Abaqus-verified names (no 'SM'); the request left on the step
+                # must hold everything the comparison needs
+                fo = [c for c in log if c[0] == 'fieldOutput.setValues' and 'variables' in c[2]]
+                final = [c[2]['variables'] for c in fo if not c[2]['rejected']]
+                need = {'S', 'E', 'SE', 'SF', 'U', 'UR', 'RF'}
+                check(f'{tag}: valid field output request (S, E, SE, SF, U, UR, RF; no SM)',
+                      float(bool(final) and need <= set(final[-1])
+                            and set(final[-1]) <= abaqus_mock.VALID_FIELD_OUTPUT), 1, 0, True)
+                # S, E at every ply's section points (3 per layer; 5 for a homogeneous section), per section
+                fr = {c[2]['name']: c[2] for c in log if c[0] == 'model.FieldOutputRequest'}
+                want_sp = [('F-Output-PLIES-FLANGE', M['plies'])] + ([('F-Output-PLIES-WEB', M['web_plies'])]
+                                                                     if M['web_faces'] else [])
+                check(f'{tag}: S, E requested at every section point of every ply (flange{" and web" if M["web_faces"] else ""})',
+                      float(all(n in fr and {'S', 'E'} <= set(fr[n]['variables']) and tuple(fr[n]['sectionPoints'])
+                                == tuple(range(1, (5 if M['kind'] == 'isotropic' else 3 * len(pl)) + 1))
+                                and (('region' in fr[n]) == bool(M['web_faces'])) for n, pl in want_sp)
+                            and len(fr) == len(want_sp)), 1, 0, True)
+                flips =sum(1 for c in log if c[0] == 'part.flipNormal')
+                check(f'{tag}: faces flipped to the OpenSees normal', flips, len(M['faces']) if flip else 0, 0, True)
+                if flip:
+                    continue
+                lab = {k + 1: key(p) for k, p in enumerate(grid)}
+                rp = {}
+                ab_load, ab_fix, ab_links = {}, {}, {}
+
+                def coords_of(region):
+                    if region[2] and isinstance(region[2][0], tuple) and region[2][0][0] == 'RP':
+                        return [key(region[2][0][1])]
+                    return [lab[n] for n in region[2]]
+                for name, args, kw in log:
+                    if name in ('model.ConcentratedForce', 'model.Moment'):
+                        off = 0 if name.endswith('Force') else 3
+                        pre = 'cf' if off == 0 else 'cm'
+                        v = np.zeros(6)
+                        for d in range(3):
+                            x = kw.get(f'{pre}{d + 1}', 'UNSET')
+                            v[off + d] = 0.0 if x == 'UNSET' else x
+                        for c in coords_of(kw['region']):
+                            ab_load[c] = ab_load.get(c, np.zeros(6)) + v
+                    elif name == 'model.DisplacementBC':
+                        for c in coords_of(kw['region']):
+                            ab_fix[c] = tuple(int(kw[k] != 'UNSET') for k in ('u1', 'u2', 'u3', 'ur1', 'ur2', 'ur3'))
+                    elif name == 'model.Coupling':
+                        ab_links[coords_of(kw['controlPoint'])[0]] = set(coords_of(kw['surface']))
+                keys = set(os_load) | set(ab_load)
+                diff = max(np.abs(ab_load.get(k, np.zeros(6)) - os_load.get(k, np.zeros(6))).max() for k in keys)
+                scale = max(np.abs(v).max() for v in os_load.values())
+                pressure = any(l.get('pressure') for l in case.get('loads', []))
+                check(f'{tag}: nodal forces/moments = OpenSees (all {len(keys)} loaded nodes'
+                      f'{", pressure excluded: Abaqus Pressure" if pressure else ""})', diff / scale, 0, 1e-9, True)   # chord-length shares: round-off
+                check(f'{tag}: fixed DOFs = OpenSees ({len(os_fix)} nodes)', float(ab_fix == os_fix), 1, 0, True)
+                check(f'{tag}: rigid ends (reference point, coupled nodes) = OpenSees', float(ab_links == os_links), 1, 0, True)
+                seeds = [(abaqus_mock_G(c[1][0]), kw2['number']) for c, (n2, a2, kw2) in
+                         zip([c for c in log if c[0] == 'part.edges.findAt'],
+                             [c for c in log if c[0] == 'part.seedEdgeByNumber'])]
+                across = sum(n for p, n in seeds if abs(p[0]) < 1e-9)
+                along = {n for p, n in seeds if abs(p[0] - mesh.L / 2) < 1e-9}
+                check(f'{tag}: seeds across the section = OpenSees strips ({mesh.nstrips})', across, mesh.nstrips, 0, True)
+                check(f'{tag}: seeds along x = OpenSees nx ({mesh.nx})', float(along == {mesh.nx}), 1, 0, True)
+                layers = [c[2] for c in log if c[0] == 'section.SectionLayer' and not c[2]['plyName'].startswith('web')]
+                web_layers = [c[2] for c in log if c[0] == 'section.SectionLayer' and c[2]['plyName'].startswith('web')]
+                wl = sm.web_laminate(mesh, lam)
+                if wl is not None and lam.kind != 'isotropic':
+                    check(f'{tag}: web layers = doubled laminate plies (angle, t)',
+                          float([(l['orientAngle'], l['thickness']) for l in web_layers] ==
+                                [(float(q['theta']), q['t']) for q in wl.plies]), 1, 0, True)
+                check(f'{tag}: composite layers = plies bottom to top (angle, t)',
+                      float([(l['orientAngle'], l['thickness']) for l in layers] ==
+                            [(float(q['theta']), q['t']) for q in lam.plies] or lam.kind == 'isotropic'), 1, 0, True)
+                stepname = [c[0] for c in log if c[0] in ('model.StaticStep', 'model.StaticRiksStep')]
+                check(f'{tag}: step = {"Riks" if case["analysis"]["type"] == "displacement_control" else "Static"}',
+                      float(stepname == (['model.StaticRiksStep'] if case['analysis']['type'] == 'displacement_control'
+                                         else ['model.StaticStep'])), 1, 0, True)
+                pr = [c[2] for c in log if c[0] == 'model.Pressure']
+                if pressure:
+                    check(f'{tag}: Abaqus pressure = -p x factor (acts along -n)', pr[0]['magnitude'], -2e-5, 1e-12)
+            ops.wipe()
+
+
+def T21_assembled_script():
+    """shell-assemble-run: the --emit-code pieces of the three skills, joined, give the same results as run_case."""
+    import json
+    import tempfile
+    sys.path.insert(0, str(SKILLS / 'shell-assemble-run'))
+    import assemble_run as ar
+    ex = SKILLS / 'shell-bc-load' / 'examples'
+    t20 = dict(T20_CASE, name='trac_like_load_control', analysis={'type': 'load_control', 'n_steps': 2})
+    cases = [json.loads((ex / 'tape_spring_L024_tip_load.json').read_text()), t20, BOOM_TRAC_CASE, BOOM_OMEGA_CASE]
+    with tempfile.TemporaryDirectory() as tmp:
+        for case in cases:
+            script, npz = Path(tmp) / f'{case["name"]}_opensees.py', Path(tmp) / f'{case["name"]}.npz'
+            with redirect_stdout(io.StringIO()):
+                ar.join(ar.write_pieces(case, Path(tmp) / f'{case["name"]}_code'), script)
+                ops.wipe()
+            r = ar.subprocess.run([sys.executable, str(script), str(npz)], capture_output=True, text=True)
+            check(f'{case["name"]}: assembled script runs (exit code)', r.returncode, 0, 0, True)
+            if r.returncode == 0:
+                diff = ar.compare(npz, case)
+                for k in ('disp', 'strains', 'history', 'frames'):
+                    check(f'{case["name"]}: {k} script = run_case (rel. max diff)', diff[k], 0, 1e-9, True)
+            ops.wipe()
+
+
+def T22_opensees_to_abaqus():
+    """opensees-to-abaqus: Abaqus script from an assembled OpenSeesPy script; model check and reference."""
+    import json
+    import tempfile
+    for d in ('shell-assemble-run', 'opensees-to-abaqus', 'abaqus-export'):
+        sys.path.insert(0, str(SKILLS / d))
+    import assemble_run as ar
+    import case_to_abaqus as c2a
+    import opensees_to_abaqus as o2a
+    ex = SKILLS / 'shell-bc-load' / 'examples'
+    t20 = dict(T20_CASE, name='trac_like_load_control', analysis={'type': 'load_control', 'n_steps': 2})
+    cases = [json.loads((ex / 'tape_spring_L024_tip_load.json').read_text()), T20_CASE, t20, BOOM_TRAC_CASE,
+             BOOM_OMEGA_CASE]
+    with tempfile.TemporaryDirectory() as tmp:
+        for case in cases:
+            src, out = Path(tmp) / f'{case["name"]}_opensees.py', Path(tmp) / f'abaqus_{case["name"]}.py'
+            with redirect_stdout(io.StringIO()):
+                ar.join(ar.write_pieces(case, Path(tmp) / f'{case["name"]}_code'), src)
+                ops.wipe()
+                info = o2a.read_script(src)
+                os_m = o2a.opensees_model(*o2a.record_model(src))
+                ref = None
+                if case['analysis']['type'] == 'linear':          # reference from the script's own run
+                    ref, _, _ = o2a.reference(src, info)
+                _, M, _ = c2a.write_script(info['CASE'], info['LAMINATE'], out, 'S4R', ref, 'T22')
+                rows = o2a.check_model(os_m, out, M, info['CASE'], info['LAMINATE'])
+            job_line = [l for l in out.read_text(encoding='utf-8').splitlines() if l.startswith('JOB = ')][0]
+            for el, size in (('S4R', M['size']), ('S4', M['size'] / 2)):
+                job = eval(job_line[6:], {'ELEM': el, 'SIZE': float(size)})
+                check(f'{case["name"]}: instructions job name = the script\'s JOB ({job})',
+                      float(o2a.job_name(case['name'], el, size) == job), 1, 0, True)
+            fails = [r[0] for r in rows if not r[1]]
+            check(f'{case["name"]}: model check passes ({len(rows)} checks{"; FAIL: " + fails[0] if fails else ""})',
+                  len(fails), 0, 0, True)
+            if ref is not None:
+                with redirect_stdout(io.StringIO()):
+                    want = c2a.opensees_reference(case)
+                for k in ('report_disp', 'max_u', 'top_ply_stress'):
+                    a, b = np.atleast_1d(ref[k]), np.atleast_1d(want[k])
+                    check(f'{case["name"]}: REF {k} from the script = from run_case', np.abs(a - b).max() / np.abs(b).max(), 0, 1e-9, True)
+                embedded_extractor(out, src.parent / 'results' / f'{case["name"]}.npz', Path(tmp), case['name'])
+            if case is T20_CASE:                                # a hand-edited script must fail
+                text = src.read_text(encoding='utf-8')
+                src.write_text(text.replace('CONTROL_NODE, CONTROL_DOF, STEP = ', 'CONTROL_NODE, CONTROL_DOF, STEP = 1 + ', 1),
+                               encoding='utf-8')
+                with redirect_stdout(io.StringIO()):
+                    rows = o2a.check_model(o2a.opensees_model(*o2a.record_model(src)), out, M, info['CASE'], info['LAMINATE'])
+                check(f'{case["name"]}: edited control node is caught', sum(not r[1] for r in rows), 1, 0, True)
+            ops.wipe()
+
+
+def embedded_extractor(script, npz, tmp, name):
+    """The ODB extractor embedded in a generated Abaqus script is the verification tool
+    verbatim, and on a stand-in ODB (from npz) writes the same arrays as the tool run alone."""
+    import ast
+    import runpy
+    ver = SKILLS.parent / 'verification'
+    sys.path.insert(0, str(ver))
+    import odb_mock
+    src = [n.value.value for n in ast.parse(Path(script).read_text(encoding='utf-8')).body
+           if isinstance(n, ast.Assign) and getattr(n.targets[0], 'id', '') == 'ODB_EXTRACT']
+    check(f'{name}: embedded ODB extractor = .claude/verification/odb_extract.py',
+          float(src == [(ver / 'odb_extract.py').read_text(encoding='utf-8')]), 1, 0, True)
+    if not src:
+        return
+    files = []
+    for k in range(2):
+        odb_mock.install(odb_mock.make_odb(npz))
+        out = Path(tmp) / f'{name}_odb_{k}.npz'
+        with redirect_stdout(io.StringIO()):
+            if k == 0:                                   # as the generated script does it
+                ns = {'__name__': 'odb_extract'}
+                exec(compile(src[0], 'odb_extract.py', 'exec'), ns)
+                ns['extract']('job.odb', str(out))
+            else:                                        # the tool on its own
+                argv, sys.argv = sys.argv, ['odb_extract.py', 'job.odb', str(out)]
+                try:
+                    runpy.run_path(str(ver / 'odb_extract.py'), run_name='__main__')
+                finally:
+                    sys.argv = argv
+        files.append(np.load(out))
+    for m in ('odbAccess', 'abaqusConstants'):
+        sys.modules.pop(m, None)
+    a, b = files
+    same = set(a.files) == set(b.files) and all(np.array_equal(a[k], b[k], equal_nan=a[k].dtype.kind == 'f')
+                                                for k in a.files)
+    check(f'{name}: embedded extraction writes the same arrays as odb_extract.py ({len(a.files)} arrays)',
+          float(same), 1, 0, True)
+
+
+# =========================== branched sections (TRAC, omega, corrugated) ===========================
+
+BOOM_TRAC_CASE = {
+    'name': 'trac_R001_linear',
+    'laminate': {'catalog': 'L024', 'layup': '[45/-45]s'},
+    'geometry': {'L': 60, 'section': {'type': 'boom', 'id': 'R001'}, 'size': 4},
+    'element': {'type': 'ASDShellQ4'},
+    'supports': [{'rigid_end': 'x0', 'dofs': [1, 1, 1, 1, 1, 1]}, {'edge': 'y0', 'dofs': [0, 1, 0, 0, 0, 0]}],
+    'loads': [{'edge': 'xL', 'force': [0, 0.05, -0.2], 'moment': [0, 5, 0]},
+              {'node': {'x': 32, 's': 30}, 'force': [0, 0.05, 0]}],
+    'analysis': {'type': 'linear'},
+}
+BOOM_OMEGA_CASE = {
+    'name': 'omega_M014_linear',
+    'laminate': {'catalog': 'L024', 'layup': '[0/90]s'},
+    'geometry': {'L': 45, 'section': {'type': 'boom', 'id': 'M014'}, 'size': 3},
+    'element': {'type': 'ASDShellQ4'},
+    'supports': [{'edge': 'x0', 'dofs': [1, 1, 1, 1, 1, 1]}, {'rigid_end': 'xL'}],
+    'loads': [{'node': {'rigid': 'xL'}, 'force': [0, 0.1, -0.5], 'moment': [3, 0, 0]}],
+    'analysis': {'type': 'linear'},
+}
+
+
+def thin_walled_EI(sec, EA_flange, EA_web, n=4000):
+    """Thin-walled beam theory: EI about the centroidal y and z axes of the
+    section mid-line, membrane stiffness per unit width EA_flange / EA_web
+    (web = bonded double tape), by midpoint integration along every branch."""
+    P, w = [], []
+    for br, lab in zip(sec.branches, sec.labels):
+        s = (np.arange(n) + 0.5) / n * br.b
+        P.append(np.array([br.point(u) for u in s]))
+        w.append(np.full(n, (EA_web if lab == 'web' else EA_flange) * br.b / n))
+    P, w = np.vstack(P), np.concatenate(w)
+    d = P - w @ P / w.sum()
+    return w @ d[:, 1]**2, w @ d[:, 0]**2            # about y (z offsets), about z (y offsets)
+
+
+def _pure_moment_EI(sec, lam, L, size, axis):
+    """FE: rigid ends, x0 clamped, end moment M about global y or z at xL;
+    EI = M L / rotation (linear)."""
+    mesh = sm.ShellMesh(L, sec, size)
+    sm.build_model(mesh, lam)
+    m0, m1 = bc.rigid_end(mesh, 'x0'), bc.rigid_end(mesh, 'xL')
+    ops.fix(m0, 1, 1, 1, 1, 1, 1)
+    M = 1000.0
+    bc.point_load(m1, (0, 0, 0), (0, M, 0) if axis == 'y' else (0, 0, M))
+    bc.linear_solve()
+    return M * L / ops.nodeDisp(m1, 5 if axis == 'y' else 6), mesh
+
+
+def T23_branched_sections():
+    """shell-mesh branched sections (TRAC, omega, corrugated): junctions, web laminate, EI vs thin-walled theory."""
+    import json
+    import tempfile
+    sys.path.insert(0, str(REPO / '.claude' / 'memory.boom_geometry_catalog'))
+    import make_boom_catalog as mk
+    from boom_data import GEOMETRIES
+
+    # geometry: every buildable TRAC / OM / CO row lies on the catalog polylines, the branches share nodes
+    def dist(p, P):
+        d = P[1:] - P[:-1]
+        u = np.clip(((p - P[:-1]) * d).sum(1) / (d * d).sum(1), 0, 1)
+        return np.min(np.linalg.norm(P[:-1] + u[:, None] * d - p, axis=1))
+    worst, n_ok, rejected = 0.0, 0, []
+    for g in GEOMETRIES:
+        if g['type'] == 'TS':
+            continue
+        try:
+            sec = sm.boom_section(g)
+        except ValueError:
+            rejected.append(g['id'])
+            continue
+        mesh = sm.ShellMesh(10, sec, 2.0)
+        b = mk.build(g)
+        lines = [np.array(x) for x in b['lines'] + b['webs']]
+        worst = max(worst, max(min(dist(np.array(mesh.coords(0, j)[1:]), P) for P in lines)
+                               for j in range(mesh.ny + 1)))
+        closed = g['type'] != 'TRAC'
+        n_ok += mesh.nstrips == mesh.ny + (1 if closed else 0)      # tree: strips = lines - 1; one loop: + 1
+    n_rows = sum(g['type'] != 'TS' for g in GEOMETRIES)
+    check(f'{n_ok} of {n_rows - len(rejected)} sections: strips = node lines - 1 (+1 closed loop): junctions shared',
+          n_ok, n_rows - len(rejected), 0, True)
+    check('nodes on the catalog polylines (40-step arc chords; max distance, mm)', worst, 0, 0.05, True)
+    info(f'rejected (shells with different free chords): {", ".join(rejected)}')
+
+    # web laminate: doubled mirror stack in the web facets only
+    lam = lp.laminate_from_spec({'catalog': 'L024', 'layup': '[0/45]'})
+    mesh = sm.ShellMesh(20, sm.boom_section('R001'), 4)
+    sm.build_model(mesh, lam)
+    web = [f for f, lab in zip(mesh.facets, mesh.facet_labels) if lab == 'web']
+    check('R001: web facets = web strips x nx', len(web), sum(st[2] == 'web' for st in mesh.strips) * mesh.nx, 0, True)
+    check('R001 web laminate = [-45/0/0/45] (mirror stack of [0/45])',
+          float([q['theta'] for q in mesh.web_laminate.plies] == [-45.0, 0.0, 0.0, 45.0]), 1, 0, True)
+    check('R001 web ABD A11 = 2 x flange A11', mesh.web_laminate.abd()[0, 0] / lam.abd()[0, 0], 2, 1e-12)
+    ops.wipe()
+
+    # EI vs thin-walled beam theory (isotropic, nu = 0: no Poisson coupling with the curved flanges)
+    E, t = 70000.0, 0.1
+    iso = lp.Laminate.isotropic(E, 0.0, t)
+    for bid, size in (('R001', 2.0), ('M001', 2.0), ('C013', 2.0)):
+        sec = sm.boom_section(bid)
+        Iy, Iz = thin_walled_EI(sec, E * t, 2 * E * t)
+        for axis, ref in (('y', Iy), ('z', Iz)):
+            EI, mesh = _pure_moment_EI(sec, iso, 300.0, size, axis)
+            check(f'{bid}: EI about {axis} (pure moment) vs thin-walled theory', EI, ref, 0.02)
+            ops.wipe()
+    # laminate omega: membrane stiffness per width 1 / a11 (flange) and of the doubled web
+    lam = lp.laminate_from_spec({'catalog': 'L024', 'layup': '[0/90/0]'})
+    sec = sm.boom_section('M001')
+    web = lp.doubled_laminate(lam)
+    ea = lambda L_: 1.0 / np.linalg.inv(L_.abd()[:3, :3])[0, 0]
+    Iy, Iz = thin_walled_EI(sec, ea(lam), ea(web))
+    for axis, ref in (('y', Iy), ('z', Iz)):
+        EI, mesh = _pure_moment_EI(sec, lam, 300.0, 2.0, axis)
+        check(f'M001 [0/90/0]: EI about {axis} vs thin-walled theory (1/a11)', EI, ref, 0.03)
+        ops.wipe()
+    _, Iz1 = thin_walled_EI(sec, ea(lam), ea(lam))
+    info(f'M001 [0/90/0]: a single-laminate web would change EI_z by {Iz1 / Iz - 1:+.2%}')
+
+    # case file -> results -> failure-check finds the web facets of the model
+    with tempfile.TemporaryDirectory() as tmp:
+        with redirect_stdout(io.StringIO()):
+            res = bc.run_case(BOOM_TRAC_CASE, tmp)
+        npz = sorted(Path(tmp).rglob('*.npz'))[0]
+        res = bc.load_results(npz)
+        lam = lp.laminate_from_spec(BOOM_TRAC_CASE['laminate'])
+        groups, mask, row, note = th.facet_groups(res, lam)
+        mesh = sm.build_from_spec(BOOM_TRAC_CASE['geometry'])
+        check('failure-check: web facets of the results = web facets of the mesh',
+              float(np.array_equal(mask, np.array(mesh.facet_labels) == 'web')), 1, 0, True)
+        check('failure-check: boom row from the results (R001)', float(row is not None and row['id'] == 'R001'), 1, 0, True)
+        check('failure-check: web group laminate = doubled', float(len(groups) == 2 and
+              [q['theta'] for q in groups[1][1].plies] == [q['theta'] for q in lp.doubled_laminate(lam).plies]), 1, 0, True)
+    ops.wipe()
+
+
+def abaqus_mock_P(g):
+    return (g[1], g[2], g[0])
+
+
+def abaqus_mock_G(p):
+    return (p[2], p[0], p[1])
+
+
+TESTS = [T01_poisson_convention, T02_ply_rotation, T03_hand_check, T04_90_0, T05_L1_L4, T06_other_layups,
+         T07_merged_vs_per_ply_large_deflection, T08_smoke_strip, T09_al_plate_1mm, T10_flat_linear_5mm,
+         T11_large_deflection_10mm, T12_large_deflection_5mm, T13_curved_strip, T14_pure_moment,
+         T15_tip_load_laminate, T16_orientation_on_curved_facets, T17_failure_unit, T18_failure_vs_clt,
+         T19_case_file_and_viewer, T20_abaqus_export, T21_assembled_script,
+         T22_opensees_to_abaqus, T23_branched_sections]
+SLOW = {'T09', 'T12'}
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--full', action='store_true')
+    ap.add_argument('--only', nargs='+')
+    ap.add_argument('--log')
+    a = ap.parse_args()
+    buf = io.StringIO()
+
+    class Tee:
+        def write(self, s):
+            sys.__stdout__.write(s)
+            buf.write(s)
+
+        def flush(self):
+            sys.__stdout__.flush()
+
+    sys.stdout = Tee()
+    t_all = time.perf_counter()
+    for t in TESTS:
+        code = t.__name__[:3]
+        if a.only and code not in a.only:
+            continue
+        if not a.only and code in SLOW and not a.full:
+            print(f'\n{t.__name__}: skipped (slow; use --full)')
+            continue
+        CURRENT[0] = code
+        print(f'\n{t.__name__}: {t.__doc__.strip().splitlines()[0]}')
+        t0 = time.perf_counter()
+        try:
+            t()
+        except Exception as e:                      # record and go on
+            RECORD.append((code, f'EXCEPTION {type(e).__name__}: {e}', 0, 0, 0, 0, False))
+            print(f'  [FAIL] exception: {type(e).__name__}: {e}')
+            import traceback
+            print('    ' + traceback.format_exc().strip().splitlines()[-3].strip())
+        print(f'  ({time.perf_counter() - t0:.1f} s)')
+    ops.wipe()
+    n_fail = sum(not r[-1] for r in RECORD)
+    print(f'\n{len(RECORD)} checks, {len(RECORD) - n_fail} passed, {n_fail} failed '
+          f'({time.perf_counter() - t_all:.0f} s)')
+    for r in RECORD:
+        if not r[-1]:
+            print(f'  FAILED {r[0]} {r[1]}: got {r[2]:.6g}, ref {r[3]:.6g}, err {r[4]:.2e}, tol {r[5]:.0e}')
+    sys.stdout = sys.__stdout__
+    if a.log:
+        Path(a.log).write_text(buf.getvalue(), encoding='utf-8')
+    raise SystemExit(1 if n_fail else 0)
+
+
+if __name__ == '__main__':
+    main()

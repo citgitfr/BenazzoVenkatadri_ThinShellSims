@@ -1,0 +1,16 @@
+Analysis initiated from SIMULIA established products
+Abaqus JOB ctm_axial_r25p62_a90_RIKS
+Abaqus 2020
+Successfully checked out QSD/50 from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+Successfully checked out QXT/50 from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+Abaqus License Manager checked out the following licenses:
+Abaqus/Standard checked out 50 tokens from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com.
+<521 out of 1200 licenses remain available>.
+Begin Analysis Input File Processor
+11/10/2026 5:43:40 PM
+Run pre.exe
+11/10/2026 5:43:48 PM
+End Analysis Input File Processor
+Begin Abaqus/Standard Analysis
+11/10/2026 5:43:48 PM
+Run standard.exe

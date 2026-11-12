@@ -1,0 +1,37 @@
+{
+ "constraints": [
+  {
+   "name": "boom length",
+   "text": "boom length 1000 mm (requirements.json)",
+   "expr": "L",
+   "op": "==",
+   "limit": 1000,
+   "tol": 0.01,
+   "units": "mm"
+  },
+  {
+   "name": "bending stiffness",
+   "text": "transverse tip load of 1 N in opposite-sense bending with a maximum tip deflection of 2 cm (k >= 1 N / 20 mm = 0.05 N/mm), no material failure",
+   "expr": "abs(force_z) / abs(tip_uz)",
+   "op": ">=",
+   "limit": 0.05,
+   "units": "N/mm"
+  },
+  {
+   "name": "buckling",
+   "text": "the 1 N opposite-sense tip load must not induce buckling: root moment 1 N x 1000 mm = 1000 N mm; phase B only, perfect boom, stop once past it",
+   "expr": "buckling_load",
+   "op": ">=",
+   "limit": 1000,
+   "units": "N mm"
+  },
+  {
+   "name": "coiling on hub",
+   "text": "must coil around a hub with a 4 cm radius without material failure",
+   "expr": "F_hub",
+   "op": "<",
+   "limit": 1,
+   "units": "-"
+  }
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "top": [
+  {
+   "design": "L002/Y002/T003",
+   "rank": 8,
+   "material": "L002",
+   "layup": "Y002",
+   "geometry": "T003",
+   "h_mm": 0.35,
+   "mass_kg": 347.37084983623913,
+   "k_cal": 381.6430422243964,
+   "buckling_cal": 457.0877547832389,
+   "F_flat": 0.015143061160966993,
+   "F_hub": 0.166335807082815,
+   "n_angles": 1,
+   "predicted_feasible": false
+  }
+ ],
+ "explore": [],
+ "iteration": 7
+}

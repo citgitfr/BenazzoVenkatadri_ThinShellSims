@@ -1,0 +1,22 @@
+Successfully checked out QAE/1 from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+Successfully checked out QAX/1 from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+Abaqus License Manager checked out the following license:
+"QAE" from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+<8 out of 11 licenses remain available>.
+shell normal flipped on the face through [-40.7654962282387, 0.0]
+shell normal flipped on the face through [40.7654962282387, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0.008 mm); scale S = 500
+   shape written: ctm_axial_r25p62_a90_shape_LBA_mode1.csv
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+   mode 1: eigenvalue 1.0144 -> 507.2
+   mode 2: eigenvalue 1.0144 -> 507.2
+   mode 3: eigenvalue 1.0144 -> 507.2
+   mode 4: eigenvalue 1.0144 -> 507.2
+
+=== 2. NLB (nonlinear preload f x LBA, then *BUCKLE about the deformed state)
+   f = 0.50: preload 253.6 + perturbation ['253.5', '253.5', '253.5', '253.5'] -> critical 507.075
+   f = 0.80: preload 405.76 + perturbation ['101.2', '101.2', '101.2', '101.2'] -> critical 506.965
+   f = 0.95: preload 481.84 + perturbation ['25.07', '25.08', '25.09', '25.1'] -> critical 506.909
+
+=== 3. RIKS with the LBA mode-1 imperfection (0.008 mm)

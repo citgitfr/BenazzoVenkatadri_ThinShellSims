@@ -1,0 +1,28 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe failure-check/failure_check.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it001\results\it001_L001_Y001_T001.npz" --boom T001 --flatten-radius 20.0
+
+S23 = Yc/2 (default)
+boom T001 (TS)
+web facets: 0 of 2600 (no web (T001 is a TS))
+Hashin 2D check: it001_L001_Y001_T001  [[0/0/0] h = 0.105 mm], 2600 facets, Gauss points, 3 points through each ply
+rank         F        R  facet        x        y        z ply  theta     at         s1         s2        t12  mode
+   1 0.0003702    51.97      0      2.5   -19.71    17.61   1      0 bottom      47.68    0.06134     0.2374  fibre tension
+   2 0.0003702    51.97   2400      2.5    19.71    17.61   1      0 bottom      47.68    0.06134    -0.2374  fibre tension
+   3 0.0003697    52.01      0      2.5   -19.71    17.61   1      0 bottom      47.69     0.5645     0.2253  fibre tension
+   4 0.0003697    52.01   2400      2.5    19.71    17.61   1      0 bottom      47.69     0.5645    -0.2253  fibre tension
+   5 0.0003681    52.12      0      2.5   -19.71    17.61   1      0 middle      47.58    0.07284     0.2257  fibre tension
+   6 0.0003681    52.12   2400      2.5    19.71    17.61   1      0 middle      47.58    0.07284    -0.2257  fibre tension
+   7 0.0003678    52.14      0      2.5   -19.71    17.61   1      0 middle      47.59     0.5663     0.2177  fibre tension
+   8 0.0003678    52.14   2400      2.5    19.71    17.61   1      0 middle      47.59     0.5663    -0.2177  fibre tension
+   9 0.0003661    52.26      0      2.5   -19.71    17.61   2      0 bottom      47.49    0.08433     0.2141  fibre tension
+  10 0.0003661    52.26      0      2.5   -19.71    17.61   1      0    top      47.49    0.08433     0.2141  fibre tension
+Per ply (max over the model):
+  ply  1 (     0 deg, z -0.0525..-0.0175): max F 0.0003702 (fibre tension), min R 51.97, max |s1| 47.69, max |s2| 0.5717, max |t12| 0.3559 MPa
+  ply  2 (     0 deg, z -0.0175..+0.0175): max F 0.0003661 (fibre tension), min R 52.26, max |s1| 47.49, max |s2| 0.5718, max |t12| 0.364 MPa
+  ply  3 (     0 deg, z +0.0175..+0.0525): max F 0.0003623 (fibre tension), min R 52.54, max |s1| 47.3, max |s2| 0.5754, max |t12| 0.3756 MPa
+MAX F = 0.0003702 -> no failure predicted (fibre tension); min strength ratio R = 51.97 (at the max F point: 51.97; facet 0, i = 0, j = 0, ply 1, bottom)
+Coiling check: flange [[0/0/0] h = 0.105 mm] flattened from r = 20 mm (given with --flatten-radius): k = +0.05 1/mm transverse (k_xx = k_xy = 0, N = 0), eps0 = [3.52e-22, -9.41e-20, -0]
+  max F = 0.1363 (matrix tension), R = 2.709, ply 3 (0 deg), top: s1 7.466, s2 23.63, t12 0 MPa
+  ply  1 (     0 deg, z -0.0525..-0.0175): max F 0.006839
+  ply  2 (     0 deg, z -0.0175..+0.0175): max F 0.01514
+  ply  3 (     0 deg, z +0.0175..+0.0525): max F 0.1363
+GOVERNING F = 0.1363 from the coiling (flattening the flange) -> no failure predicted

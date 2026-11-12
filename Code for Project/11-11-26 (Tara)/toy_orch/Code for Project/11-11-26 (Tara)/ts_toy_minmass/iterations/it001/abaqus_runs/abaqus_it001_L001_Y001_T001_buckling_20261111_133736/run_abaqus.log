@@ -1,0 +1,30 @@
+$ C:\SIMULIA\Commands2026\abaqus.BAT cae noGUI=abaqus_it001_L001_Y001_T001_buckling.py
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it001\abaqus_runs\abaqus_it001_L001_Y001_T001_buckling_20261111_133736)
+Successfully checked out QAE/1 from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+Successfully checked out QAX/1 from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+Abaqus License Manager checked out the following license:
+"QAE" from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+<8 out of 11 licenses remain available>.
+shell normal flipped on the face through [0.0, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0 mm); scale S = 1037.47
+   shape written: it001_L001_Y001_T001_buc_shape_LBA_mode1.csv
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+   mode 1: eigenvalue 4.1791 -> 4335.7
+   mode 2: eigenvalue 4.1792 -> 4335.81
+   mode 3: eigenvalue 4.1857 -> 4342.55
+   mode 4: eigenvalue 4.1858 -> 4342.66
+
+=== 2. NLB (nonlinear preload f x LBA, then *BUCKLE about the deformed state)
+   f = 0.50: no result (Cannot open file F:/Tara/BenazzoVenkatadri_ThinShellSims/Code for Project/11-11-26 (Tara)/toy_orch/Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/abaqus_runs/abaqus_it001_L001_Y001_T001_buckling_20261111_133736/it001_L001_Y001_T001_buc_NLB50.odb. *** ERROR: No such file: F:/Tara/BenazzoVenkatadri_ThinShellSims/Code for Project/11-11-26 (Tara)/toy_orch/Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/abaqus_runs/abaqus_it001_L001_Y001_T001_buckling_20261111_133736/it001_L001_Y001_T001_buc_NLB50.odb.) - the preload may be beyond the instability
+   f = 0.80: no result (Cannot open file F:/Tara/BenazzoVenkatadri_ThinShellSims/Code for Project/11-11-26 (Tara)/toy_orch/Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/abaqus_runs/abaqus_it001_L001_Y001_T001_buckling_20261111_133736/it001_L001_Y001_T001_buc_NLB80.odb. *** ERROR: No such file: F:/Tara/BenazzoVenkatadri_ThinShellSims/Code for Project/11-11-26 (Tara)/toy_orch/Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/abaqus_runs/abaqus_it001_L001_Y001_T001_buckling_20261111_133736/it001_L001_Y001_T001_buc_NLB80.odb.) - the preload may be beyond the instability
+   f = 0.95: no result (Cannot open file F:/Tara/BenazzoVenkatadri_ThinShellSims/Code for Project/11-11-26 (Tara)/toy_orch/Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/abaqus_runs/abaqus_it001_L001_Y001_T001_buckling_20261111_133736/it001_L001_Y001_T001_buc_NLB95.odb. *** ERROR: No such file: F:/Tara/BenazzoVenkatadri_ThinShellSims/Code for Project/11-11-26 (Tara)/toy_orch/Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/abaqus_runs/abaqus_it001_L001_Y001_T001_buckling_20261111_133736/it001_L001_Y001_T001_buc_NLB95.odb.) - the preload may be beyond the instability
+
+=== 3. RIKS with the LBA mode-1 imperfection (0 mm)
+OdbError: Cannot open file F:/Tara/BenazzoVenkatadri_ThinShellSims/Code for Project/11-11-26 (Tara)/toy_orch/Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/abaqus_runs/abaqus_it001_L001_Y001_T001_buckling_20261111_133736/it001_L001_Y001_T001_buc_RIKS.odb. *** ERROR: No such file: F:/Tara/BenazzoVenkatadri_ThinShellSims/Code for Project/11-11-26 (Tara)/toy_orch/Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/abaqus_runs/abaqus_it001_L001_Y001_T001_buckling_20261111_133736/it001_L001_Y001_T001_buc_RIKS.odb.
+File "abaqus_it001_L001_Y001_T001_buckling.py", line 10643, in <module>
+    odb = openOdb(job + '.odb', readOnly=True)
+
+Abaqus Error: cae exited with an error.
+$ C:\SIMULIA\Commands2026\abaqus.BAT python F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\.claude\verification\odb_extract.py it001_L001_Y001_T001_buc_LBA.odb it001_L001_Y001_T001_buc_LBA_odb.npz
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it001\abaqus_runs\abaqus_it001_L001_Y001_T001_buckling_20261111_133736)

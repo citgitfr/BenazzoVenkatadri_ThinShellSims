@@ -1,0 +1,6 @@
+{"name": "ts_L001_90_opp_moment_buckling",
+ "laminate": {"catalog": "L001", "layup": "[90/90/90]"},
+ "geometry": {"L": 200, "section": {"type": "arc", "R": 20, "b": 62.83185307}, "size": 2.5},
+ "load": {"type": "bending", "axis": "y", "sign": 1},
+ "A": {"step": 0.002, "max": 0.1, "n_coarse": 8},
+ "B": {"step": 0.01, "max": 0.15, "amplitude": 0.0105, "control": "disp"}}

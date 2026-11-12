@@ -1,0 +1,22 @@
+$ C:\SIMULIA\Commands2026\abaqus.BAT cae noGUI=abaqus_it001_L001_Y001_T001.py
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it001\abaqus_runs\abaqus_it001_L001_Y001_T001_20261111_133058)
+Successfully checked out QAE/1 from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+Successfully checked out QAX/1 from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+Abaqus License Manager checked out the following license:
+"QAE" from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+<8 out of 11 licenses remain available>.
+shell normal flipped on the face through [0.0, 0.0]
+ODB extraction: done by run_abaqus.py after this script (abaqus python odb_extract.py)
+=== it001_L001_Y001_T001_S4R_5mm: S4R, 5 mm mesh, 2600 elements, 2814 nodes
+Report node displacement (final frame)
+[PASS] uz                                 Abaqus = -8.8229   OpenSees = -8.5963   diff = -2.64%
+[PASS] ry                                 Abaqus = +0.013112   OpenSees = +0.012773   diff = +2.65%
+[PASS] max |u_i| over the model [mm]      Abaqus = +8.8229   OpenSees = +8.5963   diff = +2.64%
+Top-ply top-surface stress, ply axes [MPa] (section point 9), largest magnitude
+[PASS] s1 (S11)                           Abaqus = +42.594   OpenSees = +41.72   diff = +2.09%
+[CHECK] s2 (S22)                           Abaqus = -0.30356   OpenSees = +0.34928   diff = -186.91%
+[PASS] t12 (S12)                          Abaqus = -0.37865   OpenSees = -0.37044   diff = -2.22%
+
+SOME COMPARISONS DIFFER BY MORE THAN 3% (see CHECK lines)
+$ C:\SIMULIA\Commands2026\abaqus.BAT python F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\.claude\verification\odb_extract.py it001_L001_Y001_T001_S4R_5mm.odb it001_L001_Y001_T001_S4R_5mm_odb.npz
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it001\abaqus_runs\abaqus_it001_L001_Y001_T001_20261111_133058)

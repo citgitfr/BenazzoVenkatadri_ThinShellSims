@@ -1,0 +1,29 @@
+# UD lamina property catalog (readable units: GPa, MPa, mm) -- TOY CATALOG for the Tape Spring Baseline demo.
+# Same format as .claude/memory.material_property_catalog/UD_lamina_catalog_readable.txt (do not mix with it).
+# SI twin: UD_lamina_catalog_SI.txt (generated from this file by
+# .claude/memory.material_property_catalog/lamina_catalog_to_SI.py; do not edit the SI file by hand).
+#
+# Columns: ID | Fiber | Polymer system | E1 | E2 | G12 | nu12 | nu23 | G23 | Xc | Xt | Yc | Yt | S12 | t_ply | rho | Source
+#   Xc/Xt = longitudinal compressive/tensile strength, Yc/Yt = transverse compressive/tensile strength,
+#   S12 = in-plane shear strength. Strengths are positive magnitudes.
+#   NA = not reported by the source.  * = estimate, not measured:
+#     nu23* : matrix-dominated default (0.45 carbon/epoxy).
+#     G23*  : G23 = E2 / (2 (1 + nu23))  (transverse isotropy, same relation as PlyPropertyGenerator).
+#   Conditions are room temperature dry/ambient, mean (not B-basis) values unless noted.
+#
+# Per-ID notes
+#  L001 Copy of the real catalog row L001 (IM7/8552, NCAMP CAM-RP-2009-015 Rev A Table 2-1, RTD mean. E1/Xt/Xc
+#       normalized to CPT 0.0072 in; Xc = UNC0 back-out; S12 at 5% strain (0.2% offset: 53.5 MPa). Vf ~59%).
+#  L002 TOY: L001 with 1000x the density (1.58 -> 1580 g/cm3). All other columns as L001.
+#  L003 TOY: L001 with every strength (Xc, Xt, Yc, Yt, S12) scaled by 0.001. All other columns as L001.
+#
+# Density (rho, cured/consolidated lamina, g/cm3)
+#  L001 NCAMP report: mean of the "Comp. density" (D792) values of all test groups.
+#  L002 is NOT physical (toy); lamina_catalog_to_SI.py warns that it is outside 1.1-2.3 g/cm3, expected.
+#
+# PLY THICKNESS: t_ply = 0.035 mm (as every row of the real catalog; original L001 ply thickness 0.183 mm).
+#
+ID     Fiber   Polymer_system                                    E1_GPa   E2_GPa   G12_GPa   nu12    nu23    G23_GPa   Xc_MPa   Xt_MPa   Yc_MPa   Yt_MPa   S12_MPa   t_ply_mm   rho_g/cm3   Source
+L001   IM7     Hexcel HexPly 8552 epoxy (NCAMP)                  158.5    8.95     4.67      0.316   0.45*   3.09*     1716     2501     285.7    64.0     91.1      0.035      1.58        https://energy.ornl.gov/CFCrush/materials/uou/CAM-RP-2009-015_Rev_A_April_22_2011_Hexcel_8552_IM7_Uni_Data_Report.pdf ; https://www.wichita.edu/industry_and_defense/NIAR/Research/hexcel-8552/IM7-Unitape-2.pdf
+L002   IM7     Hexcel HexPly 8552 epoxy (TOY rho x1000)          158.5    8.95     4.67      0.316   0.45*   3.09*     1716     2501     285.7    64.0     91.1      0.035      1580        toy variant of L001 (density x 1000)
+L003   IM7     Hexcel HexPly 8552 epoxy (TOY strengths x0.001)   158.5    8.95     4.67      0.316   0.45*   3.09*     1.716    2.501    0.2857   0.064    0.0911    0.035      1.58        toy variant of L001 (strengths x 0.001)

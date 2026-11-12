@@ -1,0 +1,25 @@
+# Layup catalog -- TOY CATALOG for the Tape Spring Baseline demo.
+# Same format as .claude/memory.layup_catalog/layup_catalog.txt (do not mix with it). Written by hand (3 rows).
+#
+# Contents: 3 symmetric layups chosen for the demo. Unlike the real catalog, Y003 has no 0 ply and Y002 has
+#   10 plies (the real catalog rule is 3-5 plies with at least one 0 ply).
+#
+# Columns
+#   ID         Y001, Y002, ...
+#   n_plies    number of plies
+#   layup      full stacking sequence, bottom (-z) to top (+z), angles in deg from the shell x axis (extrusion
+#              axis), CCW about the normal. Pass it as is: laminate_properties.py --layup "[0/0/0]".
+#   h_mm       laminate thickness with t_ply = 0.035 mm (the t_ply of every material-catalog row).
+#   n_angles   number of distinct angles = coincident ASDShellQ4 elements per facet (run cost grows with it).
+#   angles     the distinct angles.
+#   cross_ply  yes if only 0 and 90 plies (A16 = A26 = D16 = D26 = 0, no extension-shear or bend-twist coupling).
+#   balanced   yes if every +theta ply has a -theta partner (A16 = A26 = 0, no extension-shear coupling).
+#
+# Mechanics to keep in mind when picking
+#   - All three are unidirectional and symmetric: B = 0, A16 = A26 = D16 = D26 = 0.
+#   - Y003 has its fibres around the tape cross-section (90 deg): low axial stiffness, high transverse stiffness.
+#
+ID     n_plies   layup                   h_mm    n_angles   angles   cross_ply   balanced
+Y001   3         [0/0/0]                 0.105   1          0        yes         yes
+Y002   10        [0/0/0/0/0/0/0/0/0/0]   0.350   1          0        yes         yes
+Y003   3         [90/90/90]              0.105   1          90       yes         yes

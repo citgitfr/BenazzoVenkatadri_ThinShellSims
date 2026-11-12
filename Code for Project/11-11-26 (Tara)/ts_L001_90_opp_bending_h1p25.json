@@ -1,0 +1,10 @@
+{
+ "name": "ts_L001_90_opp_bending_h1p25",
+ "laminate": {"catalog": "L001", "layup": "[90/90/90]"},
+ "geometry": {"L": 1000, "section": {"type": "arc", "R": 20, "b": 62.83185307}, "size": 1.25},
+ "element": {"type": "ASDShellQ4", "corotational": false},
+ "supports": [{"edge": "x0", "dofs": [1, 1, 1, 1, 1, 1]}, {"rigid_end": "xL"}],
+ "loads": [{"node": {"rigid": "xL"}, "force": [0, 0, -1]}],
+ "analysis": {"type": "linear"},
+ "report_node": {"rigid": "xL"}
+}

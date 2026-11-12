@@ -1,0 +1,48 @@
+Analysis initiated from SIMULIA established products
+Abaqus JOB it001_L001_Y001_T001_buc_NLB50
+Abaqus 2026
+!!! EXCEPTION:
+!!!   System Error CreateDirectory: The filename or extension is too long.
+
+!!! TRACEBACK:
+!!!   SMASimUttFileUtils::MakeDir
+!!!   SMASimFileCleaner::Setup
+!!!   SMASimFileCleaner_Setup
+!!!   ffi_prep_go_closure
+!!!   ffi_call_go
+!!!   ffi_call
+!!!   <stack frame not available>
+!!!   <stack frame not available>
+!!!   <stack frame not available>
+!!!   PyObject_MakeTpCall
+!!!   PyEval_EvalFrameDefault
+!!!   PyEval_Vector
+!!!   PyFunction_Vectorcall
+!!!   PyCell_Set
+!!!   PyCell_Set
+!!!   PyEval_EvalFrameDefault
+!!!   PyEval_Vector
+!!!   PyFunction_Vectorcall
+!!!   PyCell_Set
+!!!   PyCell_Set
+!!!   PyEval_EvalFrameDefault
+!!!   PyEval_Vector
+!!!   PyEval_EvalCode
+!!!   PyErr_Display
+!!!   PyErr_Display
+!!!   PyErr_Display
+!!!   PyRun_SimpleFileObject
+!!!   PyRun_AnyFileObject
+!!!   Py_RunMain
+!!!   Py_RunMain
+!!!   Py_RunMain
+!!!   Py_RunMain
+!!!   Py_Main
+!!!   <stack frame not available>
+!!!   <stack frame not available>
+!!!   <stack frame not available>
+!!!   BaseThreadInitThunk
+!!!   RtlUserThreadStart
+b'System Error CreateDirectory: The filename or extension is too long.\r\n'
+simFileCleaner.SimFileCleanerException: System Error CreateDirectory: The filename or extension is too long.
+

@@ -1,0 +1,18 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe objective-constraints/objective_constraints.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it001\convergence\results\it001_L001_Y001_T001_fine.npz" --constraints "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\constraints.json" --boom T001 --flatten-radius 20.0 --json "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it001\convergence\objcon_fine.json" --value F_hub=0.1827566987998944
+
+Objective / constraints: it001_L001_Y001_T001_fine  [[0/0/0] h = 0.105 mm]
+OBJECTIVE  minimize mass: 0.0104141 kg (10.41 g)
+CONSTRAINTS (g <= 0 is satisfied; g_rel = g / |limit|)
+  [satisfied    ] no failure: F_governing < 1.0  value 0.136288, limit 1, g -0.863712, g_rel -0.863712
+  [satisfied    ] boom length: L == 1000  value 1000, limit 1000, g -0.01, g_rel -1e-05
+  [satisfied    ] bending stiffness: abs(force_z) / abs(tip_uz) >= 0.05  value 0.117173, limit 0.05, g -0.0671726, g_rel -1.34345
+  [not evaluated] buckling: buckling_load >= 1000  -- not evaluated: buckling_load not available (not in a static results file: run the shell-buckling skill and pass --value buckling_load=...)
+  [satisfied    ] coiling on hub: F_hub < 1  value 0.182757, limit 1, g -0.817243, g_rel -0.817243
+FEASIBLE: unknown (constraints not evaluated)
+  note: web facets: 0 of 6993 (no web (T001 is a TS))
+  note: catalog L001 rho = 1580 kg/m^3
+  note: tip = free end xL: rigid end master node at xL
+  note: S23 = Yc/2 (default)
+  note: coiling: flange flattened from r = 20 mm (given with --flatten-radius), F = 0.1363 (matrix tension)
+  note: critical point of the simulation: {'group': 'flange', 'facet': 0, 'i': 0, 'j': 0, 'ply': 1, 'theta': 0.0, 'at': 'bottom', 'mode': 'fibre tension', 's1_s2_t12': [49.427974437350564, 0.13488365328882493, 0.33801097924729795]}
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it001\convergence\objcon_fine.json

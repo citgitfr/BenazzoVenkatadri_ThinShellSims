@@ -1,0 +1,21 @@
+S23 = Yc/2 (default)
+web facets: 0 of 10000 (no web (no catalog boom given))
+Hashin 2D check: ts_L001_90_axial  [[90/90/90] h = 0.105 mm], 10000 facets, Gauss points, 3 points through each ply
+rank         F        R  facet        x        y        z ply  theta     at         s1         s2        t12  mode
+   1 0.0005764    41.65   5198    996.2 1.665e-15  0.03947   3     90    top   -0.04494      1.537  5.481e-09  matrix tension
+   2 0.0005764    41.65   5198    996.2 1.665e-15  0.03947   3     90    top   -0.04494      1.537 -5.479e-09  matrix tension
+   3 0.0005764    41.65   4801     3.75 1.665e-15  0.03947   3     90    top   -0.04494      1.537  5.474e-09  matrix tension
+   4 0.0005764    41.65   4801     3.75 1.665e-15  0.03947   3     90    top   -0.04494      1.537 -5.486e-09  matrix tension
+   5 0.0005764    41.65   5198    996.2 1.665e-15  0.03947   3     90    top   -0.04056      1.537  5.481e-09  matrix tension
+   6 0.0005764    41.65   5198    996.2 1.665e-15  0.03947   3     90    top   -0.04056      1.537 -5.479e-09  matrix tension
+Per ply (max over the model):
+  ply  1 (    90 deg, z -0.0525..-0.0175): max F 0.0005749 (matrix tension), min R 41.71, max |s1| 0.37, max |s2| 1.534, max |t12| 0.01275 MPa
+  ply  2 (    90 deg, z -0.0175..+0.0175): max F 0.0005666 (matrix tension), min R 42.01, max |s1| 0.3679, max |s2| 1.523, max |t12| 0.0112 MPa
+  ply  3 (    90 deg, z +0.0175..+0.0525): max F 0.0005764 (matrix tension), min R 41.65, max |s1| 0.3658, max |s2| 1.537, max |t12| 0.01004 MPa
+MAX F = 0.0005764 -> no failure predicted (matrix tension); min strength ratio R = 41.65 (at the max F point: 41.65; facet 5198, i = 398, j = 12, ply 3, top)
+Coiling check: flange [[90/90/90] h = 0.105 mm] flattened from r = 20 mm (smallest arc radius of the case cross-section): k = -0.05 1/mm transverse (k_xx = k_xy = 0, N = 0), eps0 = [-3.35e-21, 8.5e-20, -2.99e-36]
+  max F = 0.05946 (fibre compression), R = 4.101, ply 3 (90 deg), top: s1 -418.4, s2 -7.466, t12 -1.501e-15 MPa
+  ply  1 (    90 deg, z -0.0525..-0.0175): max F 0.02799
+  ply  2 (    90 deg, z -0.0175..+0.0175): max F 0.006606
+  ply  3 (    90 deg, z +0.0175..+0.0525): max F 0.05946
+GOVERNING F = 0.05946 from the coiling (flattening the flange) -> no failure predicted

@@ -1,0 +1,11 @@
+1000 x 628.319 mm shell, arc R = 200 mm (180.0 deg); 200 x 126 = 25200 quads of 5 x 4.99 mm, 25527 nodes
+25200 elements, 153174 DOFs; linear solved in 15.9 s
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it006\axial_check\results\it006_L002_Y001_T003_axial.npz
+report node 25529: u = [0.000956, 0.0, -0.0, 0.0, 0.0, 0.0]
+max |u| = 0.000956269 mm
+laminate piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it006\axial_check\it006_L002_Y001_T003_axial_code\laminate_code.py
+    mesh piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it006\axial_check\it006_L002_Y001_T003_axial_code\mesh_code.py
+      bc piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it006\axial_check\it006_L002_Y001_T003_axial_code\bc_code.py
+joined script: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it006\axial_check\it006_L002_Y001_T003_axial_opensees.py (51184 lines)
+it006_L002_Y001_T003_axial_opensees.py ran in 23.7 s
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology

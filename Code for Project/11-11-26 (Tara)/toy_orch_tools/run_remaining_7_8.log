@@ -1,0 +1,143 @@
+iteration 7: L002/Y003/T003 (TS R 200 mm, b 628.3 mm, Y003 = [90/90/90], h 0.10499999999999998 mm, L 1000 mm, element size 5.0 mm)
+case: Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it007/case.json
+NEXT: study.py run 7 --step laminate
+laminate L002 [90/90/90]: ABD check A 4.9e-17, B 1.1e-17, D 4.4e-03 (expected ~4.4e-03) -> OK
+NEXT: study.py run 7 --step model
+assembled + ran Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it007/it007_L002_Y003_T003_opensees.py -> Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it007/results/it007_L002_Y003_T003.npz (OK; log Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it007/logs/model.log)
+NEXT: study.py run 7 --step visualize
+picture Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it007/results/it007_L002_Y003_T003.png: READ IT before going on (deformed shape, supports, load direction)
+NEXT: study.py run 7 --step failure
+failure-check: GOVERNING F = 0.0005946 (log Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it007/logs/failure.log)
+NEXT: study.py run 7 --step buckling
+buckling: B LOWER BOUND: path passed the cutoff 1000 (= 1 x requirement) still rising; stopped there by design [perfect boom (zero imperfection amplitude), B only: user request] = 1501.7662684918475 (A None, B 1501.7662684918475, imperfection none; phase A not run and no imperfection: phase B on the perfect boom (user request); Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it007/buckling/it007_L002_Y003_T003_buck.json, picture Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it007/buckling/it007_L002_Y003_T003_buck.png)
+NEXT: study.py run 7 --step objcon
+objective-constraints -> Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it007/objcon.json
+NEXT: study.py record 7
+ "F_axial": 5.887e-06,
+ "passes": true
+iteration 7 recorded: L002/Y003/T003  mass 104.23534425230648 kg, k_FE 6.361350695023981 N/mm (beam theory 6.702, ratio 0.9491029881087552), buckling 1501.7662684918475 (B LOWER BOUND: path passed the cutoff 1000 (= 1 x requirement) still rising; stopped there by design [perfect boom (zero imperfection amplitude), B only: user request]), F_governing 0.0005945577291951203, F_hub 0.038514665502730784, feasible True
+constraints: no failure: satisfied (g_rel -0.9994054422708049); boom length: satisfied (g_rel -1e-05); bending stiffness: satisfied (g_rel -126.22701390047962); buckling: satisfied (g_rel -0.5017662684918476); coiling on hub: satisfied (g_rel -0.9614853344972693)
+NEXT: study.py candidates  ->  choose material, then geometry, then layup  ->  study.py choose ...
+iteration 8: L002/Y002/T003 (TS R 200 mm, b 628.3 mm, Y002 = [0/0/0/0/0/0/0/0/0/0], h 0.35 mm, L 1000 mm, element size 5.0 mm)
+case: Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it008/case.json
+NEXT: study.py run 8 --step laminate
+laminate L002 [0/0/0/0/0/0/0/0/0/0]: ABD check A 2.6e-16, B 5.3e-16, D 2.5e-03 (expected ~2.5e-03) -> OK
+NEXT: study.py run 8 --step model
+assembled + ran Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it008/it008_L002_Y002_T003_opensees.py -> Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it008/results/it008_L002_Y002_T003.npz (OK; log Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it008/logs/model.log)
+NEXT: study.py run 8 --step visualize
+picture Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it008/results/it008_L002_Y002_T003.png: READ IT before going on (deformed shape, supports, load direction)
+NEXT: study.py run 8 --step failure
+failure-check: GOVERNING F = 0.01514 (log Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it008/logs/failure.log)
+NEXT: study.py run 8 --step buckling
+buckling: B LOWER BOUND: path passed the cutoff 1000 (= 1 x requirement) still rising; stopped there by design [perfect boom (zero imperfection amplitude), B only: user request] = 1501.9273095544368 (A None, B 1501.9273095544368, imperfection none; phase A not run and no imperfection: phase B on the perfect boom (user request); Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it008/buckling/it008_L002_Y002_T003_buck.json, picture Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it008/buckling/it008_L002_Y002_T003_buck.png)
+NEXT: study.py run 8 --step objcon
+objective-constraints -> Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it008/objcon.json
+NEXT: study.py record 8
+ "F_axial": 4.088e-10,
+ "passes": true
+iteration 8 recorded: L002/Y002/T003  mass 347.4511475076883 kg, k_FE 206.94946807727766 N/mm (beam theory 395.7, ratio 0.5230501611023981), buckling 1501.9273095544368 (B LOWER BOUND: path passed the cutoff 1000 (= 1 x requirement) still rising; stopped there by design [perfect boom (zero imperfection amplitude), B only: user request]), F_governing 0.015143061160966986, F_hub 0.166335807082815, feasible True
+constraints: no failure: satisfied (g_rel -0.984856938839033); boom length: satisfied (g_rel -1e-05); bending stiffness: satisfied (g_rel -4137.989361545553); buckling: satisfied (g_rel -0.5019273095544368); coiling on hub: satisfied (g_rel -0.833664192917185)
+SANITY FLAGS (investigate before using this result; it is excluded from best and calibration):
+  - tip stiffness -47.7% from thin-walled beam theory (tolerance 15%)
+  - FE/beam ratio 0.523 differs > 5% from the Abaqus-verified iteration 1 (0.980)
+NEXT: STOP recommended (no untried candidate left): run study.py finalize (verifications first if needed)
+{
+ "study": "Code for Project/11-11-26 (Tara)/ts_toy_minmass",
+ "created": "2026-11-11T13:23:27",
+ "req_hash": "28ca3474a92f",
+ "phase": "recorded",
+ "iteration": 8,
+ "max_iterations": 100,
+ "steps": [
+  "laminate",
+  "model",
+  "visualize",
+  "failure",
+  "buckling",
+  "objcon"
+ ],
+ "iter_steps_done": [
+  "laminate",
+  "model",
+  "visualize",
+  "failure",
+  "buckling",
+  "objcon"
+ ],
+ "best": {
+  "iter": 1,
+  "design": "L001/Y001/T001",
+  "objective": 0.010398458320442117,
+  "improvement": null
+ },
+ "best_history": [
+  0.010398458320442117,
+  0.010398458320442117,
+  0.010398458320442117,
+  0.010398458320442117,
+  0.010398458320442117,
+  0.010398458320442117,
+  0.010398458320442117,
+  0.010398458320442117
+ ],
+ "calib": {
+  "k": [
+   0.9800486697688066,
+   0.9800486697688066,
+   0.9491029881087552,
+   0.9491029881087552
+  ],
+  "b": []
+ },
+ "verification": {
+  "min": 5,
+  "max": 10,
+  "records": [
+   {
+    "iter": 1,
+    "design": "L001/Y001/T001",
+    "type": "TS",
+    "status": "done",
+    "verdict": "agree",
+    "requested": "2026-11-11T13:30:48",
+    "k_ratio": 0.9800486697688066,
+    "objective": 0.010398458320442117,
+    "instructions": "Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/abaqus_it001_L001_Y001_T001_instructions.txt",
+    "comparison": "Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it001/it001_L001_Y001_T001_S4R_5mm_verification.md",
+    "note": "Comparator: tip uz/ry within 2.65% (uniform; S4R vs ASDShellQ4), ply s1/t12 within 2.2%; CHECK lines from a compare_results.py curvature pairing bug (kxx<->SK2), near-zero s2/N22, clamp boundary layer. Re-recorded: the first record was overwritten by a concurrent study.py process. Abaqus buckling (LBA 4336, Riks peak 1395 N mm on the perfect geometry) in ab/it001/."
+   },
+   {
+    "iter": 6,
+    "design": "L002/Y001/T003",
+    "type": "TS",
+    "status": "pending",
+    "verdict": null,
+    "requested": "2026-11-11T14:12:51",
+    "k_ratio": 0.5229095653455307,
+    "objective": 104.23534425230648,
+    "instructions": "Code for Project/11-11-26 (Tara)/ts_toy_minmass/iterations/it006/abaqus_it006_L002_Y001_T003_instructions.txt"
+   }
+  ]
+ },
+ "verification_due": null,
+ "convergence_due": null,
+ "converged": {
+  "1": {
+   "ok": true,
+   "size": 5.0,
+   "fine": 3.0,
+   "dk": 0.007247866776966649,
+   "dF": 0.09222386105198144
+  }
+ },
+ "stop": {
+  "recommended": true,
+  "why": "no untried candidate left"
+ },
+ "regression_record": "  FAILED T12 5 mm: max |h/L - saved| over all steps: got 0.00409636, ref 0, err 4.10e-03, tol 1e-06",
+ "custom": false,
+ "custom_stop": null,
+ "verification_schedule": "schedule"
+}
+designs evaluated: 8
+NEXT: STOP recommended (no untried candidate left): run study.py finalize (verifications first if needed)

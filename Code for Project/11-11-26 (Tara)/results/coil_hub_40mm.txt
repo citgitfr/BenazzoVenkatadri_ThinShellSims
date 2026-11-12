@@ -1,0 +1,13 @@
+Coiling check: flange [[0/0/0] h = 0.105 mm] flattened from r = 20 mm (tape-spring arc radius): k = +0.05 1/mm transverse (k_xx = k_xy = 0, N = 0), eps0 = [3.52e-22, -9.41e-20, -0]
+  max F = 0.1363 (matrix tension), R = 2.709, ply 3 (0 deg), top: s1 7.466, s2 23.63, t12 0 MPa
+  ply  1 (     0 deg, z -0.0525..-0.0175): max F 0.006839
+  ply  2 (     0 deg, z -0.0175..+0.0175): max F 0.01514
+  ply  3 (     0 deg, z +0.0175..+0.0525): max F 0.1363
+
+Coiling on a hub: R_hub = 40 mm, coil radius used 40 mm; flange r = 20 mm
+  k = [+0.0250, +0.0500, 0] 1/mm (opposite-sense combination): max F = 0.1828 (matrix tension), R = 2.339, ply 3 top: s1 216.7, s2 27.36, t12 0 MPa
+  k = [+0.0250, -0.0500, 0] 1/mm (equal-sense combination): max F = 0.09662 (matrix tension), R = 3.217, ply 1 bottom: s1 -201.7, s2 19.89, t12 0 MPa
+  k = [-0.0250, +0.0500, 0] 1/mm (equal-sense combination): max F = 0.09662 (matrix tension), R = 3.217, ply 3 top: s1 -201.7, s2 19.89, t12 0 MPa
+  k = [-0.0250, -0.0500, 0] 1/mm (opposite-sense combination): max F = 0.1828 (matrix tension), R = 2.339, ply 1 bottom: s1 216.7, s2 27.36, t12 0 MPa
+F_flat = 0.1363; F_hub (flatten + hub, worst of 4) = 0.1828 (matrix tension, strength ratio R = 2.339, ply 3 top, k = [0.025, 0.05, 0.0])
+COILING GOVERNING F = 0.1828 -> no failure predicted

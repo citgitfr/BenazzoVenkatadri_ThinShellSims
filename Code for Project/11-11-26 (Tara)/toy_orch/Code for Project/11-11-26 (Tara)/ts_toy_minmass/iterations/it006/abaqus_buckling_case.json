@@ -1,0 +1,77 @@
+{
+ "name": "it006_L002_Y001_T003_buck",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-11-26 (Tara)\\toy_orch\\Code for Project\\11-11-26 (Tara)\\ts_toy_minmass\\iterations\\it006\\lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "arc",
+   "R": 200,
+   "b": 628.318531
+  },
+  "size": 5.0
+ },
+ "supports": [
+  {
+   "rigid_end": "x0",
+   "dofs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "rigid_end": "xL",
+   "dofs": [
+    0,
+    1,
+    0,
+    1,
+    0,
+    1
+   ]
+  }
+ ],
+ "loads": [
+  {
+   "node": {
+    "rigid": "xL"
+   },
+   "moment": [
+    0,
+    1,
+    0
+   ]
+  }
+ ],
+ "buckling": {
+  "scale": 1501.8508717580164,
+  "n_modes": 4,
+  "preload_fractions": [
+   0.5,
+   0.8,
+   0.95
+  ],
+  "riks": {
+   "amplitude": 0.0,
+   "control": {
+    "rigid": "xL",
+    "dof": 5
+   },
+   "max_disp": 0.0001010971742932114,
+   "max_lpf": 2.0,
+   "max_inc": 300
+  },
+  "monitor": {
+   "rigid": "xL",
+   "dof": 5
+  }
+ },
+ "reference": {
+  "OpenSees B (ASDShellQ4 imperfect path peak)": 1501.8508717580164
+ }
+}

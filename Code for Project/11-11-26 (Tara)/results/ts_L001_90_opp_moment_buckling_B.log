@@ -1,0 +1,18 @@
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+  step   1: param  0.01, load factor  111.384, iters 11
+  step   2: param  0.02, load factor  222.213, iters 14
+  step   3: param  0.03, load factor  332.12, iters 16
+  step   4: param  0.04, load factor  440.838, iters 17
+  step   5: param  0.05, load factor  548.138, iters 20
+  step   6: param  0.06, load factor  653.807, iters 21
+  step   7: param  0.07, load factor  757.634, iters 23
+  step   8: param  0.08, load factor  859.393, iters 25
+  step   9: param  0.09, load factor  958.837, iters 28
+  step  10: param  0.1, load factor  1055.69, iters 31
+  step  11: param  0.11, load factor  1149.61, iters 36
+  step  12: param  0.12, load factor  1240.2, iters 40
+  step  13: param  0.13, load factor  1326.95, iters 51
+  step  14: param  0.14, load factor  1409.18, iters 60
+  step  15: param  0.15, load factor  1485.92, iters 75
+B (ASDShellQ4 imperfect path, amplitude 0 mm): peak 1485.9 at 0.15 (last point: path stopped or still rising); 332 s
+saved results\ts_L001_90_opp_moment_buckling.json

@@ -1,0 +1,12 @@
+Objective / constraints: ts_L001_opp_bending  [[0/0/0] h = 0.105 mm]
+OBJECTIVE  minimize mass: 0.0104169 kg (10.42 g)
+CONSTRAINTS (g <= 0 is satisfied; g_rel = g / |limit|)
+  [satisfied    ] no failure: F_governing < 1.0  value 0.136288, limit 1, g -0.863712, g_rel -0.863712
+  [satisfied    ] tip deflection report: abs(tip_uz) <= 1000000000.0  value 8.52305, limit 1e+09, g -1e+09, g_rel -1
+FEASIBLE: yes
+  note: catalog L001 rho = 1580 kg/m^3
+  note: tip = free end xL: rigid end master node at xL
+  note: S23 = Yc/2 (default)
+  note: coiling: flange flattened from r = 20 mm (smallest arc radius of the case cross-section), F = 0.1363 (matrix tension)
+  note: critical point of the simulation: {'group': 'flange', 'facet': 9600, 'i': 0, 'j': 24, 'ply': 1, 'theta': 0.0, 'at': 'bottom', 'mode': 'fibre tension', 's1_s2_t12': [49.97679631500495, 0.1606791911315727, -0.3848748059036441]}
+saved results\ts_L001_opp_bending_objcon.json

@@ -1,0 +1,66 @@
+shell normal flipped on the face through [0.0, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0 mm); scale S = 1037.47
+   shape written: it001_L001_Y001_T001_buc_shape_LBA_mode1.csv
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+   mode 1: eigenvalue 4.1791 -> 4335.7
+   mode 2: eigenvalue 4.1792 -> 4335.81
+   mode 3: eigenvalue 4.1857 -> 4342.55
+   mode 4: eigenvalue 4.1858 -> 4342.66
+
+=== 2. NLB (nonlinear preload f x LBA, then *BUCKLE about the deformed state)
+   f = 0.50: preload 2167.85 + perturbation [] -> critical nan
+   f = 0.80: preload 3468.56 + perturbation [] -> critical nan
+   f = 0.95: preload 4118.92 + perturbation [] -> critical nan
+
+=== 3. RIKS with the LBA mode-1 imperfection (0 mm)
+   shape written: it001_L001_Y001_T001_buc_shape_RIKS_peak.csv
+   shape written: it001_L001_Y001_T001_buc_shape_RIKS_last.csv
+   73 increments; peak LPF 1.3447 -> buckling strength 1395.1 (increment 22)
+   path (load, monitor UR2):
+                0             0
+          103.392     0.0027146
+          281.578    0.00744133
+          479.134     0.0128172
+          668.401     0.0181736
+           847.44     0.0235158
+          1013.77     0.0288472
+           1163.8      0.034172
+          1290.81     0.0394777
+          1380.27     0.0447735
+          1391.68     0.0460565
+           1395.1     0.0469416
+          1390.77     0.0479708
+          1383.37       0.04838
+          1375.08       0.04858
+          1374.66     0.0485853
+          1373.58     0.0485945
+          1372.82     0.0485755
+          1372.39      0.048532
+          1371.55     0.0484345
+          1369.65     0.0482151
+           1365.1     0.0477211
+          1351.75     0.0466026
+          1326.45     0.0450147
+          1300.38     0.0436649
+          1259.52     0.0418355
+          1246.07     0.0412846
+          1229.47     0.0406375
+          1228.83     0.0406133
+          1228.32     0.0405946
+          1228.16     0.0405887
+           1228.1     0.0405866
+          1228.09     0.0405861
+          1228.09      0.040586
+          1228.09      0.040586
+          1228.09      0.040586
+          1228.09      0.040586
+   Southwell estimate (stable post-buckling paths): 3855.5
+
+=== Comparison with OpenSees / theory (case load units)
+   reference OpenSees B (ASDShellQ4 imperfect path peak) 1037.47
+   Abaqus LBA mode 1                                  4335.7   +317.9% vs OpenSees B
+   Abaqus NLB f = 0.50                                nan   +nan% vs OpenSees B
+   Abaqus NLB f = 0.80                                nan   +nan% vs OpenSees B
+   Abaqus NLB f = 0.95                                nan   +nan% vs OpenSees B
+   Abaqus RIKS peak                                   1395.1   +34.5% vs OpenSees B

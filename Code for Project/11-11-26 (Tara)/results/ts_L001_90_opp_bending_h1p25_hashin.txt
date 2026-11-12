@@ -1,0 +1,27 @@
+S23 = Yc/2 (default)
+web facets: 0 of 40000 (no web (no catalog boom given))
+Hashin 2D check: ts_L001_90_opp_bending_h1p25  [[90/90/90] h = 0.105 mm], 40000 facets, Gauss points, 3 points through each ply
+rank         F        R  facet        x        y        z ply  theta     at         s1         s2        t12  mode
+   1    0.6212    1.269      0    0.625   -19.98    19.37   1     90 bottom       11.5      50.44    -0.7721  matrix tension
+   2    0.6212    1.269  39200    0.625    19.98    19.37   1     90 bottom       11.5      50.44     0.7721  matrix tension
+   3    0.6211    1.269      0    0.625   -19.98    19.37   1     90 bottom     0.7128      50.44    -0.8089  matrix tension
+   4    0.6211    1.269  39200    0.625    19.98    19.37   1     90 bottom     0.7128      50.44     0.8089  matrix tension
+   5    0.6185    1.272      0    0.625   -19.98    19.37   1     90 middle      11.48      50.33    -0.7554  matrix tension
+   6    0.6185    1.272  39200    0.625    19.98    19.37   1     90 middle      11.48      50.33     0.7554  matrix tension
+   7    0.6184    1.272      0    0.625   -19.98    19.37   1     90 middle     0.7399      50.33    -0.7799  matrix tension
+   8    0.6184    1.272  39200    0.625    19.98    19.37   1     90 middle     0.7398      50.33     0.7799  matrix tension
+   9    0.6158    1.274      0    0.625   -19.98    19.37   1     90    top      11.47      50.22    -0.7387  matrix tension
+  10    0.6158    1.274      0    0.625   -19.98    19.37   2     90 bottom      11.47      50.22    -0.7387  matrix tension
+  11    0.6158    1.274  39200    0.625    19.98    19.37   2     90 bottom      11.47      50.22     0.7387  matrix tension
+  12    0.6158    1.274  39200    0.625    19.98    19.37   1     90    top      11.47      50.22     0.7387  matrix tension
+Per ply (max over the model):
+  ply  1 (    90 deg, z -0.0525..-0.0175): max F 0.6212 (matrix tension), min R 1.269, max |s1| 11.52, max |s2| 50.44, max |t12| 0.8089 MPa
+  ply  2 (    90 deg, z -0.0175..+0.0175): max F 0.6158 (matrix tension), min R 1.274, max |s1| 11.47, max |s2| 50.22, max |t12| 0.751 MPa
+  ply  3 (    90 deg, z +0.0175..+0.0525): max F 0.6104 (matrix tension), min R 1.28, max |s1| 11.43, max |s2| 50, max |t12| 0.7066 MPa
+MAX F = 0.6212 -> no failure predicted (matrix tension); min strength ratio R = 1.269 (at the max F point: 1.269; facet 0, i = 0, j = 0, ply 1, bottom)
+Coiling check: flange [[90/90/90] h = 0.105 mm] flattened from r = 20 mm (smallest arc radius of the case cross-section): k = -0.05 1/mm transverse (k_xx = k_xy = 0, N = 0), eps0 = [-3.35e-21, 8.5e-20, -2.99e-36]
+  max F = 0.05946 (fibre compression), R = 4.101, ply 3 (90 deg), top: s1 -418.4, s2 -7.466, t12 -1.501e-15 MPa
+  ply  1 (    90 deg, z -0.0525..-0.0175): max F 0.02799
+  ply  2 (    90 deg, z -0.0175..+0.0175): max F 0.006606
+  ply  3 (    90 deg, z +0.0175..+0.0525): max F 0.05946
+GOVERNING F = 0.6212 from the simulation -> no failure predicted

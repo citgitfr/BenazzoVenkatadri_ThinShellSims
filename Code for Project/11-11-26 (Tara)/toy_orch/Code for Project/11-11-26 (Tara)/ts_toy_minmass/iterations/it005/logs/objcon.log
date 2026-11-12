@@ -1,0 +1,18 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe objective-constraints/objective_constraints.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it005\results\it005_L001_Y002_T003.npz" --constraints "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\constraints.json" --boom T003 --flatten-radius 200.0 --json "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it005\objcon.json" --value F_hub=0.166335807082815 --value buckling_load=1501.9273095544368
+
+Objective / constraints: it005_L001_Y002_T003  [[0/0/0/0/0/0/0/0/0/0] h = 0.35 mm]
+OBJECTIVE  minimize mass: 0.347451 kg (347.5 g)
+CONSTRAINTS (g <= 0 is satisfied; g_rel = g / |limit|)
+  [satisfied    ] no failure: F_governing < 1.0  value 0.0151431, limit 1, g -0.984857, g_rel -0.984857
+  [satisfied    ] boom length: L == 1000  value 1000, limit 1000, g -0.01, g_rel -1e-05
+  [satisfied    ] bending stiffness: abs(force_z) / abs(tip_uz) >= 0.05  value 206.949, limit 0.05, g -206.899, g_rel -4137.99
+  [satisfied    ] buckling: buckling_load >= 1000  value 1501.93, limit 1000, g -501.927, g_rel -0.501927
+  [satisfied    ] coiling on hub: F_hub < 1  value 0.166336, limit 1, g -0.833664, g_rel -0.833664
+FEASIBLE: yes
+  note: web facets: 0 of 25200 (no web (T003 is a TS))
+  note: catalog L001 rho = 1580 kg/m^3
+  note: tip = free end xL: rigid end master node at xL
+  note: S23 = Yc/2 (default)
+  note: coiling: flange flattened from r = 200 mm (given with --flatten-radius), F = 0.01514 (matrix tension)
+  note: critical point of the simulation: {'group': 'flange', 'facet': 21205, 'i': 5, 'j': 106, 'ply': 10, 'theta': 0.0, 'at': 'top', 'mode': 'fibre tension', 's1_s2_t12': [0.025907609023736903, 4.788724199378216e-05, -0.009746255570968535]}
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\toy_orch\Code for Project\11-11-26 (Tara)\ts_toy_minmass\iterations\it005\objcon.json

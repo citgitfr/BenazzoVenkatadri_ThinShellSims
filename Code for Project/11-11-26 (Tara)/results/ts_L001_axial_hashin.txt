@@ -1,0 +1,20 @@
+S23 = Yc/2 (default)
+web facets: 0 of 10000 (no web (no catalog boom given))
+Hashin 2D check: ts_L001_axial  [[0/0/0] h = 0.105 mm], 10000 facets, Gauss points, 3 points through each ply
+rank         F        R  facet        x        y        z ply  theta     at         s1         s2        t12  mode
+   1 4.027e-07     1576   3200     1.25   -9.616    2.508   1      0 bottom      1.587     0.0187  3.392e-07  fibre tension
+   2 4.027e-07     1576   6799    998.8    9.616    2.508   1      0 bottom      1.587     0.0187  3.392e-07  fibre tension
+   3 4.027e-07     1576   3599    998.8   -9.616    2.508   1      0 bottom      1.587     0.0187 -3.392e-07  fibre tension
+   4 4.027e-07     1576   6400     1.25    9.616    2.508   1      0 bottom      1.587     0.0187 -3.392e-07  fibre tension
+   5 4.027e-07     1576   4000     1.25   -4.964   0.6666   1      0 bottom      1.587     0.0187 -7.827e-07  fibre tension
+Per ply (max over the model):
+  ply  1 (     0 deg, z -0.0525..-0.0175): max F 4.027e-07 (fibre tension), min R 1576, max |s1| 1.587, max |s2| 0.02574, max |t12| 0.01144 MPa
+  ply  2 (     0 deg, z -0.0175..+0.0175): max F 3.847e-07 (fibre tension), min R 1612, max |s1| 1.54, max |s2| 0.0249, max |t12| 0.0101 MPa
+  ply  3 (     0 deg, z +0.0175..+0.0525): max F 3.928e-07 (fibre tension), min R 1595, max |s1| 1.568, max |s2| 0.02407, max |t12| 0.009141 MPa
+MAX F = 4.027e-07 -> no failure predicted (fibre tension); min strength ratio R = 1576 (at the max F point: 1576; facet 3200, i = 0, j = 8, ply 1, bottom)
+Coiling check: flange [[0/0/0] h = 0.105 mm] flattened from r = 20 mm (smallest arc radius of the case cross-section): k = +0.05 1/mm transverse (k_xx = k_xy = 0, N = 0), eps0 = [3.52e-22, -9.41e-20, -0]
+  max F = 0.1363 (matrix tension), R = 2.709, ply 3 (0 deg), top: s1 7.466, s2 23.63, t12 0 MPa
+  ply  1 (     0 deg, z -0.0525..-0.0175): max F 0.006839
+  ply  2 (     0 deg, z -0.0175..+0.0175): max F 0.01514
+  ply  3 (     0 deg, z +0.0175..+0.0525): max F 0.1363
+GOVERNING F = 0.1363 from the coiling (flattening the flange) -> no failure predicted

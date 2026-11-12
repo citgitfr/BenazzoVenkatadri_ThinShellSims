@@ -1,0 +1,30 @@
+{
+ "name": "it001_L001_Y001_T001_buck",
+ "laminate": {
+  "json": "lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "arc",
+   "R": 20,
+   "b": 62.831853
+  },
+  "size": 5.0
+ },
+ "load": {
+  "type": "bending",
+  "axis": "y",
+  "sign": 1
+ },
+ "B": {
+  "step": 0.001684952904886856,
+  "max": 0.05054858714660568,
+  "amplitude": 0.0,
+  "control": "disp",
+  "tol": 1e-06,
+  "max_iter": 40,
+  "max_step": 0.013479623239094848
+ },
+ "B_cutoff": 1000.0
+}
