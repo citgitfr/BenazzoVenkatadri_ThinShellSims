@@ -121,6 +121,8 @@ def main(src, out_pdf, title):
                     parts.append(tool_call(b))
     date = first_ts.strftime('%m-%d-%Y') if first_ts else ''
     span = f'{first_ts:%H:%M} - {last_ts:%H:%M} PST' if first_ts else ''
+    if first_ts and last_ts and last_ts.date() != first_ts.date():   # session ran past midnight
+        span = f'{first_ts:%H:%M} - {last_ts:%m-%d-%Y %H:%M} PST'
     css = """
     body{font-family:Segoe UI,Arial,sans-serif;font-size:10.5pt;line-height:1.38;margin:0;color:#222}
     h1{font-size:16pt;margin:0 0 2px 0} .meta{color:#666;font-size:9pt;margin-bottom:14px}

@@ -3,7 +3,8 @@
 Run with any Python that has python-pptx, python-docx and Pillow:
     python "Lab Report 3/build_demo_deck.py"
 Inputs: the 11-11-26 deck (theme, title background, Caltech logo, section drawings), the screenshots
-in "Lab Report 3/Demo Slides Outline.docx" and the system diagram made by system_diagram_lab3.py.
+in "Lab Report 3/Demo Slides Outline.docx", the system diagram made by system_diagram_lab3.py and
+Federico's librarian prompts (prompt_bubbles.py, drawn as prompt bubbles like the screenshots).
 Output: "Lab Report 3/Lab Report 3 Demonstration of Agent System.pptx".
 """
 import io
@@ -11,6 +12,7 @@ import os
 import re
 
 import docx
+import prompt_bubbles as pb
 from docx.oxml.ns import qn as dqn
 from PIL import Image, ImageDraw
 from pptx import Presentation
@@ -101,7 +103,7 @@ def diagram_crops():
         "lay": crop(top, (286, 128, 436, 188)),
         "geo": crop(top, (445, 128, 594, 188)),
         "bl": crop((0, 299, 362, 545)),
-        "br": crop((350, 297, 722, 528), white=(0, 780, 75, 920)),
+        "br": crop((350, 302, 722, 528), white=(0, 760, 75, 900)),
     }
 
 # ----------------------------------------------------------------------------- helpers
@@ -323,8 +325,8 @@ def main():
         s = prs.slides.add_slide(blank)
         if title:
             header(s, title, len(prs.slides), logo)
-        if notes:
-            s.notes_slide.notes_text_frame.text = notes
+        # notes (presenter, sources) are kept here for reference only: the deck is shared as a PDF, so no
+        # speaker notes are written
         return s
 
     # 1 ------------------------------------------------------------------ title
@@ -352,11 +354,11 @@ def main():
     add_pic(s, diag["full"], 0.3, 0.95, w=7.3, border=False, name="system_diagram")
     add_text(s, 7.75, 0.85, 5.3, 0.45, [[("Demonstrated on the next slides", {"bold": True})]], size=20,
              space_after=0)
-    items = [("Catalogs", "librarian agent", "3-5"),
-             ("OpenSeesPy write/run pipeline", "tools", "6-7"),
-             ("Abaqus verification loop", "comparison agent", "8-9"),
-             ("End-to-end baseline", "orchestrator agent", "10-13"),
-             ("Failure case", "omega boom", "14", )]
+    items = [("Catalogs", "librarian agent", "3-6"),
+             ("OpenSeesPy write/run pipeline", "tools", "7-8"),
+             ("Abaqus verification loop", "comparison agent", "9-10"),
+             ("End-to-end baseline", "orchestrator agent", "11-14"),
+             ("Failure case", "omega boom", "15", )]
     y = 1.45
     for name, who, sl in items:
         add_box(s, 7.75, y, 5.3, 0.82,
@@ -367,20 +369,28 @@ def main():
 
     # 3-5 -------------------------------------------------------------- catalogs
     def catalog_slide(title, crop, desc, out_label, cols, rows, notes, extra=None, ref=None, row_h=0.45,
-                      ref_y=6.93):
+                      ref_y=6.93, prompt=None, io_label="Input / Output Example", prompt_pt=8.5, input_label="Input"):
         s = new_slide(title, notes)
         _, _, h = add_pic(s, crop, 0.3, 0.85, w=4.5, name="diagram_section")
         what_it_does(s, 0.3, 0.85 + h + 0.2, 4.5, 3.0, desc)
         X, W = 5.15, 7.88
-        label(s, X, 0.78, 5.5, "Input / Output Example", size=20)
+        label(s, X, 0.78, 6.0, io_label, size=20 if rows else 18)
         status_pill(s, X + W - 1.75, 0.78)
-        label(s, X, 1.3, W, "Input: Federico's prompt to the librarian agent")
-        add_box(s, X, 1.72, W, 1.2,
-                [[("[Placeholder: screenshot of Federico's prompt that created this catalog]",
-                   {"color": GREY_TXT, "italic": True})]],
-                fill=WHITE, line=BORDER, dash=True, size=18)
-        label(s, X, 3.12, W, out_label)
-        add_table(s, X, 3.55, cols, rows, size=18, row_h=row_h, first_col_bold=True)
+        y = 1.3
+        if prompt:
+            if rows:
+                label(s, X, y, W, input_label)
+                y += 0.42
+            else:
+                y = 1.33  # prompt-only slide: the bubble starts under the label and the status pill
+            _, _, bh = add_pic(s, pb.bubble(prompt, W, prompt_pt), X, y, w=W, border=True,
+                               name="prompt_librarian")
+            y += bh + 0.15
+        if rows:
+            if out_label:
+                label(s, X, y, W, out_label)
+                y += 0.43
+            add_table(s, X, y, cols, rows, size=18, row_h=row_h, first_col_bold=True)
         if extra:
             extra(s)
         if ref:
@@ -393,15 +403,25 @@ def main():
         "agent with web access. It searches qualification reports, papers and datasheets for unidirectional "
         "lamina properties. Each of the 38 rows (L001-L038) has stiffness, strength, ply thickness, density "
         "and a source.",
-        "Output: sample rows of the material catalog",
+        None, None, None,
+        "Suggested presenter: Federico (built the catalogs).\n"
+        "Federico's prompt to the librarian agent, verbatim (laid out as a prompt bubble like the other "
+        "screenshots). The output is on the next slide.",
+        prompt=pb.MATERIAL, io_label="Input: prompt to build the material catalog", prompt_pt=8.25)
+
+    catalog_slide(
+        "Catalogs: Material Properties", diag["mat"],
+        "38 laminas (L001-L038), within the 25-50 requested, saved as two .txt files: a readable one "
+        "(GPa, MPa, mm) and an SI one generated from it. Every row cites its source; * marks an estimate "
+        "(e.g. ν_{23}, G_{23} = E_{2}/(2(1 + ν_{23})) or density).",
+        None,
         [0.75, 2.35, 1.9, 1.9, 0.98],
         [["ID", "Fiber/matrix", "E_{1}/E_{2}/G_{12} (GPa)", "X_{t}/Y_{t}/S_{12} (MPa)", "ρ (g/cm³)"],
          ["L001", "IM7/8552 epoxy [1]", "158.5/8.95/4.67", "2501/64.0/91.1", "1.58"],
          ["L013", "AS4/3501-6 epoxy [2]", "126/11/6.6", "1950/48/79", "1.58*"],
          ["L024", "Carbon/epoxy [3]", "80.1/6.67/2.93", "1063/66.0/126.8", "1.60"],
          ["L030", "T1100GC/PAEK [4]", "173/9.0/4.03", "3613/90/69.0", "1.59"]],
-        "Suggested presenter: Federico (built the catalogs).\n"
-        "PLACEHOLDER: paste the screenshot of the prompt that created the material catalog.\n"
+        "Suggested presenter: Federico.\n"
         "Sample rows are copied from .claude/memory.material_property_catalog/UD_lamina_catalog_readable.txt. "
         "Every ply is 0.035 mm thick (project decision, 11/5). * = estimate (density by rule of mixtures). "
         "Not shown: nu12, nu23, G23, Xc, Yc.",
@@ -411,8 +431,8 @@ def main():
              "range of fibre-reinforced composite laminates. CST, 58(7).",
              "[3] Liu, T.-W., et al. (2023). Folding behavior of the thin-walled lenticular deployable composite boom. "
              "Mech. Adv. Mater. Struct., 30(11).",
-             "[4] Toray Advanced Composites. Toray Cetex TC1225 (T1100GC/LM-PAEK) product data sheet.   * = estimate."],
-        ref_y=6.6)
+             "[4] Toray Advanced Composites. Toray Cetex TC1225 (T1100GC/LM-PAEK) product data sheet."],
+        ref_y=6.6, io_label="Output: sample rows of the material catalog")
 
     catalog_slide(
         "Catalogs: Layups", diag["lay"],
@@ -428,11 +448,10 @@ def main():
          ["Y050", "5", "[0/45/60/45/0]", "0.175", "no", "no"],
          ["Y123", "5", "[45/−45/0/−45/45]", "0.175", "no", "yes"]],
         "Suggested presenter: Federico.\n"
-        "PLACEHOLDER: paste the screenshot of the prompt that created the layup catalog.\n"
         "Sample rows from .claude/memory.layup_catalog/layup_catalog.txt (199 rows: 15 with 3 plies, 15 with 4, "
         "169 with 5). Symmetric, so B = 0 for every row. Cross-ply = only 0 and 90 plies (no extension-shear or "
         "bend-twist coupling); balanced = every +theta ply has a -theta partner (no extension-shear coupling).",
-        row_h=0.42)
+        row_h=0.42, prompt=pb.LAYUP, input_label="Input: prompt to build the layup catalog")
 
     def geo_drawings(s):
         # side by side with a fixed gap, scaled so the four fit in the 4.5 in left column
@@ -450,24 +469,23 @@ def main():
         "The librarian collected 100 coilable-boom cross-sections: 25 each of tape springs, TRAC, omega and "
         "corrugated booms. Each row gives the arc radii and angles and is checked to flatten.",
         "Output: sample rows of the cross-section catalog",
-        [0.8, 1.75, 2.45, 1.48, 1.4],
+        [0.8, 1.75, 2.75, 1.38, 1.2],
         [["ID", "Type", "Arcs R (mm) / θ (deg)", "Size (mm)", "Origin"],
          ["T013", "Tape spring", "16.6 / 131.8", "30 × 10", "Literature"],
          ["R011", "TRAC [5]", "13.6 / 90 (2 flanges)", "27 × 22", "Literature"],
          ["M008", "Omega (CTM)", "12, 26.5, 12 / −90, 180, −90", "86 × 77", "Literature"],
          ["C006", "Corrugated [6]", "11 arcs per shell", "148 × 128", "Derived"]],
         "Suggested presenter: Federico.\n"
-        "PLACEHOLDER: paste the screenshot of the prompt that created the cross-section catalog.\n"
         "Sample rows from .claude/memory.boom_geometry_catalog/boom_geometry_catalog.txt. Size = width x height of "
         "the mid-surface section incl. webs. Every row is checked to flatten (equal flange arc lengths, tangent "
         "arcs, no self-intersection). Drawings (bottom left) are made from rows T013, R011, M008 and C006; "
         "black = bonded web.",
-        extra=geo_drawings,
+        extra=geo_drawings, prompt=pb.GEOMETRY, input_label="Input: prompt to build the cross-section catalog",
         ref=["[5] Benazzo, F., & Pellegrino, S. (2025). Design and manufacturing of ultra-thin thermoplastic "
              "composites for coilable longerons. AIAA SciTech 2025 Forum.",
              "[6] Fernandez, J. M., & Volle, C. E. (2021). Corrugated rollable tubular booms. AIAA SciTech 2021 "
              "Forum."],
-        row_h=0.45)
+        row_h=0.42)
     # the geometry description is short so the drawings fit under it (left column, y = 5.25)
 
     # 6 ------------------------------------------------------------------ OpenSeesPy pipeline: prompt + numbers
@@ -489,7 +507,7 @@ def main():
     X, W = 5.15, 7.88
     label(s, X, 0.78, 5.5, "Input / Output Example", size=20)
     status_pill(s, X + W - 1.75, 0.78)
-    label(s, X, 1.25, W, "Input: prompt for one tape spring under a 1 N tip load")
+    label(s, X, 1.25, W, "Input: prompt to model a tape spring under a 1 N tip load")
     add_pic(s, shots["img03"], X, 1.67, w=5.9, name="prompt_opensees")
     add_text(s, X, 3.82, W, 0.45,
              "Generated script (~20,700 lines) is too long for a slide: outputs only",
@@ -520,7 +538,7 @@ def main():
     add_text(s, 6.75, 0.75, 6.3, 0.4, [[("Transverse deflection u_{z} (drawing exaggerated 11.7×)",
                                          {"bold": True})]], size=18, align=PP_ALIGN.CENTER, space_after=0)
     add_pic(s, shots["img07"], 7.55, 1.17, h=3.55, border=False, name="uz")
-    label(s, 0.3, 4.85, 6.0, "Output: objective/constraint check")
+    label(s, 0.3, 4.85, 6.0, "Output: mass and material failure index calculator")
     status_pill(s, 10.45, 4.82)
     tiles = [("10.42 g", "Mass (objective); hand check agrees"),
              ("4.2×10⁻⁴", "Max Hashin index in bending, 1 N tip load (fiber tension)"),
@@ -552,7 +570,7 @@ def main():
     X, W = 5.15, 7.88
     label(s, X, 0.78, 5.5, "Input / Output Example", size=20)
     status_pill(s, X + W - 1.75, 0.78)
-    label(s, X, 1.25, W, "Input: prompt (same tape spring as the previous slides)")
+    label(s, X, 1.25, W, "Input: prompt to verify the same tape spring in Abaqus")
     add_pic(s, shots["img09"], X, 1.67, w=6.9, name="prompt_abaqus")
     add_box(s, X, 3.98, W, 1.05,
             [[("Careful on a shared lab server: ", {"bold": True}),
@@ -575,23 +593,33 @@ def main():
                   "Differences under 1% are acceptable: OpenSeesPy (ASDShellQ4 with LayeredShell sections) and "
                   "Abaqus (S4R with a composite layup) use different shell elements, integrate the layers "
                   "differently and apply the loads/BCs differently (rigid links vs. coupling).")
-    add_table(s, 0.3, 0.85, [2.5, 1.3, 1.3, 1.0],
+    label(s, 0.3, 0.72, 6.1, "Output: OpenSees vs. Abaqus comparison")
+    add_table(s, 0.3, 1.14, [2.5, 1.3, 1.3, 1.0],
               [["Quantity", "OpenSees", "Abaqus", "Diff."],
                ["Tip u_{z} (mm)", "−8.523", "−8.583", "0.70%"],
                ["Tip rotation (rad)", "0.01266", "0.01275", "0.70%"],
-               ["σ_{1}, top ply (MPa)", "46.14", "46.33", "0.4%"],
-               ["τ_{12}, top ply (MPa)", "0.355", "0.354", "0.1%"],
-               ["σ_{xx} range, top ply (MPa)", "−29.6 to 46.1", "−29.8 to 46.3", "< 1%"]],
+               ["Max σ_{1}, top ply (MPa)", "46.14", "46.33", "0.4%"],
+               ["τ_{12}, top ply (MPa)", "0.355", "0.354", "0.1%"]],
               size=18, row_h=0.45, first_col_bold=True)
-    add_box(s, 0.3, 4.15, 6.1, 1.65,
+    add_box(s, 0.3, 4.0, 6.1, 1.5,
             [[("Agree within 0.7%", {"size": 24, "bold": True})],
              [("Acceptable: the two codes model shell elements, layered composites and loads/BCs differently", {})]],
             fill=PEACH, line=ORANGE, size=18)
-    status_pill(s, 0.3, 6.05)
-    add_text(s, 2.15, 6.02, 4.3, 0.75, "Comparator agent saw only the two result files", size=18,
+    status_pill(s, 0.3, 5.75)
+    add_text(s, 2.15, 5.72, 4.3, 0.75, "Comparator agent saw only the two result files", size=18,
              color=GREY_TXT, italic=True, space_after=0)
-    add_pic(s, shots["img12"], 6.65, 0.82, w=6.4, name="compare_uz")
-    add_pic(s, shots["img11"], 6.65, 3.78, w=6.4, name="compare_sxx")
+    # pictures: OpenSees left, Abaqus right; u_z top, sigma_xx bottom (labels at 18 pt, the small
+    # descriptions in the top left of each picture are kept)
+    PX, PW = 7.1, 5.95
+    for k, t in enumerate(("OpenSees", "Abaqus")):
+        add_text(s, PX + k * PW / 2, 0.72, PW / 2, 0.4, [[(t, {"bold": True})]], size=18,
+                 align=PP_ALIGN.CENTER, space_after=0)
+    y = 1.12
+    for key, nm, t in (("img12", "compare_uz", "u_{z}"), ("img11", "compare_sxx", "σ_{1}")):
+        _, _, ph = add_pic(s, shots[key], PX, y, w=PW, name=nm)
+        add_text(s, 6.45, y, 0.65, ph, [[(t, {"bold": True})]], size=18, align=PP_ALIGN.CENTER,
+                 anchor=MSO_ANCHOR.MIDDLE, space_after=0)
+        y += ph + 0.1
 
     # 10 ----------------------------------------------------------------- baseline: sandbox
     s = new_slide("End-to-End Baseline: Sandboxed Catalogs",
@@ -618,13 +646,13 @@ def main():
     status_pill(s, X + W - 1.75, 1.6)
     add_table(s, X, 2.1, [1.6, 2.15, 1.85, 2.0],
               [["Role", "Material", "Layup", "Geometry"],
-               ["Should be optimal", "L001 (slide 3)", "[0/0/0]", "R = 20 mm, 180°"],
+               ["Should be optimal", "L001 (slide 4)", "[0/0/0]", "R = 20 mm, 180°"],
                ["Heavier", "L001, 1000× density", "[0]_{10}, 3.3× thicker", "R = 200 mm"],
                ["Should fail", "L001, strengths × 0.001", "[90/90/90]", "R = 2 mm"]],
               size=18, row_h=[0.45, 0.68, 0.68, 0.68], first_col_bold=True,
               fills={(1, None): GREEN_BG, (3, None): RED_BG})
     add_text(s, X, 4.72, W, 2.05,
-             [[("L001: ", {"bold": True}), ("IM7/8552 row of the material catalog (slide 3)", {})],
+             [[("L001: ", {"bold": True}), ("IM7/8552 row of the material catalog (slide 4)", {})],
               [("Heavier: ", {"bold": True}), ("works against the objective of the lightest boom", {})],
               [("Should fail: ", {"bold": True}),
                ("should trigger material failure ([90/90/90] should also miss the deflection limit)", {})],
@@ -687,7 +715,7 @@ def main():
                   "root moment with no limit point; Abaqus buckling on the perfect geometry: linear eigenvalue "
                   "4336 N mm, Riks limit point 1395 N mm, both above 1000 N mm. Mesh convergence 5 -> 3 mm: tip "
                   "stiffness 0.72%.")
-    label(s, 0.3, 0.78, 4.2, "Input: prompt to the orchestrator")
+    label(s, 0.3, 0.78, 4.2, "Input: prompt for boom optimization")
     add_pic(s, shots["img19"], 0.3, 1.2, h=3.85, name="prompt_orchestrator")
     add_box(s, 0.3, 5.25, 3.95, 1.45,
             [[("Optimum = human-chosen baseline: ", {"bold": True}), ("L001, [0/0/0], R = 20 mm", {})]],
@@ -725,17 +753,19 @@ def main():
                   "Next step: go beyond the baseline to problems a human could not solve by hand: far more "
                   "materials, layups and geometries, all of them realistic (unlike the altered ones here).")
     # 27-tile grid: rows = material, columns = layup x geometry
-    gx, gy, tw, th, gap = 1.35, 1.62, 0.66, 0.72, 0.06
+    label(s, 0.3, 0.72, 7.6, "Output: pre-screening of the 27 possible designs")
+    dy = 0.4
+    gx, gy, tw, th, gap = 1.35, 1.62 + dy, 0.66, 0.72, 0.06
     layups = ["[0/0/0]", "[0]_{10}", "[90/90/90]"]
     geos = ["20", "2", "200"]
     for li, ly in enumerate(layups):
         x0 = gx + li * (3 * (tw + gap) + 0.12)
-        add_text(s, x0, 0.8, 3 * (tw + gap), 0.4, [[(ly, {"bold": True})]], size=18, align=PP_ALIGN.CENTER,
+        add_text(s, x0, 0.8 + dy, 3 * (tw + gap), 0.4, [[(ly, {"bold": True})]], size=18, align=PP_ALIGN.CENTER,
                  space_after=0)
         for gi, g in enumerate(geos):
-            add_text(s, x0 + gi * (tw + gap) - 0.05, 1.17, tw + 0.1, 0.4, g, size=18, align=PP_ALIGN.CENTER,
+            add_text(s, x0 + gi * (tw + gap) - 0.05, 1.17 + dy, tw + 0.1, 0.4, g, size=18, align=PP_ALIGN.CENTER,
                      space_after=0)
-    add_text(s, 0.3, 1.17, 1.0, 0.4, [[("R (mm)", {"italic": True})]], size=18, space_after=0)
+    add_text(s, 0.3, 1.17 + dy, 1.0, 0.4, [[("R (mm)", {"italic": True})]], size=18, space_after=0)
     # status per (material, layup, geometry) from the study report (ts_toy_minmass_REPORT.pdf, table 4.1)
     fe = {("L001", 0, 0): "it1", ("L001", 0, 2): "it2", ("L001", 1, 2): "it5", ("L001", 2, 2): "it4",
           ("L002", 0, 0): "it3", ("L002", 0, 2): "it6", ("L002", 1, 2): "it8", ("L002", 2, 2): "it7"}
@@ -794,7 +824,7 @@ def main():
             fill=PEACH, line=ORANGE, size=18, align=PP_ALIGN.LEFT)
 
     # 14 ----------------------------------------------------------------- failure case
-    s = new_slide("Failure Case: Omega Boom of Palmeri and Laurenzi [1]",
+    s = new_slide("Failure Case: Omega Boom of Palmeri and Laurenzi [7]",
                   "Suggested presenter: Tara (11/10 attempt; conversation in Claude Conversations/Tara 11-10-26 "
                   "Conversation 1).\n"
                   "This was first considered as the baseline: reproduce the omega (collapsible tubular mast) "
@@ -806,10 +836,10 @@ def main():
                   "convergence study to work on the paper's optimal design, because of OpenSeesPy's limited buckling "
                   "capabilities for this closed section. It was abandoned in favor of the simpler tape-spring "
                   "baseline of the previous slides.")
-    label(s, 0.3, 0.78, 4.2, "Input: prompt")
+    label(s, 0.3, 0.78, 4.2, "Input: prompt to reproduce a paper")
     add_pic(s, shots["img21"], 0.3, 1.2, h=5.55, name="prompt_palmeri")
     X, W = 4.55, 8.5
-    label(s, X, 0.78, 5.0, "Output", size=20)
+    label(s, X, 0.78, 6.6, "Output: expected vs. returned")
     status_pill(s, X + W - 1.75, 0.78, ok=False)
     add_table(s, X, 1.3, [2.0, 6.5],
               [["Expected", "Reproduce the published optimal omega-boom geometry for maximum buckling load and "
@@ -819,10 +849,10 @@ def main():
                                 "catalogs, continuous variation of the geometry instead of discrete catalog "
                                 "rows, and buckling analyses that OpenSeesPy and the existing skills do not "
                                 "support for this closed section"],
-               ["Outcome", "Abandoned for the simpler tape-spring baseline (slides 10-13)"]],
+               ["Outcome", "Abandoned for the simpler tape-spring baseline (slides 11-14)"]],
               size=18, row_h=0.6, first_col_bold=True, align=PP_ALIGN.LEFT, header=False,
               fills={(0, None): WHITE, (1, None): WHITE, (2, None): WHITE, (3, None): WHITE})
-    refs(s, ["[1] Palmeri, F., & Laurenzi, S. (2024). Neural network-based surrogate modeling for buckling "
+    refs(s, ["[7] Palmeri, F., & Laurenzi, S. (2024). Neural network-based surrogate modeling for buckling "
              "performance optimization of lightweight-composite collapsible tubular masts. Biomimetics, 9(8), 494."])
 
     prs.save(OUT)

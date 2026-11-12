@@ -10,7 +10,7 @@ import re
 
 from docx import Document
 from docx.enum.section import WD_SECTION
-from docx.enum.table import WD_TABLE_ALIGNMENT
+from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT, WD_TABLE_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -161,15 +161,43 @@ def table(title_no, title, header, rows, widths, note=None):
     r = add_runs(cap2, title, size=8)
     for run in r.runs:
         run.font.small_caps = True
-    t = doc.add_table(rows=1 + len(rows), cols=len(header))
+    # header: one row (list of str) or several (list of lists); in a header row, None merges the cell
+    # with the one to its left and "^" merges it with the one above
+    hrows = header if isinstance(header[0], list) else [header]
+    nh = len(hrows)
+    t = doc.add_table(rows=nh + len(rows), cols=len(hrows[0]))
     t.alignment = WD_TABLE_ALIGNMENT.CENTER
-    for i, row in enumerate([header] + rows):
+    tblPr = t._tbl.tblPr
+    t.autofit = False                   # fixed layout: Word keeps the column widths
+    mar = OxmlElement("w:tblCellMar")   # narrow side margins (0.04 in) so the columns fit the text
+    for side in ("left", "right"):
+        e = OxmlElement(f"w:{side}"); e.set(qn("w:w"), "58"); e.set(qn("w:type"), "dxa"); mar.append(e)
+    tblPr.insert_element_before(mar, "w:tblLook", "w:tblCaption", "w:tblDescription")
+    for j, w in enumerate(widths):
+        t.columns[j].width = Inches(w)
+    for i, row in enumerate(hrows + rows):
         for j, val in enumerate(row):
             cell = t.cell(i, j)
             cell.width = Inches(widths[j])
+            if val is None or val == "^":
+                continue
             cp = cell.paragraphs[0]
             cp.alignment = WD_ALIGN_PARAGRAPH.LEFT if j == 0 else WD_ALIGN_PARAGRAPH.CENTER
+            cp.paragraph_format.keep_with_next = i < nh + len(rows) - 1   # keep the table on one page
             add_runs(cp, val, size=8, bold=False)
+    for i, row in enumerate(hrows):
+        for j, val in enumerate(row):
+            if val is None:
+                k = j - 1
+                while hrows[i][k] is None:
+                    k -= 1
+                t.cell(i, k).merge(t.cell(i, j))
+            elif val == "^":
+                t.cell(i - 1, j).merge(t.cell(i, j))
+    for i in range(nh + len(rows) - 1):          # merged cells: keep their paragraphs with the next row too
+        for c in t.rows[i].cells:
+            for cp in c.paragraphs:
+                cp.paragraph_format.keep_with_next = True
     # IEEE-style rules: top, below header, bottom
     tbl = t._tbl
     tblPr = tbl.tblPr
@@ -178,18 +206,22 @@ def table(title_no, title, header, rows, widths, note=None):
         e = OxmlElement(f"w:{edge}")
         e.set(qn("w:val"), "single"); e.set(qn("w:sz"), "6"); e.set(qn("w:color"), "000000")
         borders.append(e)
-    tblPr.append(borders)
-    for cell in t.rows[0].cells:
-        tcPr = cell._tc.get_or_add_tcPr()
+    tblPr.insert_element_before(borders, "w:shd", "w:tblLayout", "w:tblCellMar", "w:tblLook",
+                                "w:tblCaption", "w:tblDescription")
+    for tc in t.rows[nh - 1]._tr.tc_lst:       # rule below the (last) header row
+        tcPr = tc.get_or_add_tcPr()
         b = OxmlElement("w:tcBorders")
         e = OxmlElement("w:bottom")
         e.set(qn("w:val"), "single"); e.set(qn("w:sz"), "4"); e.set(qn("w:color"), "000000")
         b.append(e)
-        tcPr.append(b)
+        tcPr.insert_element_before(b, "w:shd", "w:noWrap", "w:tcMar", "w:textDirection", "w:tcFitText",
+                                   "w:vAlign", "w:hideMark")
     for row in t.rows:
         trPr = row._tr.get_or_add_trPr()
         h = OxmlElement("w:cantSplit")
         trPr.append(h)
+    if nh > 1:
+        t.cell(0, 0).vertical_alignment = WD_CELL_VERTICAL_ALIGNMENT.CENTER
     if note:
         n = doc.add_paragraph()
         n.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
@@ -230,7 +262,7 @@ para("Thin-shell carbon fiber reinforced polymer (CFRP) booms deploy solar array
      "different missions [3], and the booms must resist bending, buckling, and coiling around a hub without "
      "material failure. The design variables are coupled: the material and layup are discrete choices, while "
      "the cross-section geometry is continuous. Existing optimizers vary the geometry of a single "
-     "cross-section [4]; a chatbot alone cannot compute finite element (FE) responses reliably [5]; and a "
+     "cross-section but cannot handle material and layup changes [4]; a chatbot alone cannot compute finite element (FE) responses reliably [5]; and a "
      "fixed script cannot handle the new FE model that each design requires. The goal of the project is a "
      "team of Claude agents that, given the requirements of a boom, finds the lightest design (material, "
      "layup, and cross-section) that meets them without failing, by repeatedly writing and running "
@@ -258,8 +290,9 @@ lead("Verification split into a tool and an independent agent",
 lead("Claude on the lab server",
      "The repository was cloned onto the research group's shared Abaqus server, so Claude can run the Abaqus "
      "verification automatically, without a human present to move files between machines. Because the "
-     "server is shared, Abaqus is run only through a wrapper (`run_abaqus.py`) that limits each job to at "
-     "most 8 CPUs (1 by default) and refuses to write outside the project folder.")
+     "server is shared, Claude may use at most 16 CPU cores in total, and Abaqus is run only through a "
+     "wrapper (`run_abaqus.py`) that limits each job to at most 8 CPUs (1 by default) and refuses to write "
+     "outside the project repository folder.")
 lead("System diagram completed",
      "Every element that was missing at Lab Report 2 has been built and tested: the objective/constraint "
      "calculator, the layup and cross-section catalogs, the optimization loop of the orchestrator, and the "
@@ -278,8 +311,8 @@ para("Three agents make the decisions that require judgment, and each is separat
      "The *results comparison agent* sees only the outputs of the OpenSeesPy and Abaqus runs. The tools "
      "(Claude Code skills, each a Python script with instructions) write the ply/layup, mesh, and load/"
      "boundary-condition code, assemble it into one standalone OpenSeesPy script, run it, plot it, compute "
-     "the ply-by-ply Hashin failure index [10], the buckling load, the objective (mass), and the "
-     "constraints, and translate the model to Abaqus.")
+     "the ply-by-ply Hashin failure index [10], the buckling load, the objective (mass), and any "
+     "user-specified constraints, and translate the model to Abaqus.")
 subheading("B. Optimization Orchestrator")
 para("A single agent description was not enough to keep the orchestrator on task over a long "
      "optimization, so it is now built from several parts. A protocol file lists the steps of each "
@@ -287,9 +320,9 @@ para("A single agent description was not enough to keep the orchestrator on task
      "catalogs; build, run, and plot the model; check failure, coiling, and buckling; evaluate the objective "
      "and constraints; choose the next design) and states what the orchestrator may do, what needs the "
      "users' approval, and what is forbidden (for example, editing the catalogs or the verification tools). "
-     "A hook blocks forbidden actions while a study is active. A design screen ranks every catalog "
+     "A design screen ranks every catalog "
      "combination (about 1.6 million) in about 20 s using closed-form mass, beam stiffness, buckling "
-     "estimates, and an exact laminate-theory coiling index. The combinations that fail these prescreens are "
+     "estimates, and a coiling index from classical laminate theory. The combinations that fail these prescreens are "
      "discarded, and the optimization is a grid search over the material/layup/geometry combinations that "
      "pass: the orchestrator runs the FE model of each remaining candidate in order of increasing predicted "
      "mass, rather than guessing the next design. A study manager refuses out-of-order steps, checks the FE "
@@ -302,30 +335,28 @@ para("The accompanying slides demonstrate each part of Fig. 1 with the prompt gi
      "spring of IM7/8552 (catalog entry L001 [11]) with a [0/0/0] layup of 0.035 mm plies (h = 0.105 mm) and "
      "a 180° cross-section of radius R = 20 mm, clamped at the root and free at the tip.")
 subheading("A. Catalogs")
-para("The librarian built a material catalog of 38 unidirectional laminae (carbon, glass, basalt, and flax "
-     "fibers in epoxy and thermoplastic matrices) with stiffness, strength, ply thickness, density, and a "
-     "source for every row, taken from qualification reports, papers, and datasheets (e.g., [11]–[13]); "
-     "estimated values are marked. The layup catalog lists all 199 symmetric layups of 3–5 plies with "
-     "angles of 0, ±30, ±45, ±60, and 90° and at least one 0° ply, and the "
-     "cross-section catalog lists 100 geometries, 25 each of tape springs, TRAC [14], omega, and corrugated "
-     "[15] booms, from the literature or within published ranges. A script checks that every cross-section "
-     "flattens, has tangent connections, and does not self-intersect.")
+para("Each catalog was created from a single prompt to the librarian, shown on the slides. The "
+     "material prompt asked for 25–50 unidirectional laminae with the stiffnesses and Poisson's ratios "
+     "needed by the laminate-properties tool, the strengths needed by an in-plane Tsai-Hill criterion, "
+     "values only from referenced measurements, and estimated ν_{23} and G_{23} marked with *. The librarian "
+     "returned 38 laminae (carbon, glass, basalt, and flax fibers in epoxy and thermoplastic matrices) with "
+     "a source for every row, taken from qualification reports, papers, and datasheets (e.g., [11]–[13]), "
+     "saved as a readable file (GPa, MPa, mm) and an SI file. The layup prompt asked for symmetric layups "
+     "of 1–5 plies with angles of 0, ±30, ±45, ±60, and 90°; the catalog was later restricted to 3–5 plies "
+     "with at least one 0° ply, giving 199 layups. The cross-section prompt asked for literature radii, "
+     "angles, and web lengths of tape springs, TRAC [14], omega or lenticular, and corrugated [15] booms, "
+     "with every geometry checked to flatten (equal flange arc lengths). The catalog lists 100 geometries, "
+     "25 of each type, from the literature or within published ranges; a script also checks that every "
+     "connection is tangent and that no section self-intersects.")
 subheading("B. OpenSeesPy Write/Run Pipeline")
-para("For a 1 N tip load in opposite-sense bending, the tools generated, assembled, and ran a 20 700-line "
-     "OpenSeesPy script; only its outputs fit on a slide. Table I shows that the tip deflection and "
+para("For a 1 m long tape spring with a 180° cross-section of radius R = 20 mm under a 1 N tip load in "
+     "opposite-sense bending, the tools generated, assembled, and ran a 20700-line OpenSeesPy script; only its outputs fit on a slide. Table I shows that the tip deflection and "
      "rotation are within 1.3% of beam theory and change by 0.9% when the 5 mm mesh is refined to 2.5 mm. "
      "The objective/constraint calculator gives a mass of 10.42 g, which agrees with a hand calculation, and "
      "a maximum Hashin index of 4.2 × 10^{−4} (fiber tension at the root); the flattening of the "
      "cross-section for coiling gives a larger index of 0.136, so coiling governs, but all indices are below "
      "1. The visualizer draws the axial stress in the top ply and the transverse deflection (exaggerated "
      "11.7×, with the true values on the colorbar).")
-table("I", "Tape spring under a 1 N tip load: pipeline and Abaqus verification",
-      ["Quantity", "OpenSeesPy 5 mm", "OpenSeesPy 2.5 mm", "Abaqus 2.5 mm", "Beam theory"],
-      [["Tip deflection (mm)", "−8.596", "−8.523", "−8.583", "−8.414"],
-       ["Tip rotation (rad)", "0.01277", "0.01266", "0.01275", "0.01262"],
-       ["σ_{1}, top ply (MPa)", "–", "46.14", "46.33", "–"],
-       ["τ_{12}, top ply (MPa)", "–", "0.355", "0.354", "–"]],
-      [1.05, 0.6, 0.65, 0.6, 0.5])
 subheading("C. Abaqus Verification Loop")
 para("The same model was translated to an Abaqus/CAE script, which Claude ran on the lab server through "
      "the CPU-limited wrapper. The comparison agent, given only the two results files, found that the tip "
@@ -334,11 +365,19 @@ para("The same model was translated to an Abaqus/CAE script, which Claude ran on
      "and boundary conditions differently. The comparison agent also found a bug in the comparison script "
      "(two curvature components paired in the wrong order), which shows the value of a verifier that "
      "inspects the results independently.")
+table("I", "Tape spring under a 1 N tip load: pipeline and Abaqus verification",
+      [["Quantity", "OpenSeesPy", None, "Abaqus", "Beam"],
+       ["^", "5 mm", "2.5 mm", "2.5 mm", "theory"]],
+      [["Tip deflection (mm)", "−8.596", "−8.523", "−8.583", "−8.414"],
+       ["Tip rotation (rad)", "0.01277", "0.01266", "0.01275", "0.01262"],
+       ["σ_{1}, top ply (MPa)", "–", "46.14", "46.33", "–"],
+       ["τ_{12}, top ply (MPa)", "–", "0.355", "0.354", "–"]],
+      [1.05, 0.58, 0.58, 0.58, 0.58])
 figure(FIG2, COL_W,
        "Fig. 2.  Transverse deflection u_{z} (mm) of the tape spring under a 1 N tip load from OpenSeesPy "
        "(left, tip −8.523 mm) and from the translated Abaqus model run on the lab server (right, tip "
-       "−8.582 mm); deformation drawn ×20.")
-subheading("D. End-to-End Baseline")
+       "−8.583 mm); deformation drawn ×20.")
+subheading("D. End-to-End Optimization and Baseline Verification")
 para("To show that the full system finds an optimum that a human knows to be optimal, the orchestrator "
      "was given sandboxed catalogs of three options each, giving 27 designs. Only tape-spring cross-sections "
      "were considered, each a single circular arc subtending an angle of 180°. The user selected the "
@@ -356,19 +395,23 @@ para("The materials were L001, L001 with 1000 times the density (same stiffness 
      "10^{6}; flattening the cross-section for coiling, which gives an index of 0.136 with L001, then gives "
      "about 10^{5}. The layups were [0/0/0] (expected optimum, since the loads are axial and bending and need "
      "no off-axis plies), [0]_{10}, and [90/90/90]. The [0]_{10} layup is 3.3 times thicker, so it is heavier, "
-     "and the coiling strains, which grow with the half-thickness h/2, give a hub index of 2.03 on R = 20 mm, "
+     "and the coiling strains, which grow with the half-thickness h/2, give a Hashin index of 2.03 on R = 20 mm, "
      "so it is expected to fail when coiled. The [90/90/90] layup places the fibers around the cross-section, "
      "so its axial modulus is E_{2} instead of E_{1}, about 1/18 as large, and its tip deflection under 1 N "
      "is about 150 mm, well above the 2 cm limit. The geometries were R = 20 mm, R = 200 mm "
      "(10 times heavier), and R = 2 mm. The R = 2 mm section is expected to fail in two ways: the flattening "
-     "strain (h/2)/R is 10 times larger, giving a hub index of 14, and the bending stiffness, which scales "
+     "strain (h/2)/R is 10 times larger, giving a coiling Hashin index of 14, and the bending stiffness, which scales "
      "with R^{3}, is 1000 times lower than for R = 20 mm.")
 para("The tools were first run without any agent on the expected optimum to establish the baseline "
-     "(Table II). The orchestrator was then given the problem as a single prompt. Before running any FE "
+     "(Table II): all three load cases pass, with strength ratios 1/√F (the factor by which the load can "
+     "grow before Hashin failure) of 1576 in axial tension, 49 under the tip load, and 2.34 when coiled. "
+     "The orchestrator was then given the problem as a single prompt. Before running any FE "
      "model, its design screen applied two prescreens to all 27 designs. The coiling prescreen computes the "
-     "ply stresses of the cross-section flattened (transverse curvature change 1/R) and bent onto the 4 cm hub "
-     "(longitudinal curvature ±1/40 mm^{−1}, all four sign combinations) from the laminate "
-     "ABD matrix; because this curvature state is uniform, classical laminate theory is exact and no FE model "
+     "ply stresses of the cross-section flattened (transverse curvature change ±1/R) and bent onto the 4 cm hub "
+     "(longitudinal curvature ±1/40 mm^{−1}) from the laminate ABD matrix. The four sign combinations cover "
+     "coiling in the same and the opposite sense as the transverse curvature, each with either face against "
+     "the hub, and the largest index is kept. Because this curvature state is uniform, classical laminate "
+     "theory is exact and no FE model "
      "is needed, and a design is rejected if its Hashin index is 1 or more. The stiffness prescreen estimates "
      "the tip stiffness from thin-walled beam theory, k = 3E_{x}I/L^{3}, and rejects a design if k is below "
      "85% of the required 1 N/20 mm = 0.05 N/mm, which allows for the 15% tolerance of the estimate. Mass "
@@ -376,31 +419,35 @@ para("The tools were first run without any agent on the expected optimum to esta
      "and all R = 2 mm designs, and [0]_{10} on R = 20 mm) and the stiffness prescreen 12 (some fail both), "
      "so 19 of the 27 designs were rejected and the grid search needed only 8 FE iterations (Fig. 3).")
 para("The orchestrator ran the lightest remaining candidate first and confirmed that the other 7 feasible "
-     "designs were 10–33 000 times heavier. The optimal design identified by the orchestrator, L001 with "
+     "designs were 10–33000 times heavier. The optimal design identified by the orchestrator, L001 with "
      "a [0/0/0] layup and R = 20 mm, matches the user-specified baseline design. Its results agree with the "
      "baseline within the differences caused by its coarser mesh (Table II), and its Abaqus verification "
-     "agrees within 2.6%. An Abaqus Riks analysis placed the snap-through moment of the optimum at "
+     "agrees within 2.6% in tip deflection and 2.1% in peak ply stress (Table II lists the Abaqus stress "
+     "of the top ply, and the OpenSeesPy values are the peak over all plies). No buckling occurs under the "
+     "1 N load: an Abaqus Riks analysis placed the snap-through moment of the optimum at "
      "1395 N·mm, above the 1000 N·mm root moment of the 1 N load, consistent with the OpenSeesPy "
      "buckling path, which was still rising at the requirement. Thus, the full orchestrator architecture "
      "works as intended.")
-table("II", "Optimal design: baseline, orchestrator, and Abaqus",
-      ["Quantity", "Baseline 2.5 mm", "Orchestrator 5 mm", "Abaqus 5 mm"],
-      [["Mass (g)", "10.42", "10.40", "–"],
-       ["Tip deflection, 1 N (mm)", "8.52", "8.60", "8.82"],
-       ["Tip rotation (rad)", "0.0127", "0.0128", "0.0131"],
-       ["Hashin F, 1 N tip load", "4.2×10^{−4}", "3.7×10^{−4}", "–"],
-       ["Hashin F, 10 N axial", "4.0×10^{−7}", "3.9×10^{−7}", "–"],
-       ["Hashin F, coiled on hub", "0.183", "0.183", "–"]],
-      [1.35, 0.75, 0.8, 0.6])
 figure(FIG3, COL_W,
        "Fig. 3.  Mass of the 27 sandboxed designs (digits: material, layup, and geometry option). Nineteen "
        "were rejected before any FE run; the remaining eight were run in the order shown, and the optimum "
        "(L001, [0/0/0], R = 20 mm) was found in the first iteration.")
+table("II", "Optimal design: baseline, orchestrator, and Abaqus",
+      [["Quantity", "Baseline", "Orchestrator", "Abaqus"],
+       ["^", "2.5 mm", "5 mm", "5 mm"]],
+      [["Mass (g)", "10.42", "10.40", "–"],
+       ["Tip deflection, 1 N (mm)", "8.52", "8.60", "8.82"],
+       ["Tip rotation (rad)", "0.0127", "0.0128", "0.0131"],
+       ["Peak σ_{1} at root (MPa)", "50.0", "47.7", "42.6 (top ply)"],
+       ["Hashin F, 1 N tip load", "4.2×10^{−4}", "3.7×10^{−4}", "–"],
+       ["Hashin F, 10 N axial", "4.0×10^{−7}", "3.9×10^{−7}", "–"],
+       ["Hashin F, coiled on hub", "0.183", "0.183", "–"]],
+      [1.27, 0.7, 0.7, 0.7])
 subheading("E. Failure Case")
 para("The first attempt at a baseline was to reproduce the omega-boom optimization of Palmeri and Laurenzi "
      "[16], which maximized buckling loads and moments. This problem turned out to be outside the scope of "
-     "the orchestrator: it used a user-specified material and layup rather than the catalogs, a continuous "
-     "rather than discrete geometry, and buckling analyses that the existing skills do not support for closed "
+     "the orchestrator: it used a user-specified material and layup rather than the catalogs, continuous "
+     "variation of the geometry rather than discrete options in a catalog, and buckling analyses that the existing skills do not support for closed "
      "sections. After several hours, Claude could not complete a mesh-convergence study even for the "
      "published optimal design, because of the limited buckling capabilities of OpenSeesPy, so this "
      "baseline was replaced by the simpler one in Section IV-D.")
@@ -408,7 +455,7 @@ para("The first attempt at a baseline was to reproduce the omega-boom optimizati
 heading("Evaluation")
 subheading("A. Verification Independent of the LLM")
 para("The deterministic tools were checked against classical laminate theory, beam theory, the elastica, "
-     "and Abaqus in Lab Report 2, and the new coiling check uses exact laminate theory. Within an "
+     "and Abaqus in Lab Report 2, and the new coiling check uses classical laminate theory, which is exact for its uniform curvatures. Within an "
      "optimization, the FE stiffness of every design is compared with thin-walled beam theory, mesh "
      "convergence is checked, and the Abaqus comparison is performed by an agent that never sees the model "
      "code.")
