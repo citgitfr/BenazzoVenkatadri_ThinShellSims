@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COPYRIGHT DASSAULT SYSTEMES 2009 -->
+<manifest>
+    <focusFile fileBinary="ctm_axial_2p5_NLB80.simdir\ctm_axial_2p5_NLB80.1.SMAFocus"/>
+    <bulkFile bulkid="1" fileBinary="ctm_axial_2p5_NLB80.1.SMABulk"/>
+</manifest>

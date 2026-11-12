@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- COPYRIGHT DASSAULT SYSTEMES 2009 -->
+<manifest>
+    <focusFile fileBinary="ctm_axial_r25p62_a90_RIKS.simdir\ctm_axial_r25p62_a90_RIKS.1.SMAFocus"/>
+    <bulkFile bulkid="1" fileBinary="ctm_axial_r25p62_a90_RIKS.1.SMABulk"/>
+</manifest>
