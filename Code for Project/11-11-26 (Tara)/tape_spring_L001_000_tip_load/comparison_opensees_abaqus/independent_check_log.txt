@@ -1,0 +1,68 @@
+node pairing max dist 9.080619885179834e-07
+element pairing max dist 7.648525071222054e-07
+normal agreement OS vs ABQ (min dot) 0.9999999999998862 | OS normal vs OS frame e3 0.9999999999999998
+OS normal . outward radial: min/max -1.0000000000000002 -0.9999999999999998
+Abaqus SK1: corr with d(e11,e22,g12)/dz = [-0.3946  1.     -0.    ], scale [-0.6383  1.     -0.    ]
+Abaqus SK2: corr with d(e11,e22,g12)/dz = [ 1.     -0.3946  0.    ], scale [ 1.     -0.2179 -0.    ]
+Abaqus SK3: corr with d(e11,e22,g12)/dz = [ 0. -0.  1.], scale [-0. -0.  1.]
+Abaqus M11 / (D k)_11 scale 1.000000003835514 | M22 1.0000000013191206 | M12 0.9999999951466754
+Abaqus N / (A e) scales [np.float64(1.0), np.float64(1.0), np.float64(1.0)]
+
+== element fields (rRMS = ||ABQ-OS||/||OS||, sc = least-squares ABQ/OS) ==
+exx                    peakOS +0.00029111 ABQ@same +0.00029379 (+0.92%) at [1.25, -19.92, 18.75] | all: rRMS 0.70% sc 1.0070 | x<10 (root): rRMS 0.74% sc 1.0072 | 10<x<50: rRMS 0.70% sc 1.0070 | 50<x<990 (interior): rRMS 0.70% sc 1.0070 | x>990 (tip): rRMS 5.31% sc 1.0121
+eyy                    peakOS -9.2189e-05 ABQ@same -9.3931e-05 (-1.89%) at [8.75, -19.92, 18.75] | all: rRMS 1.04% sc 1.0074 | x<10 (root): rRMS 5.22% sc 1.0286 | 10<x<50: rRMS 0.75% sc 1.0067 | 50<x<990 (interior): rRMS 0.70% sc 1.0070 | x>990 (tip): rRMS 5.20% sc 1.0241
+gxy                    peakOS +7.428e-05 ABQ@same +7.3769e-05 (-0.69%) at [6.25, -15.38, 7.28] | all: rRMS 0.52% sc 1.0018 | x<10 (root): rRMS 3.79% sc 1.0016 | 10<x<50: rRMS 0.56% sc 1.0018 | 50<x<990 (interior): rRMS 0.35% sc 1.0018 | x>990 (tip): rRMS 1.00% sc 1.0023
+kxx                    peakOS +0.00023911 ABQ@same +0.00024282 (+1.55%) at [1.25, -0.0, 0.04] | all: rRMS 6.37% sc 1.0115 | x<10 (root): rRMS 9.57% sc 1.0182 | 10<x<50: rRMS 5.18% sc 1.0130 | 50<x<990 (interior): rRMS 0.72% sc 1.0070 | x>990 (tip): rRMS 5.73% sc 0.9867
+kyy                    peakOS +0.00010311 ABQ@same +0.00013577 (+31.67%) at [6.25, -19.61, 16.26] | all: rRMS 7.76% sc 1.0010 | x<10 (root): rRMS 57.90% sc 1.2725 | 10<x<50: rRMS 8.09% sc 1.0156 | 50<x<990 (interior): rRMS 1.08% sc 0.9957 | x>990 (tip): rRMS 29.18% sc 1.1600
+kxy                    peakOS -0.00015467 ABQ@same -0.00025884 (-67.35%) at [1.25, -19.92, 18.75] | all: rRMS 28.53% sc 1.0762 | x<10 (root): rRMS 44.35% sc 1.1753 | 10<x<50: rRMS 8.64% sc 1.0278 | 50<x<990 (interior): rRMS 1.68% sc 0.9970 | x>990 (tip): rRMS 15.75% sc 1.0415
+N11                    peakOS +4.8586 ABQ@same +4.9 (+0.85%) at [1.25, -19.92, 18.75] | all: rRMS 0.70% sc 1.0070 | x<10 (root): rRMS 0.73% sc 1.0070 | 10<x<50: rRMS 0.70% sc 1.0070 | 50<x<990 (interior): rRMS 0.70% sc 1.0070 | x>990 (tip): rRMS 5.33% sc 1.0124
+N22                    peakOS +0.048174 ABQ@same +0.050917 (+5.69%) at [1.25, -19.61, 16.26] | all: rRMS 10.66% sc 0.9736 | x<10 (root): rRMS 10.54% sc 0.9732 | 10<x<50: rRMS 147.33% sc 1.0691 | 50<x<990 (interior): rRMS 80.49% sc 1.1402 | x>990 (tip): rRMS 5.37% sc 1.0307
+N12                    peakOS +0.036423 ABQ@same +0.036173 (-0.69%) at [6.25, -15.38, 7.28] | all: rRMS 0.52% sc 1.0018 | x<10 (root): rRMS 3.79% sc 1.0016 | 10<x<50: rRMS 0.56% sc 1.0018 | 50<x<990 (interior): rRMS 0.35% sc 1.0018 | x>990 (tip): rRMS 1.00% sc 1.0023
+M11                    peakOS +0.0036762 ABQ@same +0.003732 (+1.52%) at [1.25, -0.0, 0.04] | all: rRMS 6.52% sc 1.0117 | x<10 (root): rRMS 9.68% sc 1.0180 | 10<x<50: rRMS 5.23% sc 1.0133 | 50<x<990 (interior): rRMS 0.74% sc 1.0072 | x>990 (tip): rRMS 5.80% sc 0.9864
+M22                    peakOS +0.00010594 ABQ@same +0.00014869 (+40.34%) at [3.75, -19.61, 16.26] | all: rRMS 8.64% sc 1.0009 | x<10 (root): rRMS 43.72% sc 1.1375 | 10<x<50: rRMS 10.61% sc 1.0274 | 50<x<990 (interior): rRMS 1.17% sc 0.9951 | x>990 (tip): rRMS 25.03% sc 1.0760
+M12                    peakOS -6.9681e-05 ABQ@same -0.00011661 (-67.35%) at [1.25, -19.92, 18.75] | all: rRMS 28.53% sc 1.0762 | x<10 (root): rRMS 44.35% sc 1.1753 | 10<x<50: rRMS 8.64% sc 1.0278 | 50<x<990 (interior): rRMS 1.68% sc 0.9970 | x>990 (tip): rRMS 15.75% sc 1.0415
+s1 ply1 bot            peakOS +47.207 ABQ@same +47.376 (+0.36%) at [1.25, -19.92, 18.75] | all: rRMS 0.70% sc 1.0070 | x<10 (root): rRMS 0.74% sc 1.0070 | 10<x<50: rRMS 0.71% sc 1.0070 | 50<x<990 (interior): rRMS 0.70% sc 1.0070 | x>990 (tip): rRMS 4.95% sc 0.9978
+s2 ply1 bot            peakOS +0.47346 ABQ@same +0.50579 (+6.83%) at [1.25, -19.61, 16.26] | all: rRMS 12.66% sc 0.9785 | x<10 (root): rRMS 14.61% sc 0.9722 | 10<x<50: rRMS 26.48% sc 1.0056 | 50<x<990 (interior): rRMS 1.23% sc 0.9950 | x>990 (tip): rRMS 10.72% sc 1.0322
+t12 ply1 bot           peakOS +0.36809 ABQ@same +0.37765 (+2.60%) at [1.25, -19.92, 18.75] | all: rRMS 0.58% sc 1.0019 | x<10 (root): rRMS 4.67% sc 1.0050 | 10<x<50: rRMS 0.55% sc 1.0018 | 50<x<990 (interior): rRMS 0.35% sc 1.0019 | x>990 (tip): rRMS 0.99% sc 1.0024
+s1 ply2 mid            peakOS +46.273 ABQ@same +46.667 (+0.85%) at [1.25, -19.92, 18.75] | all: rRMS 0.70% sc 1.0070 | x<10 (root): rRMS 0.73% sc 1.0070 | 10<x<50: rRMS 0.70% sc 1.0070 | 50<x<990 (interior): rRMS 0.70% sc 1.0070 | x>990 (tip): rRMS 5.33% sc 1.0124
+s2 ply2 mid            peakOS +0.4588 ABQ@same +0.48492 (+5.69%) at [1.25, -19.61, 16.26] | all: rRMS 10.66% sc 0.9736 | x<10 (root): rRMS 10.54% sc 0.9732 | 10<x<50: rRMS 147.33% sc 1.0691 | 50<x<990 (interior): rRMS 80.49% sc 1.1402 | x>990 (tip): rRMS 5.37% sc 1.0307
+t12 ply2 mid           peakOS +0.34689 ABQ@same +0.3445 (-0.69%) at [6.25, -15.38, 7.28] | all: rRMS 0.52% sc 1.0018 | x<10 (root): rRMS 3.79% sc 1.0016 | 10<x<50: rRMS 0.56% sc 1.0018 | 50<x<990 (interior): rRMS 0.35% sc 1.0018 | x>990 (tip): rRMS 1.00% sc 1.0023
+s1 ply3 top            peakOS +46.142 ABQ@same +46.216 (+0.16%) at [3.75, -19.92, 18.75] | all: rRMS 0.71% sc 1.0070 | x<10 (root): rRMS 0.82% sc 1.0071 | 10<x<50: rRMS 0.70% sc 1.0070 | 50<x<990 (interior): rRMS 0.70% sc 1.0070 | x>990 (tip): rRMS 6.09% sc 1.0007
+s2 ply3 top            peakOS +0.44415 ABQ@same +0.46405 (+4.48%) at [1.25, -19.61, 16.26] | all: rRMS 6.12% sc 0.9847 | x<10 (root): rRMS 6.97% sc 0.9797 | 10<x<50: rRMS 23.65% sc 1.0500 | 50<x<990 (interior): rRMS 1.28% sc 0.9951 | x>990 (tip): rRMS 10.28% sc 1.0430
+t12 ply3 top           peakOS +0.35466 ABQ@same +0.35417 (-0.14%) at [6.25, -15.38, 7.28] | all: rRMS 0.57% sc 1.0018 | x<10 (root): rRMS 4.22% sc 0.9993 | 10<x<50: rRMS 0.61% sc 1.0018 | 50<x<990 (interior): rRMS 0.35% sc 1.0018 | x>990 (tip): rRMS 1.09% sc 1.0022
+ds1 (top-bot)          peakOS +4.0013 ABQ@same +4.062 (+1.52%) at [1.25, -0.0, 0.04] | all: rRMS 6.52% sc 1.0117 | x<10 (root): rRMS 9.68% sc 1.0180 | 10<x<50: rRMS 5.23% sc 1.0133 | 50<x<990 (interior): rRMS 0.74% sc 1.0072 | x>990 (tip): rRMS 5.80% sc 0.9864
+ds2 (top-bot)          peakOS +0.11531 ABQ@same +0.16183 (+40.34%) at [3.75, -19.61, 16.26] | all: rRMS 8.64% sc 1.0009 | x<10 (root): rRMS 43.72% sc 1.1375 | 10<x<50: rRMS 10.61% sc 1.0274 | 50<x<990 (interior): rRMS 1.17% sc 0.9951 | x>990 (tip): rRMS 25.03% sc 1.0760
+dt12 (top-bot)         peakOS -0.075843 ABQ@same -0.12692 (-67.35%) at [1.25, -19.92, 18.75] | all: rRMS 28.53% sc 1.0762 | x<10 (root): rRMS 44.35% sc 1.1753 | 10<x<50: rRMS 8.64% sc 1.0278 | 50<x<990 (interior): rRMS 1.68% sc 0.9970 | x>990 (tip): rRMS 15.75% sc 1.0415
+Abaqus S vs Q E at section points: max |diff| MPa 4.0655822459712e-06
+
+== nodal fields ==
+ux: peakOS +0.16102 ABQ@same +0.16215 (+0.70%) at [992.5 -20.   20. ]; rRMS all 0.70%, x>50 0.70%
+uy: peakOS -0.01441 ABQ@same -0.01434 (+0.49%) at [175.  20.  20.]; rRMS all 0.66%, x>50 0.65%
+uz: peakOS -8.5231 ABQ@same -8.5825 (-0.70%) at [1000.  -20.   20.]; rRMS all 0.70%, x>50 0.70%
+rx: peakOS +0.00084957 ABQ@same +0.00084441 (-0.61%) at [170.  20.  20.]; rRMS all 1.60%, x>50 0.74%
+ry: peakOS +0.012811 ABQ@same +0.012898 (+0.68%) at [ 9.975e+02 -1.260e+00  4.000e-02]; rRMS all 0.70%, x>50 0.70%
+rz: peakOS +0.00049123 ABQ@same +0.00048342 (-1.59%) at [  2.5  -19.37  15.03]; rRMS all 15.94%, x>50 5.51%
+rigid end OS [ 1.81249292e-07 -3.13074944e-09 -8.52305181e+00  2.49828059e-10
+  1.26619724e-02  6.07314067e-14] 
+rigid end ABQ RP U [ 2.16469402e-07  6.89323273e-14 -8.58246040e+00] UR [-4.59513087e-15  1.27506657e-02  1.00900566e-17] at [1.00000000e+03 2.22044605e-16 7.28436422e+00]
+OS rigid node at [1.00000000e+03 2.22044605e-16 7.28436412e+00]
+load path: OS history [0. 1.] Abaqus frames [0. 1.]
+tip stiffness P/|uz|  OS 0.11732886558778358 ABQ 0.11651670418414105
+tip nodes uz range OS 9.993122773721552e-09 ABQ 0.0
+OS fixed nodes 26 max |u| there 0.0 | ABQ max |U|,|UR| at x=0 6.112259962011548e-36 1.1454618622647245e-38
+
+== section resultants (element rings, centroid z = 7.2844) ==
+x=   1.25: My exact  998.750 | OS  991.743 ABQ  998.748 | Nx OS -0.0000 ABQ +0.0000 | Vz OS -0.9299 ABQ -0.9341
+x=  51.25: My exact  948.750 | OS  942.120 ABQ  948.748 | Nx OS -0.0000 ABQ +0.0000 | Vz OS -0.9993 ABQ -1.0000
+x= 251.25: My exact  748.750 | OS  743.533 ABQ  748.749 | Nx OS -0.0000 ABQ +0.0000 | Vz OS -0.9997 ABQ -1.0000
+x= 501.25: My exact  498.750 | OS  495.281 ABQ  498.749 | Nx OS -0.0000 ABQ +0.0000 | Vz OS -0.9997 ABQ -1.0000
+x= 751.25: My exact  248.750 | OS  247.028 ABQ  248.750 | Nx OS +0.0000 ABQ +0.0000 | Vz OS -0.9997 ABQ -1.0000
+x= 998.75: My exact    1.250 | OS    1.298 ABQ    1.250 | Nx OS +0.0000 ABQ -0.0000 | Vz OS -0.9862 ABQ -0.9905
+OS: interior My/(L-x) mean 0.9931, Vz mean -0.9997
+ABQ: interior My/(L-x) mean 1.0000, Vz mean -1.0000
+OS effective A11 needed for statics (interior) = Q11 t x 1.006970432961039
+root ring (x=1.25): My OS 991.743167289429 ABQ 998.747732782695 exact 998.75
+
+PyVista magnification x20 (max |u| 8.582 mm)
+pv u_z min/max {'OS': (-8.5230518131794, 1.1669595328353564e-05), 'ABQ': (-8.582460403442383, 1.934256033564452e-05), 'clim': np.float64(8.582460403442383)} 
+pv sigma_xx top ply top min/max {'OS': (-29.600502952820914, 46.1422949531978), 'ABQ': (-29.840932846069336, 46.32875442504883), 'clim': np.float64(46.32875442504883)}

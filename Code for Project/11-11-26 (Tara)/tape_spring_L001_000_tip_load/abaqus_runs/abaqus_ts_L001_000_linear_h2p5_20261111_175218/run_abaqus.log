@@ -1,0 +1,22 @@
+$ C:\SIMULIA\Commands2026\abaqus.BAT cae noGUI=abaqus_ts_L001_000_linear_h2p5.py
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\tape_spring_L001_000_tip_load\abaqus_runs\abaqus_ts_L001_000_linear_h2p5_20261111_175218)
+Successfully checked out QAE/1 from DSLS server r1132102715640-usw1-licensing-1.3dexperience.3ds.com
+Successfully checked out QAX/1 from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+Abaqus License Manager checked out the following license:
+"QAE" from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+<7 out of 11 licenses remain available>.
+shell normal flipped on the face through [0.0, 0.0]
+ODB extraction: done by run_abaqus.py after this script (abaqus python odb_extract.py)
+=== ts_L001_000_linear_h2p5_S4R_2p5mm: S4R, 2.5 mm mesh, 10000 elements, 10426 nodes
+Report node displacement (final frame)
+[PASS] uz                                 Abaqus = -8.5825   OpenSees = -8.5231   diff = -0.70%
+[PASS] ry                                 Abaqus = +0.012751   OpenSees = +0.012662   diff = +0.70%
+[PASS] max |u_i| over the model [mm]      Abaqus = +8.5825   OpenSees = +8.5231   diff = +0.70%
+Top-ply top-surface stress, ply axes [MPa] (section point 9), largest magnitude
+[PASS] s1 (S11)                           Abaqus = +46.329   OpenSees = +46.142   diff = +0.40%
+[CHECK] s2 (S22)                           Abaqus = +0.46405   OpenSees = +0.44415   diff = +4.48%
+[CHECK] t12 (S12)                          Abaqus = -0.35425   OpenSees = +0.35466   diff = -199.88%
+
+SOME COMPARISONS DIFFER BY MORE THAN 3% (see CHECK lines)
+$ C:\SIMULIA\Commands2026\abaqus.BAT python F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\verification\odb_extract.py ts_L001_000_linear_h2p5_S4R_2p5mm.odb ts_L001_000_linear_h2p5_S4R_2p5mm_odb.npz
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\tape_spring_L001_000_tip_load\abaqus_runs\abaqus_ts_L001_000_linear_h2p5_20261111_175218)

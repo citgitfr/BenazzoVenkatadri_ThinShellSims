@@ -1,0 +1,24 @@
+=== Abaqus verification of "ts_L001_000_linear_h2p5" ===
+
+ON THE MACHINE WITH ABAQUS
+  1. Copy this ONE file into an empty folder there:
+       abaqus_ts_L001_000_linear_h2p5.py
+  2. In that folder run:
+       abaqus cae noGUI=abaqus_ts_L001_000_linear_h2p5.py
+     (2.5 mm mesh, S4R, job "ts_L001_000_linear_h2p5_S4R_2p5mm". For another mesh / element, e.g.
+      abaqus cae noGUI=abaqus_ts_L001_000_linear_h2p5.py -- 1.25 S4
+      the job and every file name below become "ts_L001_000_linear_h2p5_S4_1p25mm".)
+  3. When it finishes, open ts_L001_000_linear_h2p5_S4R_2p5mm_results.txt and check that it does NOT say
+     "ODB extraction failed". If it does, copy .claude/verification/odb_extract.py
+     from the project into the same folder and run:
+       abaqus python odb_extract.py ts_L001_000_linear_h2p5_S4R_2p5mm.odb
+     Optional: open the model in Abaqus/CAE to check the set-up:
+       abaqus cae database=ts_L001_000_linear_h2p5_S4R_2p5mm.cae
+
+COPY BACK TO THIS MACHINE, into F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\tape_spring_L001_000_tip_load
+  ts_L001_000_linear_h2p5_S4R_2p5mm_odb.npz        REQUIRED: the Abaqus results as plain arrays
+  ts_L001_000_linear_h2p5_S4R_2p5mm_results.txt    recommended: run log and Abaqus vs embedded OpenSees values
+  not needed: ts_L001_000_linear_h2p5_S4R_2p5mm.odb / .cae / .dat / .msg / .sta (keep them there for inspection)
+
+THEN TELL CLAUDE (paste):
+  Run the OpenSeesAbaqusResultsComparator agent on F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\tape_spring_L001_000_tip_load\results\ts_L001_000_linear_h2p5.npz and F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-11-26 (Tara)\tape_spring_L001_000_tip_load\ts_L001_000_linear_h2p5_S4R_2p5mm_odb.npz
