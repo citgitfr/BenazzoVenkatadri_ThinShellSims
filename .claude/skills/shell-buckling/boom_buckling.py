@@ -216,12 +216,14 @@ def run(case, out_dir, only=None):
                           fine_from=sgn * FINE_FROM * a_crit if a_crit else None)
             if case.get('B_cutoff'):                         # threshold requirement: stop once it is passed
                 ad['max_load'] = case['B_cutoff']
+            if case.get('B_pass'):                           # passed the requirement and crawling: stop
+                ad['pass_load'] = case['B_pass']
             h, peak, k = sb.imperfect_path(ctrl, sgn * b['step'], int(round(b['max'] / b['step'])), **_solver(b),
                                            **ad)
         res['B'] = dict(peak_load=float(peak), param_at_peak=float(abs(h[k, 0])), amplitude=amp,
                         imperfection='mode A' if mode is not None else 'none',
                         history=h.tolist(), time=time.perf_counter() - t0,
-                        peak_is_last_point=bool(k == len(h) - 1))
+                        peak_is_last_point=bool(k == len(h) - 1), stop=sb.LAST_PATH_STOP)
         print(f'B (ASDShellQ4 imperfect path, amplitude {amp:g} mm): peak {peak:.5g} at '
               f'{abs(h[k, 0]):.5g}{" (last point: path stopped or still rising)" if k == len(h) - 1 else ""}; '
               f'{res["B"]["time"]:.0f} s', flush=True)

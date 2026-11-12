@@ -1142,6 +1142,8 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
     if cut and 'B_cutoff' not in case:
         apply_cutoff(case, d, cut)
         case['B_cutoff'] = cut
+    if cut and 'B_pass' not in case:   # threshold requirement: B stops once past it and only crawling
+        case['B_pass'] = req['requirements']['buckling']['min_value']
     if cut and 'A' in case:            # threshold requirement: A stops refining once stable beyond this
         case['A'].setdefault('enough', A_ENOUGH * (req['requirements']['buckling']['min_value']))
     A_known = resume_A(case, bdir, logs)
@@ -1199,6 +1201,8 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
             continue
         if B.get('peak_load') is not None and not B.get('peak_is_last_point'):
             break
+        if B.get('stop') == 'stall_passed':
+            break
         if _stalled(B, case['B']):
             stalled = True
             notes.append(f'path stalled at {B["peak_load"]:g} (no convergence beyond, '
@@ -1211,7 +1215,10 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
             _widen(case)
     A =(r.get('A') or {}).get('critical_load') or (A_known or {}).get('critical_load')
     passed_cut = cut and B.get('peak_load') is not None and B['peak_load'] >= cut and B.get('peak_is_last_point')
-    if passed_cut:
+    if B.get('stop') == 'stall_passed' and B.get('peak_is_last_point'):
+        val, kind = B['peak_load'], (f'B LOWER BOUND: path passed the requirement {case["B_pass"]:g} still rising, '
+                                     f'then the solver crawled (consecutive cut / slow steps); stopped there by design')
+    elif passed_cut:
         val, kind = B['peak_load'], (f'B LOWER BOUND: path passed the cutoff {cut:g} (= {cut_f:g} x requirement) '
                                      f'still rising; stopped there by design')
     elif B.get('peak_load') is not None and not B.get('peak_is_last_point'):

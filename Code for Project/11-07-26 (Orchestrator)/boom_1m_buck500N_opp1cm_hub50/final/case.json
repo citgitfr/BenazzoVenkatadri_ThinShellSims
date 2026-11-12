@@ -1,0 +1,53 @@
+{
+ "name": "it005_L006_Y002_M008",
+ "laminate": {
+  "json": "lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "M008"
+  },
+  "size": 2.2,
+  "boom": "M008"
+ },
+ "element": {
+  "type": "ASDShellQ4",
+  "corotational": false
+ },
+ "supports": [
+  {
+   "rigid_end": "x0",
+   "dofs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "rigid_end": "xL"
+  }
+ ],
+ "loads": [
+  {
+   "node": {
+    "rigid": "xL"
+   },
+   "force": [
+    0.0,
+    0.0,
+    -50.0
+   ]
+  }
+ ],
+ "analysis": {
+  "type": "linear"
+ },
+ "report_node": {
+  "rigid": "xL"
+ }
+}

@@ -18,6 +18,21 @@ nodes. Abaqus element fields are compared in the material/local axes in
 which Abaqus reports them, with the OpenSees facet frame (x along the
 extrusion) and the ply axes.
 
+Curvatures: Abaqus names SK by the axis the section bends ABOUT (SK1 =
+curvature about local 1-axis = kyy, SK2 = about local 2-axis = kxx, SK3 =
+twist), unlike SM (SM1 = M11, bending in the 1-direction); kxx = SK2,
+kyy = SK1, kxy = SK3 (checked with SM = D SK on real Abaqus 2026 ODBs of tape
+springs and a TRAC boom).
+Web facets: facets whose strip is labelled 'web' in the results meta
+(strip_label, a TRAC / omega / corrugated model with bonded webs) carry the
+doubled laminate (meta web_stack 'mirror': the flange plies reversed with
+negated angles below the flange plies; 'repeat': twice as listed), the rule
+of failure_check.facet_groups / laminate_properties.doubled_laminate.
+Ply stresses: Abaqus section points are paired with OpenSees plies by the
+layer number and the fraction (-1 bottom, 0 middle, +1 top of the layer) in
+their descriptions, per element (flange 3 plies vs web 6 plies), else by
+number (3 Simpson points per ply).
+
 Usage:
   python compare_results.py <opensees results>.npz <abaqus>_odb.npz [--out DIR] [--tol 0.03] [--name NAME]
 Writes into DIR (default: next to the Abaqus file, folder compare_<name>):
@@ -35,6 +50,7 @@ Units: those of the two runs (N, mm, MPa in the project).
 import argparse
 import json
 import math
+import re
 from pathlib import Path
 
 import numpy as np
@@ -47,6 +63,8 @@ from mpl_toolkits.mplot3d.art3d import Poly3DCollection   # noqa: E402
 
 ORDERS = ((0, 1, 2), (1, 2, 0), (2, 0, 1))          # global = abaqus[:, order]
 POS = ('bottom', 'mid', 'top')
+# Abaqus labels for [kxx, kyy, kxy]: SK1 / SK2 = curvature ABOUT the local 1 / 2 axis (= kyy / kxx)
+SK_LABELS = ('SK2', 'SK1', 'SK3')
 
 
 # --- loading -------------------------------------------------------------------------------
@@ -123,6 +141,72 @@ def opensees_ply_stresses(strains, lam):
         NM[:, 0:3] += sum(wj * s for wj, s in zip(w, sxy))
         NM[:, 3:6] += sum(wj * s * z for wj, s, z in zip(w, sxy, q['z']))
     return sig, NM
+
+
+def doubled_laminate(lam, stack='mirror'):
+    """Web (bonded tab) laminate: a second flange laminate bonded under this one,
+    z from the bond plane; same rule as laminate_properties.doubled_laminate."""
+    below = ([dict(q, theta=-q['theta'] + 0.0) for q in reversed(lam['plies'])] if stack == 'mirror'
+             else lam['plies'])
+    return dict(lam, plies=[dict(theta=q['theta'], t=q['t'], mat=q['mat']) for q in below + lam['plies']],
+                name=f'web of {lam.get("name") or ""}'.strip())
+
+
+def facet_laminates(os_):
+    """[(label, laminate, facet mask)]: the web facets of the FE model (results
+    meta strip_label == 'web', facet strip = facet index // nx) carry the doubled
+    laminate with the model's web stack, as in failure_check.facet_groups."""
+    meta, n = os_['meta'], len(os_['faces'])
+    lab = meta.get('strip_label') or []
+    if 'web' not in lab:
+        return [('', os_['lam'], np.ones(n, bool))]
+    web = (np.array(lab) == 'web')[np.arange(n) // meta['nx']]
+    return [('flange ', os_['lam'], ~web),
+            ('web ', doubled_laminate(os_['lam'], meta.get('web_stack', 'mirror')), web)]
+
+
+def section_point_map(s_meta, sps):
+    """{column of F_S: (layer index from 0, position 0/1/2 = bottom/mid/top)}.
+    Abaqus numbers section points from the bottom; its descriptions
+    ('SNEG, (fraction = -1.0), Layer = 1', 'fraction = -0.833333, Layer = 1',
+    'Mid, (fraction = 0.0), Layer = 3', ...) give the layer and the fraction of
+    the WHOLE section thickness, and odb_extract keeps one description per number
+    (the last element's: flange and web sections share numbers). So:
+      composite, every described layer = (number - 1) // 3 + 1 (the 3 Simpson points
+        per layer of the generated scripts): number 3k+1, 3k+2, 3k+3 = layer k+1 bottom,
+        mid, top, in every element whatever its number of layers;
+      no 'Layer' (homogeneous section, one layer): fraction -1 / 0 / +1 = bottom / mid / top;
+      otherwise: lowest / middle / highest number described in a layer."""
+    desc = (s_meta or {}).get('section_point_descriptions') or {}
+    parsed = {}
+    for col, sp in enumerate(sps):
+        d = desc.get(str(sp), '')
+        lay = re.search(r'Layer\s*=\s*(\d+)', d)
+        fr = re.search(r'fraction\s*=\s*([-+0-9.eE]+)', d)
+        word = re.match(r'\s*(SNEG|MID|SPOS)', d, re.I)
+        f = float(fr.group(1)) if fr else {'SNEG': -1.0, 'MID': 0.0, 'SPOS': 1.0}[word.group(1).upper()] if word else None
+        parsed[col] = (sp, int(lay.group(1)) if lay else None, f)
+    layered = [v for v in parsed.values() if v[1] is not None]
+    if not layered and any(v[2] is not None for v in parsed.values()):          # homogeneous section
+        return {col: (0, int(round(f)) + 1) for col, (sp, _, f) in parsed.items()
+                if f is not None and min(abs(f + 1), abs(f), abs(f - 1)) < 1e-6}
+    if all(lay == (sp - 1) // 3 + 1 for sp, lay, _ in layered):                # 3 points per layer (or no descriptions)
+        return {col: divmod(sp - 1, 3) for col, (sp, _, _) in parsed.items() if sp >= 1}
+    out, by_layer = {}, {}
+    for col, (sp, lay, f) in parsed.items():
+        if lay is not None:
+            by_layer.setdefault(lay, []).append((sp, col, f))
+    for lay, pts in by_layer.items():
+        pts.sort()
+        if len(pts) == 1:
+            f = pts[0][2]
+            if f in (-1.0, 1.0):
+                out[pts[0][1]] = (lay - 1, int(f) + 1)
+            continue
+        out[pts[0][1]], out[pts[-1][1]] = (lay - 1, 0), (lay - 1, 2)
+        if len(pts) % 2:
+            out[pts[len(pts) // 2][1]] = (lay - 1, 1)
+    return out
 
 
 # --- matching -----------------------------------------------------------------------------
@@ -256,36 +340,54 @@ def run(os_path, ab_path, out_dir, tol, name):
         a = pick(se, se_c, ['SE1', 'SE2', 'SE3'])
         rows += compare('membrane strain', ['exx (SE1)', 'eyy (SE2)', 'gxy (SE3)'], a, st[:, 0:3], at_elem, tol,
                         group_scale=max(np.abs(st[:, 0:3]).max(), np.abs(st[:, 3:6]).max() * h / 2))
-        k_ab = pick(se, se_c, ['SK1', 'SK2', 'SK3'])
+        k_ab = pick(se, se_c, SK_LABELS)
     else:
         k_ab = None
     if SK is not None:
-        k_ab = pick(SK[:, 0, :][em], sk_c, ['SK1', 'SK2', 'SK3'])
+        k_ab = pick(SK[:, 0, :][em], sk_c, SK_LABELS)
     if k_ab is not None and np.isfinite(k_ab).any():
-        rows += compare('curvature', ['kxx (SK1)', 'kyy (SK2)', 'kxy (SK3)'], k_ab, st[:, 3:6], at_elem, tol)
+        rows += compare('curvature', [f'{c} ({l})' for c, l in zip(('kxx', 'kyy', 'kxy'), SK_LABELS)],
+                        k_ab, st[:, 3:6], at_elem, tol)
 
-    # ply stresses (ply axes) from OpenSees strains vs Abaqus section points
-    sig, NM = opensees_ply_stresses(st, os_['lam'])
-    n_ply = sig.shape[1]
+    # ply stresses (ply axes) from OpenSees strains vs Abaqus section points, per facet group
+    # (flange: the results laminate; web: the doubled laminate), and section forces from the same laminates
+    groups = facet_laminates(os_)
+    n_max = max(len(g[1]['plies']) for g in groups)
+    nf = len(st)
+    sig = np.full((nf, n_max, 3, 3), np.nan)
+    NM = np.zeros((nf, 6))
+    top = np.zeros(nf, int)                                   # top ply of every facet's laminate
+    for _, lam, msk in groups:
+        sg, nm_ = opensees_ply_stresses(st[msk], lam)
+        sig[msk, :sg.shape[1]] = sg
+        NM[msk] = nm_
+        top[msk] = sg.shape[1] - 1
+    if len(groups) > 1:
+        info['laminates'] = '; '.join(f'{lbl.strip()}: {int(msk.sum())} facets, ['
+                                      + '/'.join(f'{q["theta"]:g}' for q in lam['plies']) + ']'
+                                      for lbl, lam, msk in groups)
     S, s_c, s_meta = field_components(ab, 'S')
     s_ab = None
     if S is not None:
-        nsp = S.shape[1]
-        per = nsp // n_ply if nsp % n_ply == 0 and nsp >= n_ply else None
-        if per is None:
-            info['stress_note'] = f'{nsp} Abaqus section points for {n_ply} plies: not compared ply by ply'
-        else:
-            info['section_points_per_ply'] = per
-            s_ab = np.full(sig.shape, np.nan)
-            for p in range(n_ply):
-                for j, sp in ((0, 0), (1, (per - 1) / 2), (2, per - 1)):
-                    if sp == int(sp):
-                        s_ab[:, p, j] = pick(S[:, p * per + int(sp), :][em], s_c, ['S11', 'S22', 'S12'])
-            for p in range(n_ply):
-                for j in (0, 2):
-                    rows += compare(f'ply {p + 1} ({os_["lam"]["plies"][p]["theta"]:g} deg) {POS[j]}',
-                                    ['s1 (S11)', 's2 (S22)', 't12 (S12)'], s_ab[:, p, j], sig[:, p, j], at_elem, tol,
-                                    group_scale=np.abs(sig).max())
+        spmap = section_point_map(s_meta, s_meta.get('section_points') or list(range(1, S.shape[1] + 1)))
+        s_ab = np.full(sig.shape, np.nan)
+        for col, (p, j) in spmap.items():
+            if p < n_max:
+                s_ab[:, p, j] = pick(S[:, col, :][em], s_c, ['S11', 'S22', 'S12'])
+        s_ab[np.isnan(sig)] = np.nan                       # layers the facet's laminate does not have
+        have = sorted({(p, j) for p, j in spmap.values() if p < n_max})
+        info['section_points'] = (f'{len(spmap)} Abaqus stress section points paired with plies '
+                                  f'(layer, position): ' + ', '.join(f'{p + 1}{POS[j][0]}' for p, j in have))
+        for lbl, lam, msk in groups:
+            for p, q in enumerate(lam['plies']):
+                pos = [j for j in (0, 2) if np.isfinite(s_ab[msk, p, j]).any()]
+                if not pos and np.isfinite(s_ab[msk, p, 1]).any():
+                    pos = [1]
+                for j in pos:
+                    a, b = np.where(msk[:, None], s_ab[:, p, j], np.nan), np.where(msk[:, None], sig[:, p, j], np.nan)
+                    rows += compare(f'{lbl}ply {p + 1} ({q["theta"]:g} deg) {POS[j]}',
+                                    ['s1 (S11)', 's2 (S22)', 't12 (S12)'], a, b, at_elem, tol,
+                                    group_scale=np.nanmax(np.abs(sig)))
 
     # section forces and moments
     SF, sf_c, _ = field_components(ab, 'SF')
@@ -307,7 +409,7 @@ def run(os_path, ab_path, out_dir, tol, name):
                          peak_diff=path['max_rel_diff'], rel_rms=float('nan'), ls_scale=float('nan'), corr=float('nan'),
                          verdict='PASS' if path['max_rel_diff'] <= tol else 'CHECK'))
 
-    plots(os_, ab, m, sig, s_ab, k_ab, path, out_dir, name)
+    plots(os_, ab, m, sig, s_ab, k_ab, path, out_dir, name, top)
     write_report(info, rows, out_dir, name, tol)
     return info, rows
 
@@ -407,7 +509,12 @@ def _limits(ax, xyz):
     ax.set_zlabel('z')
 
 
-def plots(os_, ab, m, sig, s_ab, k_ab, path, out_dir, name):
+def plots(os_, ab, m, sig, s_ab, k_ab, path, out_dir, name, top=None):
+    """top: index of the top ply of every facet's laminate (default: the last ply)."""
+    if s_ab is not None:
+        top = np.full(len(sig), sig.shape[1] - 1) if top is None else top
+        ar = np.arange(len(sig))
+        sig_top, ab_top = sig[ar, top, 2], s_ab[ar, top, 2]          # top surface of every facet
     o = list(m['order'])
     xyz, faces = os_['points'], os_['faces']
     lab = m['lab']
@@ -437,8 +544,8 @@ def plots(os_, ab, m, sig, s_ab, k_ab, path, out_dir, name):
         c = int(np.argmax(np.abs(st[:, 3:6]).max(axis=0)))
         fields.append((['kxx', 'kyy', 'kxy'][c] + ' [1/mm]', 'elem', st[:, 3 + c], k_ab[:, c]))
     if s_ab is not None:
-        c = int(np.argmax(np.abs(sig[:, -1, 2]).max(axis=0)))
-        fields.append((['s1', 's2', 't12'][c] + ' top ply, top [MPa]', 'elem', sig[:, -1, 2, c], s_ab[:, -1, 2, c]))
+        c = int(np.argmax(np.nanmax(np.abs(sig_top), axis=0)))
+        fields.append((['s1', 's2', 't12'][c] + ' top ply, top [MPa]', 'elem', sig_top[:, c], ab_top[:, c]))
     xs = developed(os_)
     fig = plt.figure(figsize=(15, 3.6 * len(fields)) if xs is not None else (15, 4.2 * len(fields)))
     for r, (title, kind, vos, vab) in enumerate(fields):
@@ -502,9 +609,9 @@ def plots(os_, ab, m, sig, s_ab, k_ab, path, out_dir, name):
         ex = os_['centroids'][eline, 0]
         panels.append((['kxx', 'kyy', 'kxy'][c] + ' [1/mm]', ex, st[eline, 3 + c], ex, k_ab[eline, c]))
     if s_ab is not None:
-        c = int(np.argmax(np.abs(sig[:, -1, 2]).max(axis=0)))
+        c = int(np.argmax(np.nanmax(np.abs(sig_top), axis=0)))
         ex = os_['centroids'][eline, 0]
-        panels.append((['s1', 's2', 't12'][c] + ' top ply, top [MPa]', ex, sig[eline, -1, 2, c], ex, s_ab[eline, -1, 2, c]))
+        panels.append((['s1', 's2', 't12'][c] + ' top ply, top [MPa]', ex, sig_top[eline, c], ex, ab_top[eline, c]))
     fig, axes = plt.subplots(len(panels), 1, figsize=(8, 2.8 * len(panels)), squeeze=False)
     for ax, (title, x1, y1, x2, y2) in zip(axes[:, 0], panels):
         ax.plot(x1, y1, '-', color='tab:blue', label='OpenSees')
@@ -551,7 +658,7 @@ def write_report(info, rows, out_dir, name, tol):
     if info['abaqus_version'] == 'mock':
         lines.insert(2, '**WARNING: the Abaqus file comes from the stand-in ODB (odb_mock.py), not from an Abaqus run: '
                         'this is a test of the tools, not a verification.**\n')
-    for k in ('section_points_per_ply', 'stress_note'):
+    for k in ('laminates', 'section_points', 'stress_note'):
         if k in info:
             lines.append(f'- {k.replace("_", " ")}: {info[k]}')
     lines += ['', f'Peak = largest |OpenSees value|; Abaqus at the same point; diff = (Abaqus - OpenSees) / |peak|; '
