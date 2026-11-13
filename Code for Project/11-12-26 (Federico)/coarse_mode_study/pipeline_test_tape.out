@@ -1,0 +1,2 @@
+tape ok 68 s
+buckling (fast pipeline): B LOWER BOUND: path passed the cutoff 5 (= 1 x requirement) on the 5 mm B mesh still rising; stopped there by design = 7.4784525364951895 (B 7.4784525364951895 on 5 mm, imperfection segment LBA; seed: segment LBA (segment L 488 mm, 4 x 8 mm, tiled; 45 s); Code for Project/11-12-26 (Federico)/coarse_mode_study/pipeline_test/tape/iterations/it002/buckling/it002_L006_Y001_T014_buck.json, picture Code for Project/11-12-26 (Federico)/coarse_mode_study/pipeline_test/tape/iterations/it002/buckling/it002_L006_Y001_T014_buck.png; 68 s)

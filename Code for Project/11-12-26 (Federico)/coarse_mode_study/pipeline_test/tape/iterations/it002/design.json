@@ -1,0 +1,98 @@
+{
+ "iter": 2,
+ "key": "L006/Y001/T014",
+ "material": "L006",
+ "layup": "Y001",
+ "layup_str": "[0/0/0]",
+ "geometry": "T014",
+ "type": "TS",
+ "section": {
+  "type": "arc",
+  "R": 20,
+  "b": 79.93608
+ },
+ "R": 20,
+ "b": 79.9360797413403,
+ "L": 1000.0,
+ "size": 5.0,
+ "name": "it002_L006_Y001_T014",
+ "reason": "Material L006 (IM7/MTM45-1, E1 157.9 GPa vs 127 GPa for L038): iteration 1 L038 on the same section fell 1% short in stiffness (FE 0.2475 vs 0.25 N/mm), so the stiffer fibre at +1.6% mass (0.01284 kg) is the best predicted-feasible TOP design (k_cal 0.308, F_hub 0.208). Geometry T014 kept (R 20 mm, 229 deg): only one change from iteration 1, so the material effect is isolated. Layup Y001 [0/0/0] h 0.105 mm: thinnest layup, all 0 plies for E_x.",
+ "override": "",
+ "screen_rank": 3,
+ "h_mm": 0.10499999999999998,
+ "k_est": 0.3146301455729797,
+ "buckling_est": 161.77556068511007,
+ "Ex": 157900.00000000003,
+ "EIz": 104876715.19099322,
+ "EIy": 314456003.95820487,
+ "F_flat": 0.14930681379466268,
+ "F_hub": 0.20807102689466947,
+ "r_min": 20.0,
+ "cross_ply": true,
+ "buckling_est_cal": 161.77556068511007,
+ "abd_check": {
+  "A": 6.8e-18,
+  "B": 7.8e-17,
+  "D": 0.0044,
+  "D_expected": 0.0044,
+  "ok": true
+ },
+ "failure_log": "Code for Project/11-06-26 (Orchestrator)/ts_1m_buck5N_opp2cm_hub40/iterations/it002/logs/failure.log",
+ "F_governing_fc": 0.1493,
+ "buckling_value": 7.4784525364951895,
+ "buckling_kind": "B LOWER BOUND: path passed the cutoff 5 (= 1 x requirement) on the 5 mm B mesh still rising; stopped there by design",
+ "buckling_A": null,
+ "buckling_B": 7.4784525364951895,
+ "buckling_amplitude": 0.0105,
+ "buckling_imperfection": "segment LBA",
+ "buckling_notes": [
+  "seed: segment LBA (segment L 488 mm, 4 x 8 mm, tiled; 45 s)"
+ ],
+ "k_fe": 0.30553431703367845,
+ "k_beam": 0.3146301455729797,
+ "k_ratio": 0.971090409907364,
+ "sanity": [],
+ "feasible": true,
+ "objective": 0.012808368696008885,
+ "buckling_pipeline": "fast",
+ "buckling_B_size": 5.0,
+ "buckling_seed": {
+  "method": "segment LBA",
+  "model": "segment L 488 mm, 4 x 8 mm, tiled",
+  "ndof": 7813,
+  "lam": [
+   69.95205168212954,
+   69.95205255883441,
+   69.95310054212986,
+   69.95310104650655
+  ],
+  "lam_small": 0.005,
+  "times": {
+   "K0": 9.184314000420272,
+   "K1": 14.615811700001359,
+   "eig": 21.624714199453592,
+   "total": 45.424839899875224
+  },
+  "time": 45.424839899875224,
+  "target_dofs": 20514,
+  "global_scan": {
+   "skipped": "Euler 1035.1 >= segment 69.952"
+  },
+  "key": {
+   "section": {
+    "type": "arc",
+    "R": 20,
+    "b": 79.93608
+   },
+   "L": 1000.0,
+   "size": 5.0,
+   "load": {
+    "type": "compression",
+    "ends": "pinned"
+   }
+  },
+  "cached": false
+ },
+ "buckling_fine_check": null,
+ "buckling_time_s": 68.02901
+}

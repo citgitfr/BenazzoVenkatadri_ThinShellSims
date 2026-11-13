@@ -1,0 +1,29 @@
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+  step   1: param -0.024875, load factor  84.5955, iters 4
+  step   2: param -0.074625, load factor  253.771, iters 8
+  step   3: param -0.12438, load factor  422.84, iters 16
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 0.0235017 (max: 1e-06, Norm deltaR: 0.0455755)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 588.883
+OpenSees > analyze failed, returned: -3 error flag
+  step   4: param -0.14925, load factor  506.899, iters 25
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 0.00502068 (max: 1e-06, Norm deltaR: 0.0199344)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 669.474
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 4.57193 (max: 1e-06, Norm deltaR: 1.33126)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 588.948
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 0.000126797 (max: 1e-06, Norm deltaR: 0.0298241)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 548.197
+OpenSees > analyze failed, returned: -3 error flag
+  step   5: param -0.15547, load factor  527.642, iters 29
+  stall after passing 500: 2 hard steps in a row (cut or >= 0.75 x 40 iterations) at load factor 527.642; path stopped (lower bound)
+B (ASDShellQ4 imperfect path, amplitude 0.0105 mm): peak 527.64 at 0.15547 (last point: path stopped or still rising); 21334 s
+saved C:\Users\fbenazzo\Desktop\ME295\BenazzoVenkatadri_ThinShellSims\Code for Project\11-12-26 (Federico)\coarse_mode_study\results\B\omega_seg_s4_L144_m1.json

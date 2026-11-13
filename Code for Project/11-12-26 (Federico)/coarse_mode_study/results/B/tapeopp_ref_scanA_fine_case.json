@@ -1,0 +1,33 @@
+{
+ "name": "tapeopp_ref_scanA_fine",
+ "laminate": {
+  "isotropic": {
+   "E": 131000,
+   "nu": 0.3,
+   "t": 0.1
+  }
+ },
+ "geometry": {
+  "L": 200,
+  "section": {
+   "type": "arc",
+   "R": 13.3,
+   "b": 24.605
+  },
+  "size": 2
+ },
+ "load": {
+  "type": "bending",
+  "axis": "y",
+  "sign": 1
+ },
+ "B": {
+  "step": 0.005,
+  "max": 0.2,
+  "amplitude": 0.01,
+  "control": "disp",
+  "tol": 1e-06,
+  "max_iter": 40
+ },
+ "mode_file": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-12-26 (Federico)\\coarse_mode_study\\results\\tapeopp_ref_scanA_fine_mode.npz"
+}

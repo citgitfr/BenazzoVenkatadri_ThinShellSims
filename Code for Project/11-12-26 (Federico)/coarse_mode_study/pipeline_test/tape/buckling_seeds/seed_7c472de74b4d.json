@@ -1,0 +1,37 @@
+{
+ "method": "segment LBA",
+ "model": "segment L 488 mm, 4 x 8 mm, tiled",
+ "ndof": 7813,
+ "lam": [
+  69.95205168212954,
+  69.95205255883441,
+  69.95310054212986,
+  69.95310104650655
+ ],
+ "lam_small": 0.005,
+ "times": {
+  "K0": 9.184314000420272,
+  "K1": 14.615811700001359,
+  "eig": 21.624714199453592,
+  "total": 45.424839899875224
+ },
+ "time": 45.424839899875224,
+ "target_dofs": 20514,
+ "global_scan": {
+  "skipped": "Euler 1035.1 >= segment 69.952"
+ },
+ "key": {
+  "section": {
+   "type": "arc",
+   "R": 20,
+   "b": 79.93608
+  },
+  "L": 1000.0,
+  "size": 5.0,
+  "load": {
+   "type": "compression",
+   "ends": "pinned"
+  }
+ },
+ "cached": false
+}

@@ -1,0 +1,30 @@
+{
+ "name": "omega_s2.2_req",
+ "laminate": {
+  "json": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-07-26 (Orchestrator)\\boom_1m_buck500N_opp1cm_hub50\\iterations\\it005\\lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "M008"
+  },
+  "size": 2.2
+ },
+ "load": {
+  "type": "compression",
+  "ends": "pinned"
+ },
+ "B": {
+  "step": 0.024875096581342036,
+  "max": 0.49750193162684075,
+  "amplitude": 0.0105,
+  "control": "disp",
+  "tol": 1e-06,
+  "max_iter": 40,
+  "max_step": 0.3261457131556162
+ },
+ "B_cutoff": 500.0,
+ "B_pass": 500.0,
+ "mode_file": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-12-26 (Federico)\\coarse_mode_study\\results\\Bmesh\\omega_s2.2_req_seed.npz"
+}

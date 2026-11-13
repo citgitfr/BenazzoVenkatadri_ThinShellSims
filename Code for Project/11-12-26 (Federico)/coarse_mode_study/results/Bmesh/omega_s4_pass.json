@@ -1,0 +1,73 @@
+{
+ "case": {
+  "name": "omega_s4_pass",
+  "laminate": {
+   "json": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-07-26 (Orchestrator)\\boom_1m_buck500N_opp1cm_hub50\\iterations\\it005\\lam.json"
+  },
+  "geometry": {
+   "L": 1000.0,
+   "section": {
+    "type": "boom",
+    "id": "M008"
+   },
+   "size": 4.0
+  },
+  "load": {
+   "type": "compression",
+   "ends": "pinned"
+  },
+  "B": {
+   "step": 0.024875096581342036,
+   "max": 0.49750193162684075,
+   "amplitude": 0.0105,
+   "control": "disp",
+   "tol": 1e-06,
+   "max_iter": 40,
+   "max_step": 0.3261457131556162
+  },
+  "B_cutoff": 750.0,
+  "B_pass": 500.0,
+  "mode_file": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-12-26 (Federico)\\coarse_mode_study\\results\\Bmesh\\omega_s4_pass_seed.npz"
+ },
+ "B": {
+  "peak_load": 591.3880816587337,
+  "param_at_peak": 0.17412567606939425,
+  "amplitude": 0.0105,
+  "imperfection": "mode A",
+  "history": [
+   [
+    0.0,
+    0.0,
+    0.0
+   ],
+   [
+    -0.024875096581342036,
+    84.49984723706191,
+    4.0
+   ],
+   [
+    -0.0746252897440261,
+    253.49343627619555,
+    7.0
+   ],
+   [
+    -0.12437548290671017,
+    422.47310986188774,
+    13.0
+   ],
+   [
+    -0.1492505794880522,
+    506.9509373254572,
+    17.0
+   ],
+   [
+    -0.17412567606939425,
+    591.3880816587337,
+    33.0
+   ]
+  ],
+  "time": 2582.9257471999153,
+  "peak_is_last_point": true,
+  "stop": "stall_passed"
+ }
+}

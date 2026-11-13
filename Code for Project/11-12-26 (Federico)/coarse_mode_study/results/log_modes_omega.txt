@@ -1,0 +1,14 @@
+  dense LBA {'size': 6, 'size_x': 34.48275862068966}: 7565 equations, load factors [217.8093, 217.8093, 220.4691, 220.4691], times K0 14 s, K1 46 s, eig 19 s, total 79 s
+  dense LBA {'size': 8, 'size_x': 23.80952380952381}: 7745 equations, load factors [380.0398, 380.0398, 380.0694, 380.0694], times K0 13 s, K1 49 s, eig 21 s, total 83 s
+  dense LBA {'size': 4, 'size_x': 8.0, 'L': 144.0, 'load': {'type': 'compression', 'ends': 'clamped'}}: 7297 equations, load factors [504.5548, 504.5548, 504.9253, 504.9254], times K0 13 s, K1 50 s, eig 18 s, total 80 s
+  dense LBA {'size': 3, 'size_x': 8.0, 'L': 104.0, 'load': {'type': 'compression', 'ends': 'clamped'}}: 7057 equations, load factors [486.391, 486.391, 491.8992, 491.8992], times K0 16 s, K1 55 s, eig 17 s, total 88 s
+full_s6_m1                   MAC vs abaqusLBA 0.002  MAC vs prodA_it003 0.000   (79 s, 7565 DOFs)
+full_s6_m1to4                MAC vs abaqusLBA 0.001  MAC vs prodA_it003 0.000   (79 s, 7565 DOFs)
+full_s8_m1                   MAC vs abaqusLBA 0.000  MAC vs prodA_it003 0.000   (83 s, 7745 DOFs)
+full_s8_m1to4                MAC vs abaqusLBA 0.000  MAC vs prodA_it003 0.000   (83 s, 7745 DOFs)
+seg_s4_L144_m1               MAC vs abaqusLBA 0.000  MAC vs prodA_it003 0.000   (80 s, 7297 DOFs)
+seg_s4_L144_m1to4            MAC vs abaqusLBA 0.000  MAC vs prodA_it003 0.000   (80 s, 7297 DOFs)
+seg_s3_L104_m1               MAC vs abaqusLBA 0.000  MAC vs prodA_it003 0.000   (88 s, 7057 DOFs)
+seg_s3_L104_m1to4            MAC vs abaqusLBA 0.000  MAC vs prodA_it003 0.000   (88 s, 7057 DOFs)
+full_s8_m1+seg_s4_m1         MAC vs abaqusLBA 0.000  MAC vs prodA_it003 0.000   (164 s, - DOFs)
+reference vs reference: {'abaqusLBA vs prodA_it003': 5.566835912847575e-08}

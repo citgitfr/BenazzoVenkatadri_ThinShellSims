@@ -1,0 +1,73 @@
+{
+ "case": {
+  "name": "omega_ref_abaqusLBA",
+  "laminate": {
+   "json": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-07-26 (Orchestrator)\\boom_1m_buck500N_opp1cm_hub50\\iterations\\it005\\lam.json"
+  },
+  "geometry": {
+   "L": 1000.0,
+   "section": {
+    "type": "boom",
+    "id": "M008"
+   },
+   "size": 2.2
+  },
+  "load": {
+   "type": "compression",
+   "ends": "pinned"
+  },
+  "B": {
+   "step": 0.024875096581342036,
+   "max": 0.49750193162684075,
+   "amplitude": 0.0105,
+   "control": "disp",
+   "tol": 1e-06,
+   "max_iter": 40,
+   "max_step": 0.3261457131556162
+  },
+  "B_cutoff": 750.0,
+  "B_pass": 500.0,
+  "mode_file": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-12-26 (Federico)\\coarse_mode_study\\results\\omega_ref_abaqusLBA_mode.npz"
+ },
+ "B": {
+  "peak_load": 527.9019030133886,
+  "param_at_peak": 0.1554693536333877,
+  "amplitude": 0.0105,
+  "imperfection": "mode A",
+  "history": [
+   [
+    0.0,
+    0.0,
+    0.0
+   ],
+   [
+    -0.024875096581342036,
+    84.59666965973918,
+    4.0
+   ],
+   [
+    -0.0746252897440261,
+    253.77775022229665,
+    8.0
+   ],
+   [
+    -0.12437548290671016,
+    422.87454761878803,
+    16.0
+   ],
+   [
+    -0.1492505794880522,
+    507.0577660510315,
+    25.0
+   ],
+   [
+    -0.1554693536333877,
+    527.9019030133886,
+    33.0
+   ]
+  ],
+  "time": 21644.181254500523,
+  "peak_is_last_point": true,
+  "stop": "stall_passed"
+ }
+}
