@@ -1,0 +1,174 @@
+{
+ "case": "it005 M008 [0/30/0] pinned compression, ShellNLDKGQ on the 0/90 surrogate",
+ "abaqus_node_match_mm": 3.0451608358037313e-05,
+ "fine": "1000 x 250.903 mm shell, M008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 455 x 116 = 52780 quads of 2.2 x 2.09-2.25 mm, 52896 nodes",
+ "fine_dofs": 317388,
+ "seeds": {
+  "full_s6_m1": {
+   "lam": [
+    217.8093370747092,
+    217.80933730173828,
+    220.46905128793955,
+    220.46906736221175
+   ],
+   "ndof": 7565,
+   "time": 79.18147440068424,
+   "mesh": "1000 x 250.903 mm shell, M008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 29 x 42 = 1218 quads of 34.5 x 4.5-6.28 mm, 1260 nodes",
+   "size": 6,
+   "size_x": 34.48275862068966,
+   "MAC": {
+    "abaqusLBA": 0.0017596546121849948,
+    "prodA_it003": 3.389807793194354e-11
+   }
+  },
+  "full_s6_m1to4": {
+   "lam": [
+    217.8093370747092,
+    217.80933730173828,
+    220.46905128793955,
+    220.46906736221175
+   ],
+   "ndof": 7565,
+   "time": 79.18147440068424,
+   "mesh": "1000 x 250.903 mm shell, M008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 29 x 42 = 1218 quads of 34.5 x 4.5-6.28 mm, 1260 nodes",
+   "size": 6,
+   "size_x": 34.48275862068966,
+   "MAC": {
+    "abaqusLBA": 0.0014128013008501159,
+    "prodA_it003": 1.595450258861808e-05
+   }
+  },
+  "full_s8_m1": {
+   "lam": [
+    380.03977261304965,
+    380.0397727882639,
+    380.06936357213385,
+    380.0693636731952
+   ],
+   "ndof": 7745,
+   "time": 83.1879901997745,
+   "mesh": "1000 x 250.903 mm shell, M008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 42 x 30 = 1260 quads of 23.8 x 4.5-9.42 mm, 1290 nodes",
+   "size": 8,
+   "size_x": 23.80952380952381,
+   "MAC": {
+    "abaqusLBA": 4.453691226462574e-06,
+    "prodA_it003": 5.190511505895715e-09
+   }
+  },
+  "full_s8_m1to4": {
+   "lam": [
+    380.03977261304965,
+    380.0397727882639,
+    380.06936357213385,
+    380.0693636731952
+   ],
+   "ndof": 7745,
+   "time": 83.1879901997745,
+   "mesh": "1000 x 250.903 mm shell, M008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 42 x 30 = 1260 quads of 23.8 x 4.5-9.42 mm, 1290 nodes",
+   "size": 8,
+   "size_x": 23.80952380952381,
+   "MAC": {
+    "abaqusLBA": 4.8965051327172065e-06,
+    "prodA_it003": 8.616882040126476e-07
+   }
+  },
+  "seg_s4_L144_m1": {
+   "lam": [
+    504.55477441681035,
+    504.5547764931449,
+    504.92533955401393,
+    504.9253797566098
+   ],
+   "ndof": 7297,
+   "time": 80.48078829981387,
+   "mesh": "144 x 250.903 mm shell, M008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 18 x 64 = 1152 quads of 8 x 3.77-4.5 mm, 1216 nodes",
+   "size": 4,
+   "size_x": 8.0,
+   "L": 144.0,
+   "load": {
+    "type": "compression",
+    "ends": "clamped"
+   },
+   "MAC": {
+    "abaqusLBA": 4.86992789368697e-07,
+    "prodA_it003": 5.3466167855818366e-18
+   }
+  },
+  "seg_s4_L144_m1to4": {
+   "lam": [
+    504.55477441681035,
+    504.5547764931449,
+    504.92533955401393,
+    504.9253797566098
+   ],
+   "ndof": 7297,
+   "time": 80.48078829981387,
+   "mesh": "144 x 250.903 mm shell, M008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 18 x 64 = 1152 quads of 8 x 3.77-4.5 mm, 1216 nodes",
+   "size": 4,
+   "size_x": 8.0,
+   "L": 144.0,
+   "load": {
+    "type": "compression",
+    "ends": "clamped"
+   },
+   "MAC": {
+    "abaqusLBA": 1.8565005132916708e-11,
+    "prodA_it003": 0.0003074062310906374
+   }
+  },
+  "seg_s3_L104_m1": {
+   "lam": [
+    486.3909757433315,
+    486.3909765810611,
+    491.8991515851905,
+    491.89918414381674
+   ],
+   "ndof": 7057,
+   "time": 87.99301629979163,
+   "mesh": "104 x 250.903 mm shell, M008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 13 x 84 = 1092 quads of 8 x 2.25-3.14 mm, 1176 nodes",
+   "size": 3,
+   "size_x": 8.0,
+   "L": 104.0,
+   "load": {
+    "type": "compression",
+    "ends": "clamped"
+   },
+   "MAC": {
+    "abaqusLBA": 1.8068611308608226e-07,
+    "prodA_it003": 3.467920608673749e-20
+   }
+  },
+  "seg_s3_L104_m1to4": {
+   "lam": [
+    486.3909757433315,
+    486.3909765810611,
+    491.8991515851905,
+    491.89918414381674
+   ],
+   "ndof": 7057,
+   "time": 87.99301629979163,
+   "mesh": "104 x 250.903 mm shell, M008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 13 x 84 = 1092 quads of 8 x 2.25-3.14 mm, 1176 nodes",
+   "size": 3,
+   "size_x": 8.0,
+   "L": 104.0,
+   "load": {
+    "type": "compression",
+    "ends": "clamped"
+   },
+   "MAC": {
+    "abaqusLBA": 2.3429739514230203e-05,
+    "prodA_it003": 0.00015980164201712986
+   }
+  },
+  "full_s8_m1+seg_s4_m1": {
+   "time": 163.66877849958837,
+   "MAC": {
+    "abaqusLBA": 2.9776617710181826e-06,
+    "prodA_it003": 1.5090964469828999e-09
+   }
+  }
+ },
+ "ref_vs_ref": {
+  "abaqusLBA vs prodA_it003": 5.566835912847575e-08
+ }
+}

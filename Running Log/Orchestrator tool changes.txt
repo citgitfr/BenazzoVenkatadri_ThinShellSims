@@ -126,3 +126,55 @@ Claude (for Federico)
   "max_iterations" and "max_eigen" for Lanczos kept as options (needed on the omega M008 boom, where Lanczos
   accepted 0 eigenvalues); the template gets source (Tara) and extractor. Merged code: regression 359/359,
   test_verification 29/29, forced B-stop test unchanged (stall_passed at 23.6 N).
+
+11/13/26
+Claude (for Federico)
+- Fast buckling pipeline (Federico's decision, 11/13/26). Evidence: Code for Project/11-12-26 (Federico)/
+  coarse_mode_study/SUMMARY.md.
+  Findings:
+    - The B strength is insensitive to the imperfection shape at amplitude 0.1 t: within 0.2% over 10 runs on 3
+      cases, even with a mode of MAC 0, on omega it005 and both tape cases.
+    - The old step A cost 3.4-6.7 h per design.
+    - On omega it005, a 4 mm B mesh follows the 2.2 mm path to 0.01% up to the requirement, but stalls later
+      (591 N vs 528 N; 3 mm: 549 N).
+  New shell-buckling/segment_mode.py (new file):
+    - Imperfection seed from a dense classical LBA (Kg by finite difference of the ShellNLDKGQ tangent) on at
+      most 8000 DOFs.
+    - The model is the whole member if it fits at 4 x 4-8 mm; otherwise a clamped segment at 4 x 8 mm, whose
+      mode is repeated along the length and mapped onto the B mesh.
+    - In compression, if the Euler load is below the segment's local load, a coarse nonlinear stability scan
+      of the whole member also runs and its global mode is added.
+    - Cost: 45-90 s.
+  boom_buckling.py: optional case key "mode_label" (label of the imperfection in the result; default "mode A",
+  unchanged).
+  study.py, run_buckling -> run_buckling_fast when BUCKLING_PIPELINE = 'fast' (new default) and the case has a
+  B block:
+    - No step A (its range block stays in buckling.json, unused).
+    - The seed is cached per section / L / load / B mesh in <study>/buckling_seeds/.
+    - Threshold requirement with a design mesh finer than B_MESH_SIZE = 4 mm: B runs on 4 mm and must reach
+      B_COARSE_MARGIN = 1.12 x the requirement.
+    - If the 4 mm path ends between 1x and 1.12x, B is re-run automatically on the design mesh with the cutoff
+      at the requirement, and that result counts.
+    - If the 4 mm path ends below the requirement, the design fails (the coarse mesh only overestimates).
+    - Design mesh >= 4 mm: B on the design mesh, cutoff at the requirement.
+    - "maximize buckling": design mesh, no cutoff.
+    - The custom option buckling_objective "A" is unchanged. BUCKLING_PIPELINE = 'legacy' restores the old
+      pipeline.
+    - New design.json fields: buckling_pipeline, buckling_B_size, buckling_seed, buckling_fine_check,
+      buckling_time_s. finalize also copies buckling_run.json and its picture.
+  Tests:
+    - Mocked decision logic: 6/6 (coarse pass; coarse inconclusive -> fine pass; coarse inconclusive -> fine
+      fail; coarse fail; design mesh >= 4 mm; maximize) - coarse_mode_study/pipeline_logic_test.py.
+    - End to end with study.run_buckling on copies of real iterations (coarse_mode_study/pipeline_test.py):
+        11-07 omega it005 (500 N): 4 mm B passed the 560 N cutoff at 567.8 N in 1615 s in total (seed 77 s).
+          Before: 3.4 h B + 6.7 h A (it003) for the same design.
+        11-06 tape it002 (5 N): passed at 7.48 N in 68 s in total. Before: A alone took 12097 s.
+    - Regression suite: 382 checks, 382 passed, 0 failed (1392 s; coarse_mode_study/regression_2026-11-13.log).
+  Docs updated: PROTOCOL.md (buckling step, limitations), ThinShellOrchestrator.md, shell-buckling/SKILL.md.
+  Open points:
+    - The 1.12 margin comes from one omega design; check it when a new section family is first verified.
+    - The calibration uses only real peaks / stalls, so with early stops it updates rarely.
+    - The segment seed is validated only on omega; on tapes it was compared only through the B result.
+    - The optional global-scan branch of segment_mode.py (Euler < segment load) has not finished a test yet: the
+      1 m tape run with a forced Euler load was still running when this was committed. Neither real study case
+      triggers it (tape it002: Euler 1035 N >> segment 70 N).

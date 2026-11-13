@@ -24,6 +24,40 @@ python boom_buckling.py case.json [--out DIR] [--only A|B]
 ```
 Writes `<name>.json` (A critical value, B peak and path) and `<name>.png`.
 
+Optional case keys:
+- `"mode_file"`: npz of nodes / vec. It is used as the imperfection shape instead of A's mode;
+  run with `--only B`.
+- `"mode_label"`: how the imperfection is labelled in the result (default "mode A").
+- `"B_cutoff"`: B stops once the load reaches this value.
+- `"B_pass"`: B stops once past this load if the solver starts crawling.
+
+## Cheap imperfection seed without step A (`segment_mode.py`, 11/13/26)
+```
+python segment_mode.py <B case.json> --out seed.npz --json info.json --ref-load P
+       [--laminate lam_0_90.json] [--euler P_E --scan-max X]
+```
+What it does:
+- Runs a dense classical LBA of the member on at most 8000 DOFs. Kg comes from a finite difference
+  of the ShellNLDKGQ tangent. The model is the whole member if it fits at 4 mm (around) x 4-8 mm
+  (along); otherwise it is a short clamped **segment** at 4 x 8 mm.
+- Maps mode 1 onto the mesh of the B case; a segment mode is repeated along the length.
+- If `--euler` is given and that Euler load is below the segment's critical load, it also runs a
+  coarse nonlinear stability scan of the whole member and adds its global mode.
+
+Cost and use:
+- About 50-90 s (plus about 20 min when the global scan runs).
+- The ThinShellOrchestrator's fast pipeline (study.py) uses it instead of step A.
+
+Evidence (`Code for Project/11-12-26 (Federico)/coarse_mode_study/SUMMARY.md`):
+- The B result is insensitive to the seed at amplitude 0.1 t: within 0.2% over 10 runs, even with
+  a mode of MAC 0.
+- On the omega M008 boom, the segment gives the Abaqus local mode family in 80 s; the old step A
+  took 6.7 h.
+- A dense LBA of a WHOLE long member on a coarsened mesh (elements > ~8 mm along x) returns
+  spurious element-scale or free-edge modes. That is why long members use a segment.
+- The B mesh matters near the limit point. On omega it005, B at 4 mm is identical to 2.2 mm up to
+  500 N, but stalls at 591 vs 528 N (3 mm: 549 N). Use a coarse B only with a margin.
+
 ## What OpenSees can and cannot do (verified 10/29/26, openseespy 3.8)
 - No *BUCKLE, no Kg. `printA('-ret')` only with system FullGeneral (dense).
 - `eigen` after a static step = eigenvalues of the current K_T. Use ARPACK

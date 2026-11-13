@@ -1,0 +1,38 @@
+{
+ "ref_abaqusLBA": {
+  "half_wave_mm": 38.46153846153846,
+  "section_MAC_vs_abaqus": 1.0
+ },
+ "ref_prodA_it003": {
+  "half_wave_mm": 500.0,
+  "section_MAC_vs_abaqus": 0.07341759268697168
+ },
+ "full_s6_m1": {
+  "half_wave_mm": 35.714285714285715,
+  "section_MAC_vs_abaqus": 0.3117312107899589
+ },
+ "full_s8_m1": {
+  "half_wave_mm": 29.41176470588235,
+  "section_MAC_vs_abaqus": 0.34443569884673136
+ },
+ "full_s8_m1to4": {
+  "half_wave_mm": 29.41176470588235,
+  "section_MAC_vs_abaqus": 0.7298815036055999
+ },
+ "seg_s4_L144_m1": {
+  "half_wave_mm": 35.714285714285715,
+  "section_MAC_vs_abaqus": 0.6665249227308522
+ },
+ "seg_s4_L144_m1to4": {
+  "half_wave_mm": 35.714285714285715,
+  "section_MAC_vs_abaqus": 0.02974142969854943
+ },
+ "seg_s3_L104_m1": {
+  "half_wave_mm": 50.0,
+  "section_MAC_vs_abaqus": 0.375303912916503
+ },
+ "seg_s3_L104_m1to4": {
+  "half_wave_mm": 50.0,
+  "section_MAC_vs_abaqus": 0.16951302270016913
+ }
+}

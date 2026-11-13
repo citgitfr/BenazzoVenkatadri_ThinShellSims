@@ -111,16 +111,60 @@ ply, plus the flattening coiling check). The hub coiling index F_hub (exact
 CLT, flatten + bend onto the hub, in both senses) comes from the screen and
 is passed to objective-constraints as a constraint.
 
-**Buckling** (only if required). `buckling`: shell-buckling's
-`boom_buckling.py`. Step A is the tangent-eigenvalue scan; for off-axis
-layups it runs on a 0/90 surrogate of the same thickness, only to get the
-mode shape. Step B follows the path from that mode as an imperfection of
-0.1 t. Use B's peak if the path has a limit point. If the path stops while
-still rising, the value is only a lower bound: say so. The path range comes
-from the calibrated screening estimate and is doubled automatically (up to 3
-times) until a crossing or peak is found. Cost: tens of minutes per design,
-so run it in the background. study.py skips it for designs that already
-violate another constraint.
+**Buckling** (only if required). `buckling` runs the **fast pipeline**
+(default since 2026-11-13; `study.py` `BUCKLING_PIPELINE = 'fast'`). There is
+no step A any more.
+
+1. **Seed.** `shell-buckling/segment_mode.py` runs a dense linear buckling
+   analysis of a short segment (at most 8000 DOFs, 4 x 8 mm elements, about
+   80 s; off-axis layups use a 0/90 surrogate for the shape only). Its mode is
+   repeated along the boom and mapped onto the B mesh.
+   - In compression, if the boom's Euler load is below the segment's local
+     load, a coarse nonlinear scan of the whole boom also runs (about 20 min)
+     and its global mode is added.
+   - Seeds are cached per section / length / load / mesh in
+     `<study>/buckling_seeds/`.
+2. **Path B** (ASDShellQ4, imperfection 0.1 t, true laminate). For a threshold
+   requirement P_req:
+   - if the design mesh is finer than 4 mm, B runs on a **4 mm** mesh and must
+     reach **1.12 x P_req**;
+   - otherwise B runs on the design mesh and stops at P_req.
+3. **Fine check, automatic.** If the 4 mm path ends between P_req and
+   1.12 x P_req (a peak, a stall, or the solver crawling), the 4 mm result is
+   inconclusive. B is then re-run on the design mesh with the cutoff at P_req,
+   and that result counts.
+
+Pass/fail:
+- If the 4 mm path ends below P_req, the design fails: the coarse mesh only
+  overestimates the strength.
+- For "maximize buckling" objectives there is no cutoff and no coarse mesh: B
+  runs on the design mesh until it peaks.
+
+What a value means:
+- A value marked "B LOWER BOUND ... cutoff" means "passes"; it is not the
+  strength. Say so in the report.
+- Use B's peak only if the path really has a limit point.
+
+Why this is valid (Code for Project/11-12-26 (Federico)/coarse_mode_study/
+SUMMARY.md):
+- The B result changed by at most 0.2% with the seed shape over 10 runs, even
+  with a wrong mode.
+- The 4 mm path is identical to the 2.2 mm one up to the requirement (0.01%).
+- Near the limit point the 4 mm mesh is stiffer: on omega it005 it stalled at
+  591 N vs 528 N at 2.2 mm (+12%), hence the 1.12 margin. The margin comes
+  from one omega design; check it when a new section family is first
+  verified.
+
+Cost: about 40 min per omega design (it was about 12 h); minutes for tape
+springs. A fine check adds about 2 h. Run it in the background. The
+calibration uses only real peaks and stalls, so with early stops it updates
+rarely.
+
+- `study.py` skips buckling for designs that already violate another
+  constraint.
+- Custom option `buckling_objective: "A"` still runs step A, unchanged.
+- `BUCKLING_PIPELINE = 'legacy'` restores the old A + B pipeline (cutoff
+  1.5 x, design mesh).
 
 **Step 9. Objective and constraints.** `objcon`: objective-constraints on
 ONLY the results .npz, with `constraints.json` and the `--value` inputs from
@@ -192,9 +236,15 @@ their Eq. 4). Differences from the catalog loop:
   radius (uniform curvature, no contact, no transition zone, no web/tab). It
   is exact CLT for that state and unconservative near the coil's transition
   region. Coiling around a hub with contact is not simulated (ToDo 9-10).
-- **Buckling:** OpenSees has no *BUCKLE. A is an estimate (exact for
-  flat/local modes, +7% to +31% high for global modes of curved sections);
-  B is the strength. ShellNLDKGQ takes 0/90 plies only.
+- **Buckling:** OpenSees has no *BUCKLE. B (the imperfect path) is the
+  strength; the fast pipeline (default) has no A estimate. Its seed comes
+  from a segment LBA on a 0/90 surrogate (ShellNLDKGQ takes 0/90 plies
+  only). The seed's shape can be off, especially for global modes; that does
+  not change the strength (<= 0.2%), but say so if you show the mode.
+  Coarse-mesh B (4 mm) passes a design only at 1.12 x the requirement, so
+  designs within 12% of the requirement get a design-mesh fine check. In
+  the legacy / custom-A pipeline, A is an estimate (exact for flat/local
+  modes, +7% to +31% high for global modes of curved sections).
 - **Materials:** catalog strengths are mean RTD values, not allowables. Rows
   marked CAUTION are excluded unless the user allows them. `*` values are
   estimates.

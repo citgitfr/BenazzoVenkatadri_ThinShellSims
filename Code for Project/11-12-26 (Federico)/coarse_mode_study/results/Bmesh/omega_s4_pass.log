@@ -1,0 +1,19 @@
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+  step   1: param -0.024875, load factor  84.4998, iters 4
+  step   2: param -0.074625, load factor  253.493, iters 7
+  step   3: param -0.12438, load factor  422.473, iters 13
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 1.18701e-05 (max: 1e-06, Norm deltaR: 0.0298084)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 591.388
+OpenSees > analyze failed, returned: -3 error flag
+  step   4: param -0.14925, load factor  506.951, iters 17
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 0.000667889 (max: 1e-06, Norm deltaR: 0.0971234)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 675.81
+OpenSees > analyze failed, returned: -3 error flag
+  step   5: param -0.17413, load factor  591.388, iters 33
+  stall after passing 500: 2 hard steps in a row (cut or >= 0.75 x 40 iterations) at load factor 591.388; path stopped (lower bound)
+B (ASDShellQ4 imperfect path, amplitude 0.0105 mm): peak 591.39 at 0.17413 (last point: path stopped or still rising); 2583 s
+saved C:\Users\fbenazzo\Desktop\ME295\BenazzoVenkatadri_ThinShellSims\Code for Project\11-12-26 (Federico)\coarse_mode_study\results\Bmesh\omega_s4_pass.json

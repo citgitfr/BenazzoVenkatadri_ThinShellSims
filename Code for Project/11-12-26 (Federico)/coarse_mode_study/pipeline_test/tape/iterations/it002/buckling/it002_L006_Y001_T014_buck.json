@@ -1,0 +1,80 @@
+{
+ "case": {
+  "name": "it002_L006_Y001_T014_buck",
+  "laminate": {
+   "json": "lam.json"
+  },
+  "geometry": {
+   "L": 1000.0,
+   "section": {
+    "type": "arc",
+    "R": 20,
+    "b": 79.93608
+   },
+   "size": 5.0
+  },
+  "load": {
+   "type": "compression",
+   "ends": "pinned"
+  },
+  "A": {
+   "step": 0.006103355169119211,
+   "max": 0.3662013101471527,
+   "n_coarse": 8,
+   "tol": 1e-06,
+   "max_iter": 10,
+   "workers": 16,
+   "n_rounds": 2,
+   "max_step": 0.04882684135295369
+  },
+  "B": {
+   "step": 0.0003772730036151232,
+   "max": 0.007545460072302464,
+   "amplitude": 0.0105,
+   "control": "disp",
+   "tol": 1e-06,
+   "max_iter": 40,
+   "max_step": 0.009054552086762957
+  },
+  "B_cutoff": 5.0,
+  "B_pass": 5.0,
+  "mode_file": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-12-26 (Federico)\\coarse_mode_study\\pipeline_test\\tape\\buckling_seeds\\seed_7c472de74b4d.npz",
+  "mode_label": "segment LBA"
+ },
+ "B": {
+  "peak_load": 7.4784525364951895,
+  "param_at_peak": 0.005659095054226848,
+  "amplitude": 0.0105,
+  "imperfection": "segment LBA",
+  "history": [
+   [
+    0.0,
+    0.0,
+    0.0
+   ],
+   [
+    -0.0003772730036151232,
+    0.49858346344183074,
+    2.0
+   ],
+   [
+    -0.0011318190108453696,
+    1.4957426930719113,
+    3.0
+   ],
+   [
+    -0.0026409110253058626,
+    3.490028496041569,
+    3.0
+   ],
+   [
+    -0.005659095054226848,
+    7.4784525364951895,
+    4.0
+   ]
+  ],
+  "time": 19.025380900129676,
+  "peak_is_last_point": true,
+  "stop": "cutoff"
+ }
+}

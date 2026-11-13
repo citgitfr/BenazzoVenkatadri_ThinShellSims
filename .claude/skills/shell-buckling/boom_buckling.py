@@ -221,7 +221,7 @@ def run(case, out_dir, only=None):
             h, peak, k = sb.imperfect_path(ctrl, sgn * b['step'], int(round(b['max'] / b['step'])), **_solver(b),
                                            **ad)
         res['B'] = dict(peak_load=float(peak), param_at_peak=float(abs(h[k, 0])), amplitude=amp,
-                        imperfection='mode A' if mode is not None else 'none',
+                        imperfection=case.get('mode_label', 'mode A') if mode is not None else 'none',
                         history=h.tolist(), time=time.perf_counter() - t0,
                         peak_is_last_point=bool(k == len(h) - 1), stop=sb.LAST_PATH_STOP)
         print(f'B (ASDShellQ4 imperfect path, amplitude {amp:g} mm): peak {peak:.5g} at '

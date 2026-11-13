@@ -45,7 +45,9 @@ narrow: turn one user prompt into an optimized, verified boom design.
   `C:\Users\fbenazzo\Desktop\ME295\envs\shells312\Scripts\python.exe`; Federico
   `D:\Users\fbenazzo\miniconda3\envs\shells\python.exe`, Tara
   `D:\Users\tvenkata\miniforge3\envs\shells\python.exe`). Run anything longer
-  than ~2 minutes in the background; buckling paths can take many minutes.
+  than ~2 minutes in the background. Buckling (`study.py run <i> --step buckling`)
+  takes about 40 min per omega design and minutes per tape spring, plus about
+  2 h when a design-mesh fine check is triggered.
 - Abaqus is installed on this server. After `study.py verify <i>` writes the
   Abaqus script, run it yourself, in the background, with the command it
   prints (`.claude/orchestrator/tools/run_abaqus.py`), and keep optimizing.
@@ -74,9 +76,16 @@ narrow: turn one user prompt into an optimized, verified boom design.
 FE covers TS, TRAC, omega and corrugated booms (webs/tabs with the doubled
 laminate); OM/CO rows whose shells have different free chords are not built. Coiling is checked by exact CLT
 for the flattened and hub-bent flange, not by a contact simulation. OpenSees
-buckling = tangent-eigenvalue estimate (A) + imperfect path strength (B),
-and A takes 0/90 plies only (off-axis layups get their mode shape from a 0/90
-surrogate). Catalog strengths are mean values, not allowables.
+buckling uses the **fast pipeline** (since 2026-11-13, PROTOCOL.md step 8):
+- the imperfection seed is a segment LBA (about 80 s; 0/90 surrogate for the
+  shape);
+- the imperfect-path strength B runs on a 4 mm mesh and must reach
+  1.12 x the requirement;
+- a design-mesh B is re-run automatically when the 4 mm result falls between
+  1x and 1.12x.
+There is no A estimate except with the custom `buckling_objective: "A"`. A
+"B LOWER BOUND ... cutoff" value means the design passes; it is not the
+strength. Catalog strengths are mean values, not allowables.
 
 The previous general-purpose version of this agent (any shell simulation,
 no optimization loop) is kept in `.claude/agents_v2.0/ThinShellOrchestrator.md`;

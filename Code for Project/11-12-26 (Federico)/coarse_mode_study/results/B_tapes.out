@@ -1,0 +1,6 @@
+tape1m ref_prodA_it002 exit 0
+tape1m full_s5_m1 exit 0
+tape1m full_s5_m1to4 exit 0
+tapeopp ref_scanA_fine exit 0
+tapeopp lba_samemesh_m2 exit 0
+tapeopp lba_samemesh_m1 exit 0

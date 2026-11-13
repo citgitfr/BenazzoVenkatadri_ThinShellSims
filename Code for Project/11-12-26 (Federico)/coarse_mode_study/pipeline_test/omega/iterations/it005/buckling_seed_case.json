@@ -1,0 +1,40 @@
+{
+ "name": "it005_L006_Y002_M008_buck_s4",
+ "laminate": {
+  "json": "lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "M008"
+  },
+  "size": 4.0
+ },
+ "load": {
+  "type": "compression",
+  "ends": "pinned"
+ },
+ "A": {
+  "step": 0.040768214144452024,
+  "max": 2.4460928486671216,
+  "n_coarse": 8,
+  "tol": 1e-06,
+  "max_iter": 10,
+  "workers": 16,
+  "n_rounds": 2,
+  "max_step": 0.3261457131556162,
+  "enough": 750.0
+ },
+ "B": {
+  "step": 0.018573405447402054,
+  "max": 0.3714681089480411,
+  "amplitude": 0.0105,
+  "control": "disp",
+  "tol": 1e-06,
+  "max_iter": 40,
+  "max_step": 0.3261457131556162
+ },
+ "B_cutoff": 560.0,
+ "B_pass": 500.0
+}

@@ -1,0 +1,6 @@
+  fine nonlinear scan (reference): load 297.2774509659723, 598 s, 7890 DOFs
+  dense LBA {}: 7881 equations, load factors [1.2365, 31.2989, 49.3883, 67.1565], times K0 9 s, K1 17 s, eig 22 s, total 48 s
+lba_samemesh_m1              MAC vs scanA_fine 0.993   (48 s, 7881 DOFs)
+lba_samemesh_m2              MAC vs scanA_fine 0.000   (48 s, 7881 DOFs)
+lba_samemesh_m2to4           MAC vs scanA_fine 0.006   (48 s, 7881 DOFs)
+reference vs reference: {}

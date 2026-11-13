@@ -69,6 +69,18 @@ CONV_TOL = dict(k=0.02, F=0.10, buckling=0.05)   # buckling: custom mode (object
 # load and the value is recorded as a lower bound (the design passes with that margin). Override per study with
 # requirements.json "buckling": {"cutoff_factor": ...}; 0 or null = no cutoff. Added 2026-11-06 at the user's request.
 BUCKLING_CUTOFF = 1.5     # B stops at 1.5 x a threshold requirement (was 3.0; Federico, 2026-11-09)
+# Fast buckling pipeline (Federico, 2026-11-13; evidence: Code for Project/11-12-26 (Federico)/coarse_mode_study/
+# SUMMARY.md). Step A (hours) is replaced by a cheap seed (shell-buckling/segment_mode.py: dense LBA of a <= 8000-DOF
+# segment, ~80 s, plus a coarse nonlinear scan when the Euler load is below the segment's local load): the B
+# strength changed <= 0.2% with the seed over 10 runs. For a threshold requirement B runs on a B_MESH_SIZE mesh
+# (when the design mesh is finer) and must reach B_COARSE_MARGIN x the requirement, because the 4 mm mesh is stiff
+# near the limit point (omega it005 stall 591 N at 4 mm, 549 N at 3 mm, 528 N at 2.2 mm). If the coarse path ends
+# between the requirement and that margin, B is re-run on the design mesh with the cutoff at the requirement.
+# The cutoff_factor of requirements.json is used only by the legacy pipeline.
+BUCKLING_PIPELINE = 'fast'   # 'legacy' = step A + B on the design mesh, cutoff 1.5 x (behaviour before 2026-11-13)
+B_MESH_SIZE = 4.0            # mm, B mesh for threshold requirements when the design mesh is finer
+B_COARSE_MARGIN = 1.12       # coarse-mesh B passes only if it reaches this x the requirement
+B_FINE_CUTOFF = 1.0          # design-mesh B (fine check, or design mesh >= B_MESH_SIZE) stops at the requirement
 NO_IMPROVE_WINDOW, MIN_ITERS_BEFORE_STOP, IMPROVE_TOL = 15, 20, 0.01
 
 
@@ -1136,6 +1148,8 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
     Threshold requirements: B stops at cutoff_factor x the required value (lower bound, design passes).
     A finished in an interrupted run is reused (only B reruns)."""
     case = solver_settings(jload(idir / 'buckling.json'))
+    if BUCKLING_PIPELINE == 'fast' and 'B' in case:
+        return run_buckling_fast(idir, d, logs, case, req, max_widen)
     bdir = idir / 'buckling'
     notes = []
     cut, cut_f = buckling_cutoff(req, d)
@@ -1247,6 +1261,171 @@ def run_buckling(idir, d, logs, max_widen=3, req=None):
              buckling_notes=notes)
     jsave(idir / 'design.json', d)
     return val is not None, f'buckling: {kind} = {val} (A {A}, B {B.get("peak_load")}, imperfection '                             f'{B.get("imperfection")}; {"; ".join(notes)}; {rel(rf)}, picture '                             f'{rel(bdir / (case["name"] + ".png"))})'
+
+
+# --- fast buckling pipeline (2026-11-13) ---------------------------------------------------
+
+def _has_off_axis(lam_json):
+    return any(abs(p.get('theta', 0)) % 90 > 1e-9 for p in jload(lam_json).get('plies', []))
+
+
+def _euler_load(d, case):
+    """Euler load of the member in compression (weaker EI; K = 1 pinned, 0.5 clamped, 2 free tip), or None."""
+    if case['load']['type'] != 'compression' or not (d.get('EIy') and d.get('EIz')):
+        return None
+    K = {'pinned': 1.0, 'clamped': 0.5, 'free_tip': 2.0}.get(case['load'].get('ends', 'clamped'), 1.0)
+    return math.pi ** 2 * min(d['EIy'], d['EIz']) / (K * d['L']) ** 2
+
+
+def buckling_seed(idir, d, case, logs, ref_load):
+    """Imperfection seed for B on the mesh of `case` (shell-buckling/segment_mode.py), cached per section /
+    length / load / B mesh in <study>/buckling_seeds/ (the mode shape is a geometric property; the B result is
+    insensitive to it). Returns (mode file, info dict) or (None, info with 'error')."""
+    key = dict(section=case['geometry']['section'], L=case['geometry']['L'], size=case['geometry']['size'],
+               load=case['load'])
+    h = hashlib.sha1(json.dumps(key, sort_keys=True, default=str).encode()).hexdigest()[:12]
+    sdir = idir.parent.parent / 'buckling_seeds'
+    sdir.mkdir(exist_ok=True)
+    mf, inf = sdir / f'seed_{h}.npz', sdir / f'seed_{h}.json'
+    if mf.exists() and inf.exists():
+        info = jload(inf)
+        info['cached'] = True
+        return mf, info
+    sc = idir / 'buckling_seed_case.json'
+    jsave(sc, case)
+    args = [SKILLS / 'shell-buckling' / 'segment_mode.py', sc, '--out', mf, '--json', inf, '--ref-load', ref_load]
+    lamj = idir / case['laminate']['json']
+    if _has_off_axis(lamj):                      # ShellNLDKGQ takes 0/90 plies only: shape from a 0/90 surrogate
+        lam = jload(lamj)
+        for p in lam.get('plies', []):
+            p['theta'] = 0.0 if abs(p['theta']) % 180 < 45 or abs(p['theta']) % 180 > 135 else 90.0
+        jsave(idir / 'lam_surrogate_0_90.json', lam)
+        args += ['--laminate', idir / 'lam_surrogate_0_90.json']
+    pe = _euler_load(d, case)
+    if pe:
+        args += ['--euler', pe, '--scan-max', (case.get('A') or case['B'])['max']]
+    lg = logs / f'buckling_seed_s{case["geometry"]["size"]:g}.log'
+    code, _ = run_cmd(args, lg, cwd=idir)
+    if code or not mf.exists():
+        return None, dict(error=f'seed failed (log {rel(lg)})')
+    info = jload(inf)
+    info.update(key=key, cached=False)
+    jsave(inf, info)
+    return mf, info
+
+
+def _classify_B(B, bcase, cut, cut_f):
+    """(value, kind) of a finished B path."""
+    p, last = B.get('peak_load'), B.get('peak_is_last_point')
+    size = bcase['geometry']['size']
+    if p is None:
+        return None, 'none'
+    if cut and last and p >= cut:
+        return p, (f'B LOWER BOUND: path passed the cutoff {cut:g} (= {cut_f:g} x requirement) on the {size:g} mm B '
+                   'mesh still rising; stopped there by design')
+    if B.get('stop') == 'stall_passed' and last:
+        return p, (f'B LOWER BOUND: path passed the requirement {bcase["B_pass"]:g} still rising, then the solver '
+                   f'crawled (consecutive cut / slow steps); stopped there by design ({size:g} mm B mesh)')
+    if not last:
+        drop = 1 - abs(B['history'][-1][1]) / abs(p) if B.get('history') else 0
+        return p, ('B peak (limit point reached, path stalled there: falling branch not traced; Abaqus Riks to confirm)'
+                   if drop < 0.01 else 'B peak (limit point)')
+    if _stalled(B, bcase['B']):
+        return p, ('B STALL: no convergence beyond this load, far short of the path range (limit point; falling '
+                   'branch not traced; Abaqus Riks to confirm)')
+    return p, 'B LOWER BOUND (path stopped while rising)'
+
+
+def _run_B(idir, d, case, logs, tag, max_widen, cut):
+    """boom_buckling --only B on `case`, range doubled while the path is still rising at its end."""
+    bdir = idir / 'buckling'
+    rf = bdir / f'{case["name"]}.json'
+    notes = []
+    for k in range(max_widen + 1):
+        cf = idir / f'buckling{tag}.json'
+        jsave(cf, case)
+        lg = logs / f'buckling_B{tag}_{k}.log'
+        code, _ = run_cmd([SKILLS / 'shell-buckling' / 'boom_buckling.py', cf, '--out', bdir, '--only', 'B'], lg,
+                          cwd=idir)
+        if code or not rf.exists():
+            return None, notes + [f'boom_buckling failed (log {rel(lg)})']
+        B = jload(rf).get('B') or {}
+        if B.get('peak_load') is None or not B.get('peak_is_last_point') or B.get('stop') == 'stall_passed' \
+                or _stalled(B, case['B']) or (cut and B['peak_load'] >= cut):
+            return B, notes
+        if k < max_widen:
+            notes.append(f'path range doubled to {case["B"]["max"] * 2:g} (no peak yet)')
+            _widen(case)
+    return B, notes
+
+
+def run_buckling_fast(idir, d, logs, case, req, max_widen=3):
+    """Fast pipeline (2026-11-13): seed (segment LBA, ~80 s) -> B on the B mesh with the cutoff -> design-mesh B
+    only when the coarse result is inconclusive. No step A (its range block stays in buckling.json, unused)."""
+    bdir = idir / 'buckling'
+    bdir.mkdir(exist_ok=True)
+    notes = []
+    bq = (req or {}).get('requirements', {}).get('buckling') or {}
+    P_req = bq.get('min_value')
+    obj = (req or {}).get('objective', {})
+    threshold = bool(P_req) and not (obj.get('quantity') == 'buckling' and obj.get('sense') == 'maximize')
+    coarse = threshold and d['size'] < B_MESH_SIZE
+    ref = P_req or d.get('buckling_est_cal') or d.get('buckling_est') or 1.0
+    base = json.loads(json.dumps(case))
+
+    def setup(size, cut_f):
+        c = json.loads(json.dumps(base))
+        c['geometry']['size'] = size
+        c['name'] = d['name'] + '_buck' + (f'_s{size:g}' if size != d['size'] else '')
+        cut = cut_f * P_req if threshold else None
+        if cut:
+            apply_cutoff(c, d, cut)
+            c['B_cutoff'], c['B_pass'] = cut, P_req
+        mf, info = buckling_seed(idir, d, c, logs, ref)
+        if mf:
+            c['mode_file'], c['mode_label'] = str(mf), info.get('method', 'seed')
+        else:
+            notes.append(f'NO SEED ({info.get("error")}): B ran without imperfection')
+        return c, cut, info
+
+    t0 = dt.datetime.now()
+    size1, f1 = (B_MESH_SIZE, B_COARSE_MARGIN) if coarse else (d['size'], B_FINE_CUTOFF)
+    c1, cut1, seed1 = setup(size1, f1)
+    notes.append(f'seed: {seed1.get("method")} ({seed1.get("model")}; {seed1.get("time", 0):.0f} s'
+                 f'{", cached" if seed1.get("cached") else ""})')
+    B1, n1 = _run_B(idir, d, c1, logs, '' if not coarse else f'_s{size1:g}', max_widen, cut1)
+    notes += n1
+    if B1 is None:
+        return False, f'buckling: {"; ".join(notes)}'
+    val, kind = _classify_B(B1, c1, cut1, f1)
+    final_case, B, fine = c1, B1, None
+    if coarse and val is not None and P_req <= val and not kind.startswith('B LOWER BOUND: path passed the cutoff'):
+        notes.append(f'{size1:g} mm B ended at {val:g}, between the requirement {P_req:g} and {f1:g} x requirement '
+                     f'(inconclusive: the coarse mesh is stiff near the limit point): design-mesh B run')
+        c2, cut2, seed2 = setup(d['size'], B_FINE_CUTOFF)
+        B2, n2 = _run_B(idir, d, c2, logs, '_fine', max_widen, cut2)
+        notes += n2
+        if B2 is None:
+            return False, f'buckling: {"; ".join(notes)}'
+        fine = dict(coarse_value=val, coarse_kind=kind, coarse_size=size1)
+        val, kind = _classify_B(B2, c2, cut2, B_FINE_CUTOFF)
+        final_case, B = c2, B2
+    elif coarse and val is not None and val < P_req:
+        notes.append(f'{size1:g} mm B below the requirement: fails (the coarse mesh only overestimates)')
+    if B.get('imperfection') == 'none' and B.get('peak_load') is not None:
+        kind += ' [no imperfection: a bifurcation may have been missed]'
+    jsave(idir / 'buckling_run.json', final_case)
+    d.update(buckling_value=val, buckling_kind=kind, buckling_A=None, buckling_B=B.get('peak_load'),
+             buckling_amplitude=B.get('amplitude'), buckling_imperfection=B.get('imperfection'),
+             buckling_notes=notes, buckling_pipeline='fast', buckling_B_size=final_case['geometry']['size'],
+             buckling_seed=seed1, buckling_fine_check=fine,
+             buckling_time_s=(dt.datetime.now() - t0).total_seconds())
+    jsave(idir / 'design.json', d)
+    rf = bdir / f'{final_case["name"]}.json'
+    return val is not None, (f'buckling (fast pipeline): {kind} = {val} (B {B.get("peak_load")} on '
+                             f'{final_case["geometry"]["size"]:g} mm, imperfection {B.get("imperfection")}; '
+                             f'{"; ".join(notes)}; {rel(rf)}, picture {rel(bdir / (final_case["name"] + ".png"))}; '
+                             f'{d["buckling_time_s"]:.0f} s)')
 
 
 # --- record ----------------------------------------------------------------------------
@@ -1658,7 +1837,9 @@ def cmd_finalize(a):
         for f in [idir / 'case.json', idir / 'lam.json', idir / 'design.json', idir / 'objcon.json',
                   idir / f'{d["name"]}_opensees.py', idir / 'results' / f'{d["name"]}.png',
                   idir / f'abaqus_{d["name"]}.py', idir / f'abaqus_{d["name"]}_instructions.txt',
-                  idir / 'buckling.json', idir / 'buckling' / f'{d["name"]}_buck.png',
+                  idir / 'buckling.json', idir / 'buckling' / f'{d["name"]}_buck.png', idir / 'buckling_run.json',
+                  idir / 'buckling' / f'{jload(idir / "buckling_run.json")["name"]}.png'
+                  if (idir / 'buckling_run.json').exists() else idir / 'buckling_run.json',
                   idir / f'abaqus_{d["name"]}_buckling.py', idir / 'abaqus_buckling_case.json',
                   idir / 'lam_web.json', idir / 'lam_buckling.json']:
             if f.exists():

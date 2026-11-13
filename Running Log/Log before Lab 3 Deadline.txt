@@ -60,3 +60,11 @@ I also used Claude to draft the Lab Report 3 demo slides and narrative report.  
 11/12/26
 Tara
 I incorporated Federico's comments on the report and slides into my prompts to Claude.  I then iterated them until I was satisfied (and checked that Federico was also happy with them), then converted them to PDFs for submission on CodeGrade.
+
+11/13/26
+Federico
+The buckling runs were the bottleneck of the orchestrator: about 12 h per omega design, mostly in finding the buckling mode (step A) and in a slow imperfect-path run.
+- Mode-error vs time study (with Claude, 11/12-11/13, Code for Project/11-12-26 (Federico)/coarse_mode_study): the imperfect-path strength barely depends on which mode is used as the imperfection (within 0.2% over 10 runs, even with a wrong mode), so the expensive mode search can be replaced by an 80 s linear buckling analysis of a short segment.
+- A 4 mm mesh gives the same path as the 2.2 mm one up to the requirement, but overestimates the stall load by up to 12%. So the coarse run must reach 1.12x the requirement; designs within that margin are re-checked on the fine mesh.
+- We made this the default "fast pipeline" of the orchestrator. On the 11-07 omega design it now takes 27 min instead of about 12 h, and on the tape spring 68 s.
+- Abaqus stays for verification only.

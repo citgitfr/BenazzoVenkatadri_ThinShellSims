@@ -1,0 +1,3 @@
+seed LBA (segment L 144 mm, 4 x 8 mm, tiled, 7297 equations): load factors [504.5548, 504.5548, 504.9253, 504.9254]; 77 s
+seed: segment LBA, 77 s -> seedtest/omega_seed.npz
+done
