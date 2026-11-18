@@ -21,7 +21,11 @@ What is exact and what is an estimate
                        TRAC webs/OM tabs are bent by k_x only but sit off the neutral surface; not included.
   estimates (thin-walled beam, membrane modulus Ex = 1/(h a11)):
     EI_z, EI_y       = Ex * Iyy (deflection along z), Ex * Izz (along y), centroidal.
-    k_est            = 3 EI / L^3 (cantilever tip stiffness) in the requirement's direction.
+    k_est            = cantilever tip stiffness in the requirement's direction, Timoshenko (11-17-26, Tara,
+                       user-approved): 1 / (L^3 / (3 EI) + L / kGA), kGA = A66 * sum(m l (d/ds)^2) over the
+                       walls (m = 2 on webs/tabs; d/ds = dz/ds for a load along z, dy/ds along y). Thin-wall
+                       shear area estimate; on OM M006 [0/0/0] M55J it gave kGA 51.4e3 N vs FE 42.7e3 N
+                       (shear 39% of the tip deflection, Euler-Bernoulli alone 3 EI / L^3 was 1.7x the FE).
     P_col            = column buckling (TS: Euler / flexural-torsional, sb.column_buckling;
                        TRAC/OM/CO: Euler with the weaker EI).
     P_loc            = KNOCKDOWN x classical curved-panel stress x area (TS 0.3; OM/CO 0.3 on the
@@ -163,11 +167,30 @@ def geometries(req):
                    s_total=sum(_len(p) * m for p, m in parts), fe_supported=fe_buildable(g),
                    I1=section_inertia(parts, 1.0), props1=None)
         geo['tors'] = torsion_geometry(parts)
+        geo['shear'] = shear_geometry(parts)
         if g['type'] == 'TS':
             import shell_buckling as sb
             geo['props1'] = sb.section_properties(parts[0][0], 1.0)      # t = 1; scaled per laminate
         out[g['id']] = geo
     return out
+
+
+def shear_geometry(parts):
+    """Thin-wall shear-area factors (laminate-independent): sum m l (dz/ds)^2 (load along z) and
+    sum m l (dy/ds)^2 (along y); m = 2 on webs/tabs (doubled laminate). kGA = A66 x factor."""
+    out = dict(z=0.0, y=0.0)
+    for P, m in parts:
+        d = np.diff(P, axis=0)
+        ln = np.hypot(d[:, 0], d[:, 1])
+        ok = ln > 0
+        out['z'] += float(m * np.sum(d[ok, 1]**2 / ln[ok]))
+        out['y'] += float(m * np.sum(d[ok, 0]**2 / ln[ok]))
+    return out
+
+
+def tip_stiffness(EI, kGA, L):
+    """Timoshenko cantilever tip stiffness [N/mm] (kGA None or 0: Euler-Bernoulli)."""
+    return 1.0 / (L**3 / (3 * EI) + (L / kGA if kGA else 0.0))
 
 
 def torsion_geometry(parts):
@@ -367,9 +390,10 @@ def screen(req, top=30, max_rows=20000):
                 why = []
                 EIz, EIy = Lm.Ex * geo['I1']['Iyy'] * Lm.h, Lm.Ex * geo['I1']['Izz'] * Lm.h
                 k_est = None
+                kGAz, kGAy = Lm.A66 * geo['shear']['z'], Lm.A66 * geo['shear']['y']
                 if stiff:
-                    EI = EIz if stiff.get('direction', 'z') == 'z' else EIy
-                    k_est = 3 * EI / length**3
+                    dz = stiff.get('direction', 'z') == 'z'
+                    k_est = tip_stiffness(EIz if dz else EIy, kGAz if dz else kGAy, length)
                     if k_est < STIFF_MARGIN * stiff['min_N_per_mm']:
                         why.append('stiffness estimate')
                 P_col, P_loc, M_opp, M_eq = buckling_estimates(Lm, geo, length, buck)
@@ -395,7 +419,8 @@ def screen(req, top=30, max_rows=20000):
                                  n_plies=lay['n_plies'], n_angles=lay['n_angles'], cross_ply=lay['cross_ply'],
                                  h_mm=Lm.h, r_min_mm=geo['r_min'], width_mm=geo['width'], height_mm=geo['height'],
                                  mass_kg=mpl * length * 1e-3, mass_per_length_kg_m=mpl,
-                                 Ex_MPa=Lm.Ex, EIz_Nmm2=EIz, EIy_Nmm2=EIy, k_est_N_mm=k_est,
+                                 Ex_MPa=Lm.Ex, EIz_Nmm2=EIz, EIy_Nmm2=EIy, kGAz_N=kGAz, kGAy_N=kGAy,
+                                 k_est_N_mm=k_est,
                                  buckling_est=b_est, P_col=P_col, P_loc=P_loc, M_fold_opp=M_opp, M_fold_eq=M_eq,
                                  F_flat=F_flat, F_hub=F_hub, GJ_est_Nmm2=GJ_est, twist_est_deg=twist_est))
     sense = req.get('objective', {}).get('sense', 'minimize')

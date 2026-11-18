@@ -44,6 +44,9 @@ add step "loadcases" (after failure): linear OpenSeesPy runs of the design's sta
 root, rigid tip) with the torque about x, and with each extra tip load, through shell-assemble-run; the tip
 twist is rx of the rigid tip node; failure-check (Hashin) runs on each. The screen adds GJ_est / twist_est_deg
 (design_screen.py) and study.py calibrates the twist estimate with the FE (calib "t").
+Shear (added 11-17-26, Tara, user-approved): the beam reference k_beam of record (and the screen's k_est) is the
+Timoshenko tip stiffness 1 / (L^3 / (3 EI) + L / kGA), kGA = A66 * sum(m l (d/ds)^2) from the screen (columns
+kGAz_N, kGAy_N); designs chosen before this change (no kGA) keep Euler-Bernoulli 3 EI / L^3.
 """
 import argparse
 import csv
@@ -799,7 +802,8 @@ def cmd_choose(a):
                   k_est=_num(row['k_est_N_mm']), buckling_est=_num(row['buckling_est']),
                   Ex=float(row['Ex_MPa']), EIz=float(row['EIz_Nmm2']), EIy=float(row['EIy_Nmm2']), F_flat=float(row['F_flat']),
                   F_hub=_num(row['F_hub']), r_min=float(row['r_min_mm']), cross_ply=row['cross_ply'] == 'True',
-                  GJ_est=_num(row.get('GJ_est_Nmm2')), twist_est=_num(row.get('twist_est_deg')))
+                  GJ_est=_num(row.get('GJ_est_Nmm2')), twist_est=_num(row.get('twist_est_deg')),
+                  kGAz=_num(row.get('kGAz_N')), kGAy=_num(row.get('kGAy_N')))
     bq = req['requirements'].get('buckling')
     if bq:
         design['buckling_est_cal'] = (design['buckling_est'] or bq['min_value']) * calib_factor(st, 'b', row['type'])
@@ -1549,13 +1553,15 @@ def cmd_record(a):
     u = abs(Q.get(f'tip_u{dirn}') or 0.0)
     k_fe = F / u if u > 0 else None
     EI = d['EIz'] if dirn == 'z' else d['EIy']
-    k_beam = 3 * EI / d['L']**3
+    kGA = d.get('kGAz') if dirn == 'z' else d.get('kGAy')
+    k_beam = 1.0 / (d['L']**3 / (3 * EI) + (d['L'] / kGA if kGA else 0.0))   # Timoshenko when kGA is known
     k_ratio = k_fe / k_beam if k_fe else None
     sanity = []
     if k_ratio is None or not math.isfinite(k_ratio):
         sanity.append('no tip stiffness (zero or non-finite tip displacement)')
     elif abs(k_ratio - 1) > K_TOL:
-        sanity.append(f'tip stiffness {100 * (k_ratio - 1):+.1f}% from thin-walled beam theory (tolerance '
+        sanity.append(f'tip stiffness {100 * (k_ratio - 1):+.1f}% from thin-walled beam theory '
+                      f'({"Timoshenko" if kGA else "Euler-Bernoulli"}; tolerance '
                       f'{100 * K_TOL:.0f}%)')
     if not d.get('abd_check', {}).get('ok'):
         sanity.append('ABD check failed')
