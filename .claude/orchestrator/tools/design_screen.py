@@ -29,12 +29,19 @@ What is exact and what is an estimate
     M_fold           = tape-spring steady fold moments: opposite sense (1+nu) D alpha,
                        equal sense (1-nu) D alpha, D = sqrt(D11 D22), nu = D12/D, alpha = b/R; TS only.
                        These are the post-buckling fold moments, a LOWER bound of the peak moment.
+    GJ_est           = torsional stiffness (added 11-17-26, Tara, user-approved): Bredt on the closed cell
+                       4 A_c^2 / sum(l / A66) (OM/CO; tabs in the cell carry 2 A66) + St Venant 4 D66 l of
+                       every wall (webs/tabs 8 D66, the doubled mirror laminate), as shell-bc-load torsion.py.
+                       Open sections (TS/TRAC): St Venant only, which overstates the twist of a root-clamped
+                       boom (warping restraint; 10-25% for 1 m booms), hence the looser open margin.
+    twist_est_deg    = T L / GJ_est for the required torque T (requirements torsional_stiffness).
   study.py multiplies the estimates by FE/estimate ratios learned from the runs (calibration).
 
 Feasibility by estimate (screen_ok): strengths complete, F_flat < 1, F_hub < 1 (if a hub
-radius is required), geometric limits; stiffness and buckling estimates only REJECT when
+radius is required), geometric limits; stiffness, buckling and torsion estimates only REJECT when
 they miss the requirement by more than the screening margins (est < 0.85 x required
-stiffness, est < 0.5 x required buckling), because they are approximate.
+stiffness, est < 0.5 x required buckling, GJ_est < 0.85 (closed) / 0.5 (open) x required GJ),
+because they are approximate.
 Units: N, mm, MPa; mass kg.
 """
 import argparse
@@ -60,6 +67,7 @@ MAT_CATALOG = CLAUDE / 'memory.material_property_catalog' / 'UD_lamina_catalog_S
 LAYUP_CATALOG = CLAUDE / 'memory.layup_catalog' / 'layup_catalog.txt'
 FE_SUPPORTED = {'TS', 'TRAC', 'OM', 'CO'}   # section types shell-mesh builds (see PROTOCOL.md section 4)
 STIFF_MARGIN, BUCK_MARGIN = 0.85, 0.5
+TORS_MARGIN = {'closed': 0.85, 'open': 0.5}   # GJ_est vs required GJ (Bredt is exact; St Venant is low for open)
 
 
 def fe_buildable(g):
@@ -154,11 +162,36 @@ def geometries(req):
         geo = dict(g=g, parts=parts, r_min=min(radii), width=y1 - y0, height=z1 - z0,
                    s_total=sum(_len(p) * m for p, m in parts), fe_supported=fe_buildable(g),
                    I1=section_inertia(parts, 1.0), props1=None)
+        geo['tors'] = torsion_geometry(parts)
         if g['type'] == 'TS':
             import shell_buckling as sb
             geo['props1'] = sb.section_properties(parts[0][0], 1.0)      # t = 1; scaled per laminate
         out[g['id']] = geo
     return out
+
+
+def torsion_geometry(parts):
+    """Laminate-independent torsion data of a section: closed cell area and wall lengths (flange / doubled web
+    in the cell) and total flange / web lengths (shell-bc-load torsion._closed_cell on the catalog polylines)."""
+    import torsion
+    segs = [(a, b, 'web' if m > 1 else 'flange', 1.0, 1.0, 1.0) for P, m in parts for a, b in zip(P[:-1], P[1:])]
+    seg_len = lambda a, b: float(np.hypot(*(b - a)))
+    out = dict(l_f=sum(seg_len(a, b) for a, b, lab, *_ in segs if lab == 'flange'),
+               l_w=sum(seg_len(a, b) for a, b, lab, *_ in segs if lab == 'web'), A_cell=None, s_f=0.0, s_w=0.0)
+    cell = torsion._closed_cell(segs)
+    if cell is not None:
+        out['A_cell'] = abs(sum(0.5 * (pa[0] * pb[1] - pb[0] * pa[1]) for pa, pb, *_ in cell))
+        out['s_f'] = sum(seg_len(pa, pb) for pa, pb, lab, *_ in cell if lab == 'flange')
+        out['s_w'] = sum(seg_len(pa, pb) for pa, pb, lab, *_ in cell if lab == 'web')
+    return out
+
+
+def torsion_GJ(Lm, tg):
+    """GJ estimate [N mm^2] of laminate Lm on section torsion data tg (torsion_geometry)."""
+    GJ = 4 * Lm.D66 * (tg['l_f'] + 8 * tg['l_w'])
+    if tg['A_cell']:
+        GJ += 4 * tg['A_cell']**2 / (tg['s_f'] / Lm.A66 + tg['s_w'] / (2 * Lm.A66))
+    return GJ
 
 
 def props_at(props1, t):
@@ -208,6 +241,7 @@ class Lam:
         self.Ex, self.Gxy = 1 / (self.h * a[0, 0]), 1 / (self.h * a[2, 2])
         self.nu_xy = -a[0, 1] / a[0, 0]
         self.D11, self.D22, self.D12 = D[0, 0], D[1, 1], D[0, 1]
+        self.A66, self.D66 = A[2, 2], D[2, 2]
         self.areal = mat['rho_kg_m3'] * self.h * 1e-3          # kg/m^2
         # ply stresses (ply axes) for unit curvature k_x and unit k_y (symmetric: eps0 = 0)
         E = np.zeros((2, 1, 8))
@@ -297,6 +331,8 @@ def screen(req, top=30, max_rows=20000):
     length = float(req['length_mm'])
     rq = req.get('requirements', {})
     stiff, buck, coil = rq.get('bending_stiffness'), rq.get('buckling'), rq.get('coiling')
+    tors = rq.get('torsional_stiffness')
+    GJ_req = tors['torque_Nmm'] * length / math.radians(tors['max_twist_deg']) if tors else None
     R_hub = coil.get('hub_radius_mm') if coil else None
     lim = req.get('limits', {})
     mats, mskip = materials(req)
@@ -345,6 +381,10 @@ def screen(req, top=30, max_rows=20000):
                         b_est = M_opp if buck.get('sense', 'opposite') == 'opposite' else M_eq
                     if b_est is not None and b_est < BUCK_MARGIN * buck['min_value']:
                         why.append('buckling estimate')
+                GJ_est = torsion_GJ(Lm, geo['tors'])
+                twist_est = math.degrees(tors['torque_Nmm'] * length / GJ_est) if tors else None
+                if tors and GJ_est < TORS_MARGIN['closed' if geo['tors']['A_cell'] else 'open'] * GJ_req:
+                    why.append('torsion estimate')
                 mpl = Lm.areal * geo['s_total'] * 1e-3               # kg/m
                 for w in why:
                     reasons[w] = reasons.get(w, 0) + 1
@@ -357,7 +397,7 @@ def screen(req, top=30, max_rows=20000):
                                  mass_kg=mpl * length * 1e-3, mass_per_length_kg_m=mpl,
                                  Ex_MPa=Lm.Ex, EIz_Nmm2=EIz, EIy_Nmm2=EIy, k_est_N_mm=k_est,
                                  buckling_est=b_est, P_col=P_col, P_loc=P_loc, M_fold_opp=M_opp, M_fold_eq=M_eq,
-                                 F_flat=F_flat, F_hub=F_hub))
+                                 F_flat=F_flat, F_hub=F_hub, GJ_est_Nmm2=GJ_est, twist_est_deg=twist_est))
     sense = req.get('objective', {}).get('sense', 'minimize')
     q = req.get('objective', {}).get('quantity', 'mass')
     key = {'mass': 'mass_kg', 'bending_stiffness': 'k_est_N_mm', 'buckling': 'buckling_est'}.get(q, 'mass_kg')
@@ -374,7 +414,8 @@ def screen(req, top=30, max_rows=20000):
                    rejections=reasons, materials_used=sorted(mats), materials_skipped=mskip,
                    n_layups=len(lays), geometries=sorted(geos),
                    fe_supported_types=sorted(FE_SUPPORTED), ranking_key=f'{sense} {key}',
-                   margins=dict(stiffness=STIFF_MARGIN, buckling=BUCK_MARGIN))
+                   margins=dict(stiffness=STIFF_MARGIN, buckling=BUCK_MARGIN, torsion=TORS_MARGIN),
+                   GJ_required_Nmm2=GJ_req)
     return rows[:max_rows], summary
 
 

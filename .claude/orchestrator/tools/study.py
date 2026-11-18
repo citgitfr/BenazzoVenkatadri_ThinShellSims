@@ -12,7 +12,7 @@ ACTION; the orchestrator follows that line (PROTOCOL.md).
     study.py candidates [<study>] [--n 10]         untried designs, calibrated estimates (choose from these)
     study.py choose --material L### --geometry T### --layup Y### --reason "..." [--override "..."]
     study.py choose --r1 R1 --alpha ALPHA --reason "..."      (custom-design mode, see below)
-    study.py run <iter> --step laminate|model|visualize|failure|buckling|objcon|all
+    study.py run <iter> --step laminate|model|visualize|failure|loadcases|buckling|objcon|all
     study.py record <iter>                         sanity checks, ledger, calibration, verification/stop decisions
     study.py converge <iter>                       mesh-convergence rerun (element size x 0.6)
     study.py verify <iter>                         Abaqus script (opensees-to-abaqus) + the run_abaqus.py command
@@ -36,6 +36,14 @@ w; r2 = (h - 2 w - 2 r1 alpha) / (2 alpha) (their Eq. 4). Keys:
   laminate step reports the model ABD against it and requires a match to 1e-6),
   h_mm, w_mm, bounds {r1: [lo, hi], alpha: [lo, hi], r2: [lo, hi]}, mesh_size_mm,
   stop {window, min_iterations, tol}, verification "final_only" | "schedule".
+
+Torsion and extra failure load cases (added 11-17-26, Tara, user-approved): requirements
+  "torsional_stiffness": {"text", "torque_Nmm": T, "max_twist_deg": theta}  -> constraint tip_twist_deg <= theta
+  "failure_load_cases": [{"name", "text", "force": [Fx, Fy, Fz], "moment": [Mx, My, Mz]}]  -> F_<name> < 1
+add step "loadcases" (after failure): linear OpenSeesPy runs of the design's static model (same mesh, clamped
+root, rigid tip) with the torque about x, and with each extra tip load, through shell-assemble-run; the tip
+twist is rx of the rigid tip node; failure-check (Hashin) runs on each. The screen adds GJ_est / twist_est_deg
+(design_screen.py) and study.py calibrates the twist estimate with the FE (calib "t").
 """
 import argparse
 import csv
@@ -59,10 +67,11 @@ ACTIVE = ORCH / 'ACTIVE_STUDY'
 PY = sys.executable
 sys.path.insert(0, str(HERE))
 
-STEPS = ('laminate', 'model', 'visualize', 'failure', 'buckling', 'objcon')
+STEPS = ('laminate', 'model', 'visualize', 'failure', 'loadcases', 'buckling', 'objcon')
 LEDGER_COLS = ('iter', 'material', 'layup', 'geometry', 'type', 'h_mm', 'size_mm', 'mass_kg', 'k_fe', 'k_beam',
                'k_ratio', 'buckling_fe', 'buckling_kind', 'buckling_est', 'F_sim', 'F_flat', 'F_hub',
-               'F_governing', 'feasible', 'objective', 'sanity', 'override', 'reason')
+               'F_governing', 'feasible', 'objective', 'sanity', 'override', 'reason', 'twist_deg', 'twist_est_deg',
+               'F_loadcases')
 K_TOL = 0.15            # FE tip stiffness vs thin-walled beam theory (rigid-end tape spring: 0.4% in v2.0 tests)
 CONV_TOL = dict(k=0.02, F=0.10, buckling=0.05)   # buckling: custom mode (objective = buckling value)
 # Buckling path cutoff (threshold requirements only): path B stops once it carries this multiple of the required
@@ -318,12 +327,18 @@ def validate_requirements(req):
         for k in ('h_mm', 'w_mm'):
             if not cd.get(k, 0) > 0:
                 errs.append(f'custom_design.{k} must be > 0')
+    tq = rq.get('torsional_stiffness')
+    if tq and not (tq.get('torque_Nmm', 0) > 0 and tq.get('max_twist_deg', 0) > 0):
+        errs.append('torsional_stiffness: torque_Nmm > 0 and max_twist_deg > 0 required')
+    for lc in rq.get('failure_load_cases') or []:
+        if not re.match(r'^[A-Za-z][A-Za-z0-9_]*$', str(lc.get('name', ''))) or not (lc.get('force') or lc.get('moment')):
+            errs.append('failure_load_cases: each needs a name (letters, digits, _) and a tip force and/or moment')
     c = rq.get('coiling')
     if c and not c.get('hub_radius_mm', 0) > 0:
         errs.append('coiling.hub_radius_mm must be > 0')
     if obj.get('quantity') == 'buckling' and not b:
         errs.append('objective "buckling" needs a buckling requirement (load type, sense/ends)')
-    if not (s or b or c or req.get('extra_constraints')):
+    if not (s or b or c or tq or req.get('extra_constraints')):
         errs.append('no requirement at all: ask the user what the boom must do')
     v = req.get('verification', {})
     if not 1 <= v.get('min', 5) <= v.get('max', 10):
@@ -350,6 +365,15 @@ def constraints_from(req):
     if b and b.get('min_value'):
         out.append({'name': 'buckling', 'text': b.get('text', ''), 'expr': 'buckling_load', 'op': '>=',
                     'limit': b['min_value'], 'units': b.get('units', 'N mm' if b['load'] == 'bending' else 'N')})
+    tq = rq.get('torsional_stiffness')
+    if tq:
+        out.append({'name': 'torsional stiffness', 'text': tq.get('text', ''), 'expr': 'tip_twist_deg', 'op': '<=',
+                    'limit': tq['max_twist_deg'], 'units': 'deg'})
+        out.append({'name': 'no failure under the torque', 'text': f'Hashin F < 1 under the {tq["torque_Nmm"]:g} N mm '
+                    'torque (study step loadcases)', 'expr': 'F_torsion', 'op': '<', 'limit': 1, 'units': '-'})
+    for lc in rq.get('failure_load_cases') or []:
+        out.append({'name': f'no failure: {lc["name"]}', 'text': lc.get('text', ''), 'expr': f'F_{lc["name"]}',
+                    'op': '<', 'limit': 1, 'units': '-'})
     c = rq.get('coiling')
     if c:
         out.append({'name': 'coiling on hub', 'text': c.get('text', ''), 'expr': 'F_hub', 'op': '<', 'limit': 1,
@@ -398,14 +422,16 @@ def cmd_init(a):
             w.writeheader()
             w.writerows(rows)
     jsave(sd / 'screen' / 'screen_summary.json', summary)
-    steps = [s for s in STEPS if s != 'buckling' or req['requirements'].get('buckling')]
+    rq0 = req['requirements']
+    steps = [s for s in STEPS if (s != 'buckling' or rq0.get('buckling')) and
+             (s != 'loadcases' or rq0.get('torsional_stiffness') or rq0.get('failure_load_cases'))]
     reg = SKILLS / 'regression-tests' / 'last_run_full.txt'
     reg_line = next((ln for ln in reversed(reg.read_text(errors='replace').splitlines()) if ln.strip()), '') \
         if reg.exists() else 'no regression record'
     st = dict(study=rel(sd), created=dt.datetime.now().isoformat(timespec='seconds'),
               req_hash=hashlib.sha1((sd / 'requirements.json').read_bytes()).hexdigest()[:12],
               phase='initialized', iteration=0, max_iterations=req.get('max_iterations', 100), steps=steps,
-              iter_steps_done=[], designs={}, best=None, best_history=[], calib=dict(k=[], b=[]),
+              iter_steps_done=[], designs={}, best=None, best_history=[], calib=dict(k=[], b=[], t=[]),
               verification=dict(min=req.get('verification', {}).get('min', 5),
                                 max=req.get('verification', {}).get('max', 10), records=[]),
               verification_due=None, convergence_due=None, converged={}, stop={},
@@ -485,7 +511,11 @@ def candidate_list(sd, st, n=10):
         k, b = _num(r['k_est_N_mm']), _num(r['buckling_est'])
         kc = k * ck if k is not None else None
         bc = b * calib_factor(st, 'b', r.get('type')) if b is not None else None
+        tw = _num(r.get('twist_est_deg'))
+        twc = tw * calib_factor(st, 't') if tw is not None and st['calib'].get('t') else tw
         pred = True
+        if rq.get('torsional_stiffness') and twc is not None and twc > rq['torsional_stiffness']['max_twist_deg']:
+            pred = False
         if rq.get('bending_stiffness') and kc is not None and kc < rq['bending_stiffness']['min_N_per_mm']:
             pred = False
         if rq.get('buckling') and bc is not None and bc < rq['buckling']['min_value']:
@@ -493,7 +523,7 @@ def candidate_list(sd, st, n=10):
         out.append(dict(design=key, rank=int(r['rank']), material=r['material'], layup=r['layup'],
                         geometry=r['geometry'], h_mm=_num(r['h_mm']), mass_kg=_num(r['mass_kg']),
                         k_cal=kc, buckling_cal=bc, F_flat=_num(r['F_flat']), F_hub=_num(r['F_hub']),
-                        n_angles=int(r['n_angles']), predicted_feasible=pred))
+                        n_angles=int(r['n_angles']), twist_cal=twc, predicted_feasible=pred))
     obj = req.get('objective', {})
     q = {'mass': 'mass_kg', 'bending_stiffness': 'k_cal', 'buckling': 'buckling_cal'}[obj.get('quantity', 'mass')]
     sgn = 1 if obj.get('sense', 'minimize') == 'minimize' else -1
@@ -561,9 +591,10 @@ def cmd_candidates(a):
         return custom_candidates(sd, st)
     top, explore, ck, cb = candidate_list(sd, st, a.n)
     print(f'calibration (median FE/estimate): stiffness x{ck:.3g} ({len(st["calib"]["k"])} runs), '
-          f'buckling x{cb:.3g} ({len(st["calib"]["b"])} runs)')
-    cols = ('design', 'rank', 'h_mm', 'mass_kg', 'k_cal', 'buckling_cal', 'F_flat', 'F_hub', 'n_angles',
-            'predicted_feasible')
+          f'buckling x{cb:.3g} ({len(st["calib"]["b"])} runs), twist x'
+          f'{(calib_factor(st, "t") if st["calib"].get("t") else 1.0):.3g} ({len(st["calib"].get("t", []))} runs)')
+    cols = ('design', 'rank', 'h_mm', 'mass_kg', 'k_cal', 'buckling_cal', 'twist_cal', 'F_flat', 'F_hub',
+            'n_angles', 'predicted_feasible')
 
     def show(title, rows):
         print(f'\n{title}')
@@ -767,7 +798,8 @@ def cmd_choose(a):
                   override=a.override or '', screen_rank=int(row['rank']), h_mm=float(row['h_mm']),
                   k_est=_num(row['k_est_N_mm']), buckling_est=_num(row['buckling_est']),
                   Ex=float(row['Ex_MPa']), EIz=float(row['EIz_Nmm2']), EIy=float(row['EIy_Nmm2']), F_flat=float(row['F_flat']),
-                  F_hub=_num(row['F_hub']), r_min=float(row['r_min_mm']), cross_ply=row['cross_ply'] == 'True')
+                  F_hub=_num(row['F_hub']), r_min=float(row['r_min_mm']), cross_ply=row['cross_ply'] == 'True',
+                  GJ_est=_num(row.get('GJ_est_Nmm2')), twist_est=_num(row.get('twist_est_deg')))
     bq = req['requirements'].get('buckling')
     if bq:
         design['buckling_est_cal'] = (design['buckling_est'] or bq['min_value']) * calib_factor(st, 'b', row['type'])
@@ -893,6 +925,73 @@ def _fail_args(d):
     return out
 
 
+def _loadcase_values(d):
+    """--value inputs of objective-constraints from the loadcases step (twist, Hashin F per case)."""
+    out = []
+    if d.get('tip_twist_deg') is not None:
+        out += ['--value', f'tip_twist_deg={d["tip_twist_deg"]}']
+    for k, v in (d.get('loadcase_F') or {}).items():
+        if v is not None:
+            out += ['--value', f'F_{k}={v}']
+    return out
+
+
+def run_loadcases(sd, idir, d, logs):
+    """Step loadcases: the design's static model (case.json: same mesh, clamped root, rigid tip, linear) with
+    the required torque about x and with each extra failure load case at the tip, assembled and run with
+    shell-assemble-run; tip twist = rx of the rigid tip node; failure-check on each results .npz."""
+    import numpy as np
+    req = jload(sd / 'requirements.clean.json')
+    rq = req['requirements']
+    base = jload(idir / 'case.json')
+    runs = []
+    tq = rq.get('torsional_stiffness')
+    if tq:
+        runs.append(('torsion', {'node': {'rigid': 'xL'}, 'force': [0.0, 0.0, 0.0],
+                                 'moment': [float(tq['torque_Nmm']), 0.0, 0.0]}))
+    for lc in rq.get('failure_load_cases') or []:
+        ld = {'node': {'rigid': 'xL'}, 'force': [float(x) for x in (lc.get('force') or [0, 0, 0])]}
+        if lc.get('moment'):
+            ld['moment'] = [float(x) for x in lc['moment']]
+        runs.append((lc['name'], ld))
+    msgs, ok, Fs = [], True, {}
+    for tag, load in runs:
+        c = json.loads(json.dumps(base))
+        c['name'] = f'{d["name"]}_{tag}'
+        c['loads'] = [load]
+        cf = idir / f'case_{tag}.json'
+        jsave(cf, c)
+        lg = logs / f'loadcase_{tag}.log'
+        code, _ = run_cmd(['shell-assemble-run/assemble_run.py', cf, '--laminate', idir / 'lam.json'], lg)
+        npz = idir / 'results' / f'{c["name"]}.npz'
+        if code or not npz.exists():
+            return False, f'loadcase {tag}: assemble/run failed (log {rel(lg)})'
+        lgf = logs / f'loadcase_{tag}_failure.log'
+        code, out = run_cmd(['failure-check/failure_check.py', npz] + _boom_args(d) + _fail_args(d), lgf)
+        # the load case's own index (SIMULATION MAX F); the coiling check failure-check adds is F_flat / F_hub
+        m = re.search(r'SIMULATION MAX F = ([\d.]+(?:e[+-]?\d+)?)', out)
+        F = float(m.group(1)) if (m and code == 0) else None
+        ok &= F is not None
+        Fs[tag] = F
+        msg = f'{tag}: F = {F} (log {rel(lgf)})'
+        if tag == 'torsion':
+            r = np.load(npz, allow_pickle=True)
+            meta = json.loads(str(r['meta']))
+            tip = int(meta['rigid']['xL'])
+            j = int(np.nonzero(r['node_tags'] == tip)[0][0])
+            rx = float(r['disp'][j, 3])
+            tw = abs(math.degrees(rx))
+            d['tip_twist_deg'] = tw
+            d['GJ_fe'] = float(tq['torque_Nmm']) * d['L'] / abs(rx) if rx else None
+            ratio = tw / d['twist_est'] if d.get('twist_est') else float('nan')
+            msg += (f'; tip twist {tw:.5g} deg under {tq["torque_Nmm"]:g} N mm (limit {tq["max_twist_deg"]:g}), '
+                    f'GJ_FE {d["GJ_fe"]} N mm^2 vs screen estimate {d.get("GJ_est")} (FE/est twist {ratio:.4g})')
+        msgs.append(msg)
+    d['loadcase_F'] = Fs
+    jsave(idir / 'design.json', d)
+    return ok, 'loadcases: ' + '; '.join(msgs)
+
+
 def _custom_values(d):
     return sum((['--value', f'{k}={d[k]}'] for k in ('r1', 'alpha', 'r2')), []) if d.get('custom') else []
 
@@ -1013,10 +1112,13 @@ def run_step(sd, st, i, step):
         d['F_governing_fc'] = float(m.group(1)) if m else None
         jsave(idir / 'design.json', d)
         return code == 0, f'failure-check: GOVERNING F = {d["F_governing_fc"]} (log {rel(log)})'
+    if step == 'loadcases':
+        return run_loadcases(sd, idir, d, logs)
     if step == 'buckling':
         # buckling paths cost tens of minutes: skip them for designs already infeasible without buckling
         pre = idir / 'objcon_pre.json'
-        vals = (['--value', f'F_hub={d["F_hub"]}'] if d.get('F_hub') is not None else []) + _custom_values(d)
+        vals = (['--value', f'F_hub={d["F_hub"]}'] if d.get('F_hub') is not None else []) + _custom_values(d) \
+            + _loadcase_values(d)
         run_cmd(['objective-constraints/objective_constraints.py', npz, '--constraints', sd / 'constraints.json']
                 + _boom_args(d) + _fail_args(d) + ['--flatten-radius', d['r_min'], '--json', pre] + vals,
                 logs / 'objcon_pre.log')
@@ -1027,7 +1129,7 @@ def run_step(sd, st, i, step):
             return True, f'buckling skipped: the design already violates {", ".join(bad)} (saves the path run)'
         return run_buckling(idir, d, logs, req=_clean(jload(sd / 'requirements.json')))
     if step == 'objcon':
-        vals = _custom_values(d)
+        vals = _custom_values(d) + _loadcase_values(d)
         if d.get('F_hub') is not None:
             vals += ['--value', f'F_hub={d["F_hub"]}']
         if d.get('buckling_value') is not None:
@@ -1481,6 +1583,8 @@ def cmd_record(a):
     if not sanity:
         if k_fe and d.get('k_est'):
             st['calib']['k'].append(k_fe / d['k_est'])
+        if d.get('tip_twist_deg') and d.get('twist_est'):
+            st['calib'].setdefault('t', []).append(d['tip_twist_deg'] / d['twist_est'])
         if d.get('buckling_value') and d.get('buckling_est') and d.get('buckling_kind', '').startswith(
                 ('B peak', 'B STALL')):
             st['calib']['b'].append(d['buckling_value'] / d['buckling_est'])
@@ -1506,7 +1610,8 @@ def cmd_record(a):
                buckling_kind=d.get('buckling_kind', ''), buckling_est=d.get('buckling_est'),
                F_sim=Q.get('F_sim'), F_flat=d['F_flat'], F_hub=d.get('F_hub'), F_governing=Fg,
                feasible=feasible, objective=objective, sanity='; '.join(sanity), override=d['override'],
-               reason=d['reason'])
+               reason=d['reason'], twist_deg=d.get('tip_twist_deg'), twist_est_deg=d.get('twist_est'),
+               F_loadcases=json.dumps(d.get('loadcase_F') or {}))
     with open(sd / 'ledger.csv', 'a', newline='') as f:
         csv.writer(f).writerow([row[c] for c in LEDGER_COLS])
     d.update(k_fe=k_fe, k_beam=k_beam, k_ratio=k_ratio, sanity=sanity, feasible=feasible, objective=objective)
