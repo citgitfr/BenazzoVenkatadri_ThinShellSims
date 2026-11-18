@@ -1,0 +1,26 @@
+=== Abaqus verification of "R001_Al_torsion_nl_abq_5mm" ===
+
+ON THE MACHINE WITH ABAQUS
+  1. Copy this ONE file into an empty folder there:
+       abaqus_R001_Al_torsion_nl_abq_5mm.py
+  2. In that folder run:
+       abaqus cae noGUI=abaqus_R001_Al_torsion_nl_abq_5mm.py
+     (5 mm mesh, S4R, job "R001_Al_torsion_nl_abq_5mm_S4R_5mm". For another mesh / element, e.g.
+      abaqus cae noGUI=abaqus_R001_Al_torsion_nl_abq_5mm.py -- 2.5 S4
+      the job and every file name below become "R001_Al_torsion_nl_abq_5mm_S4_2p5mm".)
+  3. When it finishes, open R001_Al_torsion_nl_abq_5mm_S4R_5mm_results.txt and check that it does NOT say
+     "ODB extraction failed". If it does, copy .claude/verification/odb_extract.py
+     from the project into the same folder and run:
+       abaqus python odb_extract.py R001_Al_torsion_nl_abq_5mm_S4R_5mm.odb
+     Optional: open the model in Abaqus/CAE to check the set-up:
+       abaqus cae database=R001_Al_torsion_nl_abq_5mm_S4R_5mm.cae
+
+COPY BACK TO THIS MACHINE, into F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\trac_torsion\abaqus_nl
+  R001_Al_torsion_nl_abq_5mm_S4R_5mm_odb.npz        REQUIRED: the Abaqus results as plain arrays
+  R001_Al_torsion_nl_abq_5mm_S4R_5mm_results.txt    recommended: run log and Abaqus vs embedded OpenSees values
+  not needed: R001_Al_torsion_nl_abq_5mm_S4R_5mm.odb / .cae / .dat / .msg / .sta (keep them there for inspection)
+
+THEN TELL CLAUDE (paste):
+  Run the OpenSeesAbaqusResultsComparator agent on F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\trac_torsion\abaqus_nl\results\R001_Al_torsion_nl_abq_5mm.npz and F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\trac_torsion\abaqus_nl\R001_Al_torsion_nl_abq_5mm_S4R_5mm_odb.npz
+
+(The OpenSees results file does not exist yet: run  python R001_Al_torsion_nl_abq_5mm_opensees.py  in F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\trac_torsion\abaqus_nl first.)

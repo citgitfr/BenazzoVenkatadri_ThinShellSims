@@ -1,0 +1,29 @@
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+1000 x 47.2699 mm shell, R001 branched section: 3 branches, 1 web(s) with the doubled (mirror) laminate; 200 x 10 = 2000 quads of 5 x 4-4.91 mm, 2211 nodes; corotational ASDShellQ4; T 0 -> 1.0 N mm in 20 steps
+    tip twist 0.00000 rad, torque 0.00000 N mm (14:38:39)
+    tip twist 0.05000 rad, torque 0.05951 N mm (14:38:43)
+  step   1: load factor 0.059506, 6 iterations
+    tip twist 0.10000 rad, torque 0.11969 N mm (14:38:50)
+  step   2: load factor 0.11969, 13 iterations
+    tip twist 0.15000 rad, torque 0.18124 N mm (14:39:01)
+  step   3: load factor 0.18124, 24 iterations
+    tip twist 0.20000 rad, torque 0.24480 N mm (14:39:17)
+  step   4: load factor 0.2448, 38 iterations
+    tip twist 0.25000 rad, torque 0.31101 N mm (14:39:40)
+  step   5: load factor 0.31101, 54 iterations
+    tip twist 0.30000 rad, torque 0.38050 N mm (14:40:15)
+  step   6: load factor 0.3805, 73 iterations
+    tip twist 0.35000 rad, torque 0.45386 N mm (14:40:57)
+  step   7: load factor 0.45386, 92 iterations
+    tip twist 0.40000 rad, torque 0.53167 N mm (14:41:45)
+  step   8: load factor 0.53167, 113 iterations
+    tip twist 0.45000 rad, torque 0.61446 N mm (14:42:46)
+  step   9: load factor 0.61446, 134 iterations
+    tip twist 0.50000 rad, torque 0.70277 N mm (14:43:54)
+  step  10: load factor 0.70277, 155 iterations
+    tip twist 0.55000 rad, torque 0.79711 N mm (14:45:16)
+  step  11: load factor 0.79711, 176 iterations
+    tip twist 0.60000 rad, torque 0.89798 N mm (14:46:45)
+  step  12: load factor 0.89798, 197 iterations
+    tip twist 0.65000 rad, torque 1.00586 N mm (14:48:21)
+  step  13: load factor 1.0059, 216 iterations

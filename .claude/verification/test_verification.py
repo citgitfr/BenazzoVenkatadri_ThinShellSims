@@ -132,13 +132,30 @@ def static_checks(res_path):
         for lbl, l, m in cr_groups)
 
 
+def height_pairing_checks():
+    """Homogeneous Abaqus sections are paired with the OpenSees plies by height (11-17-26 fix): a
+    single 0.2 mm Abaqus web layer (5 Simpson points) vs the doubled 2 x 0.1 mm OpenSees web."""
+    desc = {'1': 'SNEG, (fraction = -1.0)', '2': 'fraction = -0.5', '3': 'MID, (fraction = 0.0)',
+            '4': 'fraction = 0.5', '5': 'SPOS, (fraction = 1.0)'}
+    spmap = cr.section_point_map({'section_point_descriptions': desc}, [1, 2, 3, 4, 5])
+    ok = spmap == {0: (None, -1.0), 1: (None, -0.5), 2: (None, 0.0), 3: (None, 0.5), 4: (None, 1.0)}
+    flange = dict(plies=[dict(theta=0.0, t=0.1, mat=0)], materials=[dict(E1=7e4, E2=7e4, nu12=0.33, G12=2.6e4)])
+    web = cr.doubled_laminate(flange)
+    got = [cr.ply_positions_at(web, f) for f in (-1.0, -0.5, 0.0, 0.5, 1.0)]
+    ok &= got == [[(0, 0)], [(0, 1)], [(0, 2), (1, 0)], [(1, 1)], [(1, 2)]]
+    ok &= [cr.ply_positions_at(flange, f) for f in (-1.0, 0.0, 1.0)] == [[(0, 0)], [(0, 1)], [(0, 2)]]
+    return ok, f'web points -> (ply, position): {got}'
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('results', nargs='*')
     ap.add_argument('--out', default=str(HERE / '_test_out'))
     a = ap.parse_args()
     results = a.results or default_results(a.out)
-    fails = n = 0
+    ok, note = height_pairing_checks()
+    fails, n = int(not ok), 1
+    print(f'[{"PASS" if ok else "FAIL"}] homogeneous Abaqus section paired with OpenSees plies by height ({note})')
     for res in results:
         name = Path(res).stem
         ok, note = static_checks(res)

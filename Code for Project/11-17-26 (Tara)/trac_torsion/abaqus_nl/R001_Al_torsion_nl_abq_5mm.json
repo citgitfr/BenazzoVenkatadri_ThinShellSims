@@ -1,0 +1,10 @@
+{
+ "name": "R001_Al_torsion_nl_abq_5mm",
+ "laminate": {"isotropic": {"E": 69000.0, "nu": 0.33, "t": 0.1, "rho": 2.7e-9}},
+ "geometry": {"L": 1000.0, "section": {"type": "boom", "id": "R001"}, "size": 5},
+ "element": {"type": "ASDShellQ4", "corotational": true},
+ "supports": [{"edge": "x0", "dofs": [1,1,1,1,1,1]}, {"rigid_end": "xL"}],
+ "loads": [{"node": {"rigid": "xL"}, "force": [0, 0, 0], "moment": [1.0, 0, 0]}],
+ "analysis": {"type": "load_control", "n_steps": 20, "max_load_factor": 1.0},
+ "report_node": {"rigid": "xL"}
+}

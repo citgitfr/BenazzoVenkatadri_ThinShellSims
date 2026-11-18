@@ -1,0 +1,18 @@
+shell normal flipped on the face through [-40.75, 0.0]
+shell normal flipped on the face through [40.75, 0.0]
+ODB extraction: done by run_abaqus.py after this script (abaqus python odb_extract.py)
+=== M008_Al_torsion_2p5mm_S4R_2p5mm: S4R, 2.5 mm mesh, 40800 elements, 40902 nodes
+Report node displacement (final frame)
+[CHECK] ux                                 Abaqus = -1.5625e-17   OpenSees = +1.0795e-16   diff = -114.47%
+[CHECK] uy                                 Abaqus = -4.0636e-14   OpenSees = +9.1758e-15   diff = -542.86%
+[CHECK] uz                                 Abaqus = +4.9855e-15   OpenSees = +2.27e-15   diff = +119.62%
+[PASS] rx                                 Abaqus = +1.7937e-06   OpenSees = +1.7928e-06   diff = +0.05%
+[CHECK] ry                                 Abaqus = -6.7798e-18   OpenSees = -3.1171e-18   diff = -117.50%
+[PASS] rz                                 Abaqus = +1.2069e-17   OpenSees = +1.2392e-17   diff = -2.61%
+[PASS] max |u_i| over the model [mm]      Abaqus = +7.7131e-05   OpenSees = +7.709e-05   diff = +0.05%
+Top-ply top-surface stress, ply axes [MPa] (section point 5), largest magnitude
+[CHECK] s1 (S11)                           Abaqus = -0.0010126   OpenSees = +0.00076633   diff = -232.13%
+[CHECK] s2 (S22)                           Abaqus = +0.00050505   OpenSees = +0.00049012   diff = +3.05%
+[PASS] t12 (S12)                          Abaqus = -0.0014496   OpenSees = -0.0014504   diff = +0.06%
+
+SOME COMPARISONS DIFFER BY MORE THAN 3% (see CHECK lines)

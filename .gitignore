@@ -4,3 +4,5 @@ Code for Project/11-10-26 (Tara)/abaqus_axial_check/r5/ctm_axial_r25p62_a90_RIKS
 Code for Project/11-10-26 (Tara)/abaqus_axial_check/r2p5/ctm_axial_r25p62_a90_RIKS.odb
 # Browser profiles (cookies, saved logins)
 chrome_profile/
+# Abaqus ODBs of 11-17-26 (40-50 MB each; results extracted to *_odb.npz next to the scripts)
+Code for Project/11-17-26 (Tara)/**/*.odb

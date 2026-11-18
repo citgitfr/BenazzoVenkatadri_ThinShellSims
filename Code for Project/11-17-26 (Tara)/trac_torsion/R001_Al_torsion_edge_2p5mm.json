@@ -1,0 +1,10 @@
+{
+ "name": "R001_Al_torsion_edge_2p5mm",
+ "laminate": {"isotropic": {"E": 69000.0, "nu": 0.33, "t": 0.1, "rho": 2.7e-9}},
+ "geometry": {"L": 1000.0, "section": {"type": "boom", "id": "R001"}, "size": 2.5},
+ "element": {"type": "ASDShellQ4", "corotational": false},
+ "supports": [{"edge": "x0", "dofs": [1,1,1,1,1,1]}],
+ "loads": [{"edge": "xL", "force": [0,0,0], "moment": [1.0,0,0]}],
+ "analysis": {"type": "linear"},
+ "report_node": "tip"
+}

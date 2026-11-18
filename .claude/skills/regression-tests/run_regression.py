@@ -1013,6 +1013,111 @@ def abaqus_mock_P(g):
     return (g[1], g[2], g[0])
 
 
+def T24_torsion():
+    """Torsion (11-17-26): section stiffness, linear twist vs Bredt / Vlasov, nonlinear twist vs Wagner, script = run_case."""
+    import json
+    import tempfile
+    import torsion as tq
+    E, nu = 69000.0, 0.33
+    G = E / (2 * (1 + nu))
+    # section stiffness vs closed forms
+    strip = lp.Laminate.isotropic(E, nu, 0.5)
+    mesh = sm.ShellMesh(200.0, sm.CrossSection.flat(20.0), 4.0)
+    sm.build_model(mesh, strip)
+    d = tq.section_torsion(mesh)
+    check('flat strip 20 x 0.5: GJ = G b t^3 / 3', d['GJ'], G * 20 * 0.5**3 / 3, 1e-9)
+    check('flat strip 20 x 0.5: E dI = E b^5 t / 180 (Wagner)', d['EdI'], E * 20**5 * 0.5 / 180, 1e-6)
+    ops.wipe()
+    al = lp.Laminate.isotropic(E, nu, 0.1)
+    mesh = sm.ShellMesh(1000.0, sm.boom_section('R001'), 2.5)
+    sm.build_model(mesh, al)
+    d = tq.section_torsion(mesh)
+    check('R001: GJ = G (2 s t^3 + w (2t)^3) / 3 (arcs as 100 chords)', d['GJ'], G * (2 * 12.5 * math.pi / 2 * 0.1**3 + 8 * 0.2**3) / 3, 1e-5)
+    # linear TRAC: root clamped, tip rigid end (warping restrained) / torque on the edge (free) vs Vlasov
+    bc.fix_edge(mesh, 'x0')
+    tip = bc.rigid_end(mesh, 'xL')
+    bc.point_load(tip, (0, 0, 0), (1.0, 0, 0))
+    bc.linear_solve()
+    check('R001 L 1000, rigid tip: twist vs Vlasov (warping restrained)', ops.nodeDisp(tip, 4),
+          tq.vlasov_tip(1.0, 1000.0, d['GJ'], d['ECw'], 'restrained'), 0.02)
+    ops.wipe()
+    mesh = sm.ShellMesh(1000.0, sm.boom_section('R001'), 2.5)
+    sm.build_model(mesh, al)
+    bc.fix_edge(mesh, 'x0')
+    bc.edge_load(mesh, 'xL', (0, 0, 0), (1.0, 0, 0))
+    bc.linear_solve()
+    check('R001 L 1000, edge torque: tip twist vs Vlasov (tip free to warp)', bc.edge_twist(mesh, 'xL', linear=True),
+          tq.vlasov_tip(1.0, 1000.0, d['GJ'], d['ECw'], 'free'), 0.03)
+    ops.wipe()
+    # linear omega (closed cell) vs Bredt, twist profile linear in x
+    mesh = sm.ShellMesh(1000.0, sm.boom_section('M008'), 5.0)
+    sm.build_model(mesh, al)
+    d = tq.section_torsion(mesh)
+    bc.fix_edge(mesh, 'x0')
+    tip = bc.rigid_end(mesh, 'xL')
+    bc.point_load(tip, (0, 0, 0), (1.0, 0, 0))
+    bc.linear_solve()
+    check('M008 L 1000: tip twist vs Bredt T L / GJ', ops.nodeDisp(tip, 4), 1000.0 / d['GJ'], 0.01)
+    x, phi = bc.twist_profile(bc.collect_results(mesh))
+    check('M008: twist at L/2 / tip twist (closed cell: linear)', float(np.interp(500.0, x, phi) / phi[-1]), 0.5, 0.01)
+    ops.wipe()
+    # nonlinear: flat strip, rotation control of a large-rotation rigid end vs Wagner (stiffening ratio)
+    base = {'laminate': {'isotropic': {'E': E, 'nu': nu, 't': 0.5}},
+            'geometry': {'L': 200.0, 'section': {'type': 'flat', 'b': 20.0}, 'size': 4.0},
+            'loads': [{'node': {'rigid': 'xL'}, 'moment': [1.0, 0, 0]}], 'report_node': {'rigid': 'xL'}}
+    lin = dict(base, name='strip_torsion_linear', element={'type': 'ASDShellQ4'},
+               supports=[{'edge': 'x0'}, {'rigid_end': 'xL'}], analysis={'type': 'linear'})
+    with redirect_stdout(io.StringIO()):
+        mesh, res = bc.run_case(lin, verbose=False)
+    k_lin = 1.0 / ops.nodeDisp(mesh.rigid['xL'], 4)
+    ops.wipe()
+    nl = dict(base, name='strip_torsion_nl', element={'type': 'ASDShellQ4', 'corotational': True},
+              supports=[{'edge': 'x0'}, {'rigid_end': 'xL', 'large_rotation': True}],
+              analysis={'type': 'displacement_control', 'node': {'rigid': 'xL'}, 'dof': 4, 'step': 0.15, 'n_steps': 6,
+                        'record_twist': 'xL', 'test': 'EnergyIncr'})
+    with redirect_stdout(io.StringIO()):
+        mesh, res = bc.run_case(nl, verbose=False)
+    h = res['history']
+    T_fe, ph = h[-1, 0], h[-1, 2]
+    GJ, EdI = G * 20 * 0.5**3 / 3, E * 20**5 * 0.5 / 180
+    th = ph / 200.0
+    info(f'strip: phi = {ph:.4f} rad at T = {T_fe:.4g} N mm; linear FE {k_lin * ph:.4g}; Wagner ratio {tq.wagner_ratio(th, GJ, EdI):.3f}')
+    check(f'strip {ph:.2f} rad: recorded twist = rigid-end rotation', ph, h[-1, 1], 1e-3)
+    check(f'strip {ph:.2f} rad: FE stiffening T / (k_lin phi) vs Wagner', T_fe / (k_lin * ph),
+          tq.wagner_torque(th, GJ, EdI) / (GJ * th), 0.02)
+    ops.wipe()
+    # the assembled script (spokes, rotation control, record_twist, EnergyIncr) = run_case
+    sys.path.insert(0, str(SKILLS / 'shell-assemble-run'))
+    import assemble_run as ar
+    case = dict(nl, name='strip_torsion_nl_script', analysis=dict(nl['analysis'], n_steps=2))
+    with tempfile.TemporaryDirectory() as tmp:
+        script, npz = Path(tmp) / 'strip_opensees.py', Path(tmp) / 'strip.npz'
+        with redirect_stdout(io.StringIO()):
+            ar.join(ar.write_pieces(case, Path(tmp) / 'strip_code'), script)
+            ops.wipe()
+        r = ar.subprocess.run([sys.executable, str(script), str(npz)], capture_output=True, text=True)
+        check('torsion case: assembled script runs (exit code)', r.returncode, 0, 0, True)
+        if r.returncode == 0:
+            diff = ar.compare(npz, case)
+            for k in ('disp', 'history'):
+                check(f'torsion case: {k} script = run_case (rel. max diff)', diff[k], 0, 1e-9, True)
+        # opensees-to-abaqus: spokes = the Abaqus coupling, rotation control = Riks on the reference point DOF 4
+        for d_ in ('opensees-to-abaqus', 'abaqus-export'):
+            sys.path.insert(0, str(SKILLS / d_))
+        import case_to_abaqus as c2a
+        import opensees_to_abaqus as o2a
+        out = Path(tmp) / 'abaqus_strip.py'
+        with redirect_stdout(io.StringIO()):
+            inf = o2a.read_script(script)
+            os_m = o2a.opensees_model(*o2a.record_model(script))
+            _, M, _ = c2a.write_script(inf['CASE'], inf['LAMINATE'], out, 'S4R', None, 'T24')
+            rows = o2a.check_model(os_m, out, M, inf['CASE'], inf['LAMINATE'])
+        fails = [r[0] for r in rows if not r[1]]
+        check(f'torsion case -> Abaqus: model check passes ({len(rows)} checks{"; FAIL: " + fails[0] if fails else ""})',
+              len(fails), 0, 0, True)
+    ops.wipe()
+
+
 def abaqus_mock_G(p):
     return (p[2], p[0], p[1])
 
@@ -1022,7 +1127,7 @@ TESTS = [T01_poisson_convention, T02_ply_rotation, T03_hand_check, T04_90_0, T05
          T11_large_deflection_10mm, T12_large_deflection_5mm, T13_curved_strip, T14_pure_moment,
          T15_tip_load_laminate, T16_orientation_on_curved_facets, T17_failure_unit, T18_failure_vs_clt,
          T19_case_file_and_viewer, T20_abaqus_export, T21_assembled_script,
-         T22_opensees_to_abaqus, T23_branched_sections]
+         T22_opensees_to_abaqus, T23_branched_sections, T24_torsion]
 SLOW = {'T09', 'T12'}
 
 

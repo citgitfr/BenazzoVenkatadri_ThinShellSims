@@ -175,7 +175,10 @@ def section_point_map(s_meta, sps):
       composite, every described layer = (number - 1) // 3 + 1 (the 3 Simpson points
         per layer of the generated scripts): number 3k+1, 3k+2, 3k+3 = layer k+1 bottom,
         mid, top, in every element whatever its number of layers;
-      no 'Layer' (homogeneous section, one layer): fraction -1 / 0 / +1 = bottom / mid / top;
+      no 'Layer' (homogeneous section, one layer): (None, fraction) - the point's height
+        z = fraction x h / 2 is matched with the plies of each facet's OpenSees laminate by
+        height (ply_positions_at), so a single 0.2 mm Abaqus web layer pairs its top point with
+        the top of the doubled OpenSees web's upper ply, not with ply 1 top (the bond plane);
       otherwise: lowest / middle / highest number described in a layer."""
     desc = (s_meta or {}).get('section_point_descriptions') or {}
     parsed = {}
@@ -188,8 +191,7 @@ def section_point_map(s_meta, sps):
         parsed[col] = (sp, int(lay.group(1)) if lay else None, f)
     layered = [v for v in parsed.values() if v[1] is not None]
     if not layered and any(v[2] is not None for v in parsed.values()):          # homogeneous section
-        return {col: (0, int(round(f)) + 1) for col, (sp, _, f) in parsed.items()
-                if f is not None and min(abs(f + 1), abs(f), abs(f - 1)) < 1e-6}
+        return {col: (None, f) for col, (sp, _, f) in parsed.items() if f is not None}
     if all(lay == (sp - 1) // 3 + 1 for sp, lay, _ in layered):                # 3 points per layer (or no descriptions)
         return {col: divmod(sp - 1, 3) for col, (sp, _, _) in parsed.items() if sp >= 1}
     out, by_layer = {}, {}
@@ -207,6 +209,15 @@ def section_point_map(s_meta, sps):
         if len(pts) % 2:
             out[pts[len(pts) // 2][1]] = (lay - 1, 1)
     return out
+
+
+def ply_positions_at(lam, fraction, tol=1e-6):
+    """[(ply index, position 0/1/2)] of the laminate's ply points at the height
+    z = fraction x h / 2 (h = laminate thickness): a point on a ply interface
+    belongs to both plies (top of the lower, bottom of the upper)."""
+    h = sum(q['t'] for q in lam['plies'])
+    z = fraction * h / 2
+    return [(p, j) for p, q in enumerate(plies(lam)) for j, zq in enumerate(q['z']) if abs(zq - z) <= tol * h]
 
 
 # --- matching -----------------------------------------------------------------------------
@@ -371,11 +382,19 @@ def run(os_path, ab_path, out_dir, tol, name):
     if S is not None:
         spmap = section_point_map(s_meta, s_meta.get('section_points') or list(range(1, S.shape[1] + 1)))
         s_ab = np.full(sig.shape, np.nan)
+        have = set()
         for col, (p, j) in spmap.items():
-            if p < n_max:
-                s_ab[:, p, j] = pick(S[:, col, :][em], s_c, ['S11', 'S22', 'S12'])
+            vals = pick(S[:, col, :][em], s_c, ['S11', 'S22', 'S12'])
+            if p is None:                                   # homogeneous section: pair by height, per facet group
+                for _, lam, msk in groups:
+                    for pp, jj in ply_positions_at(lam, j):
+                        s_ab[msk, pp, jj] = vals[msk]
+                        have.add((pp, jj))
+            elif p < n_max:
+                s_ab[:, p, j] = vals
+                have.add((p, j))
         s_ab[np.isnan(sig)] = np.nan                       # layers the facet's laminate does not have
-        have = sorted({(p, j) for p, j in spmap.values() if p < n_max})
+        have = sorted(have)
         info['section_points'] = (f'{len(spmap)} Abaqus stress section points paired with plies '
                                   f'(layer, position): ' + ', '.join(f'{p + 1}{POS[j][0]}' for p, j in have))
         for lbl, lam, msk in groups:

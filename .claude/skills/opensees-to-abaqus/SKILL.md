@@ -53,7 +53,8 @@ abaqus cae noGUI=abaqus_<name>.py [-- <size> <S4R|S4>]          # on a machine w
   give; shell normal per section piece = OpenSees facet normal (bottom ply =
   SNEG); ply angles through the thickness from the elements' `-local` axes;
   layer thicknesses and E1, E2, nu12, G12, transverse G modulus; fixed DOFs;
-  rigid ends (reference point + coupled nodes = `rigidLink`); nodal forces and
+  rigid ends (reference point + coupled nodes = `rigidLink`, or the corotational spokes
+  of a `large_rotation` rigid end, 11-17-26); nodal forces and
   moments (pressure lumps vs Abaqus `Pressure`); step type, Riks control
   node/DOF/stop or load factor; report node. A FAIL means the script was
   hand-edited or the pieces disagree: regenerate it with shell-assemble-run.

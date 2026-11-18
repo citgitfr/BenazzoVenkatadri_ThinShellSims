@@ -84,6 +84,16 @@ def main(src, out_pdf, title):
     recs = [json.loads(l) for l in open(src, encoding='utf-8') if l.strip()]
     parts, first_ts, last_ts = [], None, None
     for d in recs:
+        att = d.get('attachment') or {}
+        if d.get('type') == 'attachment' and att.get('type') == 'queued_command' \
+                and not str(att.get('prompt', '')).lstrip().startswith('<'):
+            # a user message sent while Claude was working (absorbed mid-turn), added 11-17-26
+            ts = d.get('timestamp')
+            t = datetime.fromisoformat(ts.replace('Z', '+00:00')).astimezone(PST) if ts else None
+            stamp = t.strftime('%H:%M') if t else ''
+            parts.append(f'<div class="user"><div class="who">User &middot; {stamp} (sent while Claude was working)'
+                         f'</div>{md(strip_tags(str(att["prompt"])))}</div>')
+            continue
         if d.get('type') not in ('user', 'assistant') or d.get('isMeta'):
             continue
         ts = d.get('timestamp')

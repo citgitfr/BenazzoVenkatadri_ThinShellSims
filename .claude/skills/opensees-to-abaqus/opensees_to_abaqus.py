@@ -125,7 +125,11 @@ def opensees_model(calls, ns):
     mats = {a[1]: a for a in calls['nDMaterial']}
     secs = {a[1]: a for a in calls['section']}
     quads = {}                                   # node tuple -> [(section, -local axis or None)]
+    links = {}
     for a in calls['element']:
+        if a[0] == 'elasticBeamColumn':          # large-rotation rigid end (shell_bc_load.rigid_end): spoke master -> edge node
+            links.setdefault(a[2], set()).add(a[3])
+            continue
         q, rest = tuple(a[2:6]), list(a[6:])
         ax = np.array(rest[rest.index('-local') + 1:rest.index('-local') + 4], float) if '-local' in rest else None
         quads.setdefault(q, []).append((rest[0], ax, a[0], [r for r in rest[1:] if isinstance(r, str)]))
@@ -134,9 +138,15 @@ def opensees_model(calls, ns):
     load = {}
     for a in calls['load']:
         load[a[0]] = load.get(a[0], np.zeros(6)) + np.array(a[1:7], float)
-    links = {}
     for _, m, s in calls['rigidLink']:
         links.setdefault(m, set()).add(s)
+    rest_eq = []
+    for a in calls['equalDOF']:                  # a spoke rigid end ties an edge node at its centroid with all 6 DOFs
+        if a[0] in links and tuple(a[2:]) == (1, 2, 3, 4, 5, 6):
+            links[a[0]].add(a[1])
+        else:
+            rest_eq.append(a)
+    calls = dict(calls, equalDOF=rest_eq)
     return dict(nodes=nodes, mats=mats, secs=secs, quads=quads, shell=shell, fix=fix, load=load, links=links, ns=ns,
                 integrator=calls['integrator'][0] if calls['integrator'] else None,
                 unsupported={k: len(calls[k]) for k in ('equalDOF', 'sp', 'eleLoad') if calls[k]},
@@ -345,7 +355,7 @@ def check_model(os_m, script, M, case, lam):
     add(f'fixed DOFs = OpenSees ({len(os_fix)} nodes)', ab_fix == os_fix,
         f'{sum(ab_fix.get(k) != os_fix.get(k) for k in set(ab_fix) | set(os_fix))} node(s) differ')
     os_links = {_key(nodes[m]): {_key(nodes[s]) for s in ss} for m, ss in os_m['links'].items()}
-    add(f'rigid ends: reference point and coupled nodes = OpenSees rigidLink ({len(os_links)})', ab_links == os_links)
+    add(f'rigid ends: reference point and coupled nodes = OpenSees rigid end (rigidLink or spokes, {len(os_links)})', ab_links == os_links)
 
     an = M['analysis']
     lf = ns.get('MAX_LOAD_FACTOR') or 1.0 if an['type'] == 'load_control' else 1.0

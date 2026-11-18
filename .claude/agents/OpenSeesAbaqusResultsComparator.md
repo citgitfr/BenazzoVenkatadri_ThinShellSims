@@ -57,7 +57,11 @@ ODB lacks are reported as missing; ask the user whether the run requested
 them (field output `S, E, SE, SF, U, UR`; S, E at every ply's section points).
 compare_results.py reads kxx = SK2, kyy = SK1 (Abaqus SK1 = curvature about
 local axis 1), uses the doubled laminate on web facets (meta strip_label), and
-pairs section points with plies per element (layer, bottom/mid/top).
+pairs section points with plies per element (layer, bottom/mid/top). A
+homogeneous Abaqus section (one layer, e.g. an isotropic 0.2 mm web) is paired
+by height through the wall (z = fraction x h/2) with the plies of the facet's
+OpenSees laminate, so its top point meets the top of the doubled web's upper
+ply (fixed 11-17-26; before, it was paired with ply 1 top = the bond plane).
 
 ## 2. Compare and draw
 ```
