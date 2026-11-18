@@ -15,8 +15,10 @@ ACTION; the orchestrator follows that line (PROTOCOL.md).
     study.py run <iter> --step laminate|model|visualize|failure|loadcases|buckling|objcon|all
     study.py record <iter>                         sanity checks, ledger, calibration, verification/stop decisions
     study.py converge <iter>                       mesh-convergence rerun (element size x 0.6)
-    study.py verify <iter>                         Abaqus script (opensees-to-abaqus) + the run_abaqus.py command
-    study.py verify-result <iter> --verdict agree|disagree|inconclusive --comparison FILE [--note ..]
+    study.py verify <iter> [--all-cases]           Abaqus script (opensees-to-abaqus) + the run_abaqus.py command;
+                                                   --all-cases: one script per OpenSeesPy load case (static,
+                                                   loadcases, buckling); required for the final best design
+    study.py verify-result <iter> --verdict agree|disagree|inconclusive --comparison FILE [--comparison ..] [--note ..]
     study.py finalize [--force-reason ..]          final/ folder, REPORT.md, list of files to commit
     study.py close [--reason ..]                   stop without finalizing (removes the active-study marker)
 
@@ -1862,8 +1864,10 @@ def cmd_verify(a):
     st = load_state(sd)
     i = a.iter
     V = st['verification']
-    if any(v['iter'] == i for v in V['records']):
-        die(f'iteration {i} already has a verification record')
+    prev = [v for v in V['records'] if v['iter'] == i]
+    if prev and (not getattr(a, 'all_cases', False) or any(v.get('all_cases') for v in prev)):
+        die(f'iteration {i} already has a verification record'
+            + ('' if getattr(a, 'all_cases', False) else ' (an all-cases one can still be added: --all-cases)'))
     if len(V['records']) >= V['max']:
         die(f'verification budget ({V["max"]}) used')
     idir = iter_dir(sd, i)
@@ -1873,20 +1877,43 @@ def cmd_verify(a):
     instr = idir / f'abaqus_{d["name"]}_instructions.txt'
     if code:
         die(f'opensees-to-abaqus model check FAILED: do not hand the script out (log {rel(idir / "logs/abaqus.log")})')
+    abq = idir / f'abaqus_{d["name"]}.py'
+    cases = [dict(case='static', abaqus=rel(abq), opensees_npz=rel(idir / 'results' / (d['name'] + '.npz')))]
+    bscript = None
     if (idir / 'buckling.json').exists() and d.get('buckling_value') is not None:
         fb = final_B(idir, d)
         if fb:
             print(fb)
         bscript, bmsg = abaqus_buckling_script(idir, d)
         print(bmsg)
+    if getattr(a, 'all_cases', False):
+        # every OpenSeesPy load case of the design (11-17-26, Tara, user request): the loadcases-step scripts
+        for tag in (d.get('loadcase_F') or {}):
+            ls = idir / f'{d["name"]}_{tag}_opensees.py'
+            if not ls.exists():
+                die(f'load case {tag}: assembled script {rel(ls)} missing (rerun the loadcases step)')
+            code, _ = run_cmd(['opensees-to-abaqus/opensees_to_abaqus.py', ls], idir / 'logs' / f'abaqus_{tag}.log')
+            if code:
+                die(f'opensees-to-abaqus model check FAILED for load case {tag} (log '
+                    f'{rel(idir / "logs" / ("abaqus_" + tag + ".log"))})')
+            cases.append(dict(case=tag, abaqus=rel(idir / f'abaqus_{d["name"]}_{tag}.py'),
+                              opensees_npz=rel(idir / 'results' / f'{d["name"]}_{tag}.npz')))
+        if bscript:
+            cases.append(dict(case='buckling', abaqus=rel(bscript), opensees_npz=None,
+                              opensees_reference=dict(value=d.get('buckling_value'), kind=d.get('buckling_kind'))))
     V['records'].append(dict(iter=i, design=d['key'], type=d['type'], status='pending', verdict=None,
                              requested=dt.datetime.now().isoformat(timespec='seconds'), k_ratio=d.get('k_ratio'),
-                             objective=d.get('objective'), instructions=rel(instr)))
+                             objective=d.get('objective'), instructions=rel(instr),
+                             all_cases=bool(getattr(a, 'all_cases', False)), cases=cases))
     if st.get('verification_due') == i:
         st['verification_due'] = None
     save_state(sd, st)
-    abq = idir / f'abaqus_{d["name"]}.py'
     print(f'Abaqus script ready for iteration {i}: {rel(abq)} (model check passed).')
+    if len(cases) > 1:
+        print(f'all-cases verification: {len(cases)} Abaqus scripts, run them ONE AT A TIME with the runner and '
+              'compare each with its OpenSees results (verify-result takes one --comparison per case, in this order):')
+        for c in cases:
+            print(f'  [{c["case"]}] {c["abaqus"]}  vs  {c["opensees_npz"] or "the OpenSees buckling value " + str(c.get("opensees_reference"))}')
     print('RUN IT NOW, in the background, with the shared-server runner (PROTOCOL.md section 6; never call '
           'abaqus directly, at most 8 CPUs, nothing written outside the ME295 folder):')
     print(f'  "{PY}" "{HERE / "run_abaqus.py"}" "{abq}" --cpus 1')
@@ -1900,12 +1927,19 @@ def cmd_verify(a):
 def cmd_verify_result(a):
     sd = study_dir(a.study)
     st = load_state(sd)
-    rec = next((v for v in st['verification']['records'] if v['iter'] == a.iter), None)
+    recs = [v for v in st['verification']['records'] if v['iter'] == a.iter]
+    rec = next((v for v in reversed(recs) if v.get('status') == 'pending'), recs[-1] if recs else None)
     if rec is None:
         die(f'no verification was requested for iteration {a.iter}')
-    if not Path(a.comparison).exists():
-        die(f'{a.comparison} does not exist: the OpenSeesAbaqusResultsComparator report is required')
-    rec.update(status='done', verdict=a.verdict, comparison=rel(a.comparison), note=a.note or '')
+    for c in a.comparison:
+        if not Path(c).exists():
+            die(f'{c} does not exist: the OpenSeesAbaqusResultsComparator report is required')
+    n_need = len(rec.get('cases') or [None]) if rec.get('all_cases') else 1
+    if len(a.comparison) < n_need:
+        die(f'this all-cases verification has {n_need} load cases '
+            f'({", ".join(c["case"] for c in rec["cases"])}): give one --comparison per case')
+    rec.update(status='done', verdict=a.verdict, comparison=rel(a.comparison[0]),
+               comparisons=[rel(c) for c in a.comparison], note=a.note or '')
     if a.verdict == 'disagree':
         st['model_trust'] = dict(ok=False, iter=a.iter, note=a.note or '')
         print('DISAGREE: stop choosing new designs. Report the discrepancy to the user and wait for instructions '
@@ -1931,9 +1965,9 @@ def cmd_finalize(a):
         if not st['converged'].get(str(best['iter']), {}).get('ok'):
             problems.append(f'best design (iteration {best["iter"]}) has no passed mesh-convergence check: '
                             f'study.py converge {best["iter"]}')
-        if not any(v['iter'] == best['iter'] for v in V['records']):
-            problems.append(f'best design (iteration {best["iter"]}) has no Abaqus verification: '
-                            f'study.py verify {best["iter"]}')
+        if not any(v['iter'] == best['iter'] and v.get('all_cases') for v in V['records']):
+            problems.append(f'best design (iteration {best["iter"]}) has no all-cases Abaqus verification (every '
+                            f'OpenSeesPy load case; user request 11-17-26): study.py verify {best["iter"]} --all-cases')
     if len(V['records']) < V['min']:
         problems.append(f'only {len(V["records"])} verifications requested (minimum {V["min"]}): verify more designs '
                         '(best first, then the most different feasible ones)')
@@ -2081,6 +2115,9 @@ def main():
         p.add_argument('iter', type=int)
         p.add_argument('--study')
         p.set_defaults(f=f)
+        if name == 'verify':
+            p.add_argument('--all-cases', action='store_true',
+                           help='one Abaqus script per OpenSeesPy load case (static, loadcases, buckling)')
     p = sp.add_parser('buckling-stopped', help='record a buckling run stopped by the user as a FAILURE (value '
                       'below the requirement only)')
     p.add_argument('iter', type=int)
@@ -2091,7 +2128,7 @@ def main():
     p = sp.add_parser('verify-result')
     p.add_argument('iter', type=int)
     p.add_argument('--verdict', required=True, choices=('agree', 'disagree', 'inconclusive'))
-    p.add_argument('--comparison', required=True)
+    p.add_argument('--comparison', required=True, action='append')
     p.add_argument('--note')
     p.add_argument('--study')
     p.set_defaults(f=cmd_verify_result)
