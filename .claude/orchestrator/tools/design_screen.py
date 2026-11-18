@@ -266,7 +266,11 @@ class Lam:
         self.Ex, self.Gxy = 1 / (self.h * a[0, 0]), 1 / (self.h * a[2, 2])
         self.nu_xy = -a[0, 1] / a[0, 0]
         self.D11, self.D22, self.D12 = D[0, 0], D[1, 1], D[0, 1]
-        self.A66, self.D66 = A[2, 2], D[2, 2]
+        # effective membrane shear stiffness 1/a66 (= Gxy h; = A66 for balanced layups). Unbalanced layups
+        # (A16 != 0) shear with free axial strain: A66 overstated GJ 3.6x on L028 [0/45/0/45/0] M006
+        # (study boom_1m_lat50N_k25_tors1deg_hub100 it003, FE 7.10e8 vs 1/a66 6.89e8 N mm^2). Used by the
+        # torsion (Bredt) and shear (kGA) estimates. 11-17-26, Tara.
+        self.A66, self.D66 = 1 / a[2, 2], D[2, 2]
         self.areal = mat['rho_kg_m3'] * self.h * 1e-3          # kg/m^2
         # ply stresses (ply axes) for unit curvature k_x and unit k_y (symmetric: eps0 = 0)
         E = np.zeros((2, 1, 8))
