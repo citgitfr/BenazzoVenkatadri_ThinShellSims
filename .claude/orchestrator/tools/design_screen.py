@@ -33,6 +33,8 @@ What is exact and what is an estimate
     M_fold           = tape-spring steady fold moments: opposite sense (1+nu) D alpha,
                        equal sense (1-nu) D alpha, D = sqrt(D11 D22), nu = D12/D, alpha = b/R; TS only.
                        These are the post-buckling fold moments, a LOWER bound of the peak moment.
+    M_loc (OM/CO)    = local-buckling moment of closed booms in bending (CLOSED_BEND_FIT, a fit of segment
+                       LBAs; 11-17-26, Tara): reported in M_fold_opp / M_fold_eq and used as buckling_est.
     GJ_est           = torsional stiffness (added 11-17-26, Tara, user-approved): Bredt on the closed cell
                        4 A_c^2 / sum(l / A66) (OM/CO; tabs in the cell carry 2 A66) + St Venant 4 D66 l of
                        every wall (webs/tabs 8 D66, the doubled mirror laminate), as shell-bc-load torsion.py.
@@ -319,6 +321,30 @@ def branched_buckling(L, geo, length, req_b):
     return P_col, P_loc
 
 
+# Local-buckling moment of closed OM/CO booms in bending (11-17-26, Tara, user-approved). Fit of 35 segment
+# LBAs (shell-buckling segment_mode.py, ShellNLDKGQ, bending about z) of L038 / L028 with 0/90 layups
+# Y001 Y005 Y016 Y020 Y031 Y063 on C005 C008 C016 M006 M022: N_cr = K D11^a D22^b A22s^c Rmin^e,
+# M = N_cr x I / c (A22s = 1/a22; I/c per unit thickness about the bending axis). LBA/fit 0.82-1.17,
+# rms 8.4% (study boom_1m_lat50N_k25_tors1deg_hub100, investigations/lba_fit.py). It is a PERFECT-shell
+# (LBA) value: the imperfect strength B is lower; study.py calibrates it per section type with the FE B
+# results. Off-axis layups and bending about y are extrapolations.
+CLOSED_BEND_FIT = dict(K=1.094, a=0.407, b=0.454, c=-0.156, e=0.033)
+
+
+def closed_bending_local(L, geo, axis):
+    """Local-buckling moment estimate [N mm] of a closed OM/CO boom bent about `axis` (CLOSED_BEND_FIT)."""
+    f = CLOSED_BEND_FIT
+    a = np.linalg.inv(L.lam.abd()[:3, :3])
+    Ncr = f['K'] * L.D11**f['a'] * L.D22**f['b'] * (1 / a[1, 1])**f['c'] * geo['r_min']**f['e']
+    pts = np.vstack([P for P, _ in geo['parts']])
+    I1 = geo['I1']
+    if axis == 'z':
+        mod = I1['Izz'] / np.abs(pts[:, 0] - I1['yc']).max()
+    else:
+        mod = I1['Iyy'] / np.abs(pts[:, 1] - I1['zc']).max()
+    return float(Ncr * mod)
+
+
 def buckling_estimates(L, geo, length, req_b):
     """(P_col, P_loc, M_opp, M_eq) estimates: TS all four; TRAC/OM/CO P_col, P_loc in compression
     (no fold-moment estimate for bending: M Nones)."""
@@ -326,6 +352,9 @@ def buckling_estimates(L, geo, length, req_b):
     if g['type'] != 'TS':
         if req_b and req_b.get('load') == 'compression':
             return (*branched_buckling(L, geo, length, req_b), None, None)
+        if req_b and req_b.get('load') == 'bending' and g['type'] in ('OM', 'CO'):
+            M = closed_bending_local(L, geo, req_b.get('axis', 'y'))
+            return None, None, M, M
         return None, None, None, None
     import shell_buckling as sb
     R, th = g['A'][0]

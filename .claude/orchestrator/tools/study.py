@@ -2012,6 +2012,34 @@ def cmd_close(a):
     print(f'study {rel(sd)} closed (not finalized). Nothing is committed.')
 
 
+def cmd_buckling_stopped(a):
+    """A buckling path the user had stopped (it stalled far below the requirement): record it as a failure.
+    Added 11-17-26 (Tara, user-approved; study boom_1m_lat50N_k25_tors1deg_hub100 it002). Only for a value
+    below the requirement, so it can never make a design pass."""
+    sd = study_dir(a.study)
+    st = load_state(sd)
+    i = a.iter
+    if i != st['iteration'] or st['phase'] != 'step:buckling-FAILED':
+        die(f'buckling-stopped needs the open iteration with a failed buckling step (iteration {st["iteration"]}, '
+            f'phase {st["phase"]})')
+    req = jload(sd / 'requirements.clean.json')
+    P_req = (req['requirements'].get('buckling') or {}).get('min_value')
+    if not P_req or not a.value < P_req:
+        die(f'--value {a.value:g} must be below the requirement {P_req}: this command only records failures')
+    if len(a.reason) < 20:
+        die('--reason must say why the run was stopped and where the value comes from')
+    idir = iter_dir(sd, i)
+    d = jload(idir / 'design.json')
+    d.update(buckling_value=a.value, buckling_kind=f'B STALL (run stopped by the user, below the requirement): '
+             f'{a.reason}', buckling_A=None, buckling_B=None, buckling_pipeline='fast (stopped)')
+    jsave(idir / 'design.json', d)
+    st['iter_steps_done'].append('buckling')
+    st['phase'] = 'step:buckling'
+    save_state(sd, st)
+    print(f'iteration {i}: buckling recorded as a failure ({a.value:g} < {P_req:g}): {a.reason}')
+    print('NEXT: ' + next_action(st))
+
+
 def main():
     if len(sys.argv) == 3 and sys.argv[1] == '_custom_abd_check':      # internal: laminate step of custom mode
         return custom_abd_check(sys.argv[2])
@@ -2053,6 +2081,13 @@ def main():
         p.add_argument('iter', type=int)
         p.add_argument('--study')
         p.set_defaults(f=f)
+    p = sp.add_parser('buckling-stopped', help='record a buckling run stopped by the user as a FAILURE (value '
+                      'below the requirement only)')
+    p.add_argument('iter', type=int)
+    p.add_argument('--value', type=float, required=True, help='buckling value to record (< requirement)')
+    p.add_argument('--reason', required=True, help='why it was stopped and where the value comes from')
+    p.add_argument('--study')
+    p.set_defaults(f=cmd_buckling_stopped)
     p = sp.add_parser('verify-result')
     p.add_argument('iter', type=int)
     p.add_argument('--verdict', required=True, choices=('agree', 'disagree', 'inconclusive'))
