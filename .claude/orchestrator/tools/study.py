@@ -1905,6 +1905,10 @@ def cmd_verify(a):
         if bscript:
             cases.append(dict(case='buckling', abaqus=rel(bscript), opensees_npz=None,
                               opensees_reference=dict(value=d.get('buckling_value'), kind=d.get('buckling_kind'))))
+    # re-read the state: the script writing above takes minutes while a `run` step may save state.json
+    # (11-19-26, Tara: an all-cases verify wiped iteration 20's 'failure' step record)
+    st = load_state(sd)
+    V = st['verification']
     V['records'].append(dict(iter=i, design=d['key'], type=d['type'], status='pending', verdict=None,
                              requested=dt.datetime.now().isoformat(timespec='seconds'), k_ratio=d.get('k_ratio'),
                              objective=d.get('objective'), instructions=rel(instr),
