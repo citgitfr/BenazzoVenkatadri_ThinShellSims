@@ -906,6 +906,9 @@ def cmd_run(a):
             die(f'out of order: {todo[0]} comes before {step} (PROTOCOL.md section 3)')
         ok, msg = run_step(sd, st, i, step)
         print(msg)
+        # re-read the state before saving: a step can run for hours (buckling) while verify / verify-result
+        # write state.json; saving the copy loaded at the start lost those records (11-18-26, Tara, user-approved)
+        st = load_state(sd)
         if not ok:
             st['phase'] = f'step:{step}-FAILED'
             save_state(sd, st)
@@ -1764,6 +1767,7 @@ def cmd_converge(a):
         conv['ok'] = ok
         print(f'buckling on the fine mesh: {v1} vs {d["buckling_value"]} ({100 * db:.1f}%, tol '
               f'{100 * CONV_TOL["buckling"]:.0f}%; A {A1}, B {B1})')
+    st = load_state(sd)      # re-read after the (minutes-long) rerun: keep concurrent verify records
     st['converged'][str(i)] = conv
     if st.get('convergence_due') == i:
         st['convergence_due'] = None
