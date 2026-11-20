@@ -1,0 +1,530 @@
+{
+ "study": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100",
+ "created": "2026-11-17T17:12:22",
+ "req_hash": "698aee3f0fb3",
+ "phase": "finalized",
+ "iteration": 20,
+ "max_iterations": 100,
+ "steps": [
+  "laminate",
+  "model",
+  "visualize",
+  "failure",
+  "loadcases",
+  "buckling",
+  "objcon"
+ ],
+ "iter_steps_done": [
+  "laminate",
+  "model",
+  "visualize",
+  "failure",
+  "loadcases",
+  "buckling",
+  "objcon"
+ ],
+ "designs": {
+  "L028/Y001/M006": {
+   "iter": 1,
+   "feasible": false,
+   "objective": 0.06602158140566128,
+   "sanity": true
+  },
+  "L038/Y001/C008": {
+   "iter": 2,
+   "feasible": false,
+   "objective": 0.07563365336677358,
+   "sanity": false
+  },
+  "L028/Y047/M006": {
+   "iter": 3,
+   "feasible": false,
+   "objective": 0.11003596900943548,
+   "sanity": false
+  },
+  "L028/Y095/M006": {
+   "iter": 4,
+   "feasible": true,
+   "objective": 0.11003596900943548,
+   "sanity": false
+  },
+  "L028/Y024/C005": {
+   "iter": 5,
+   "feasible": true,
+   "objective": 0.10773798649136596,
+   "sanity": false
+  },
+  "L011/Y026/C008": {
+   "iter": 6,
+   "feasible": true,
+   "objective": 0.10485195212877221,
+   "sanity": false,
+   "strict_buckling": "PASS: Abaqus LBA 56,397 / NLB 55,436-55,737 N mm"
+  },
+  "L006/Y025/C008": {
+   "iter": 7,
+   "feasible": true,
+   "objective": 0.10218056481338945,
+   "sanity": false,
+   "strict_buckling": "FAIL: Abaqus LBA 49,457 / NLB 48,445-48,786 N mm < 50,000 (it007; it008 is its mirror)"
+  },
+  "L006/Y029/C008": {
+   "iter": 8,
+   "feasible": true,
+   "objective": 0.10218056481338945,
+   "sanity": false,
+   "strict_buckling": "FAIL (Abaqus checked 2026-11-19: LBA 49,457.8, NLB 48,445-48,787 N mm, 1.1-3.1% below 50,000)"
+  },
+  "L028/Y009/C008": {
+   "iter": 9,
+   "feasible": false,
+   "objective": 0.08064250458311623,
+   "sanity": false
+  },
+  "L028/Y031/M022": {
+   "iter": 10,
+   "feasible": false,
+   "objective": 0.10606211030002667,
+   "sanity": true
+  },
+  "L028/Y031/M006": {
+   "iter": 11,
+   "feasible": false,
+   "objective": 0.11003596900943548,
+   "sanity": false
+  },
+  "L038/Y031/C005": {
+   "iter": 12,
+   "feasible": false,
+   "objective": 0.1263077326102194,
+   "sanity": true
+  },
+  "L011/Y107/C005": {
+   "iter": 13,
+   "feasible": true,
+   "objective": 0.1313265829126122,
+   "sanity": false
+  },
+  "L030/Y026/C008": {
+   "iter": 14,
+   "feasible": true,
+   "objective": 0.10618764578646356,
+   "sanity": false
+  },
+  "L002/Y026/C008": {
+   "iter": 15,
+   "feasible": true,
+   "objective": 0.1055197989576179,
+   "sanity": false
+  },
+  "L029/Y024/C008": {
+   "iter": 16,
+   "feasible": false,
+   "objective": 0.10618764578646356,
+   "sanity": false
+  },
+  "L011/Y026/C006": {
+   "iter": 17,
+   "feasible": false,
+   "objective": 0.10488092796880714,
+   "sanity": false
+  },
+  "L030/Y024/C007": {
+   "iter": 18,
+   "feasible": false,
+   "objective": 0.10619436915762588,
+   "sanity": false
+  },
+  "L017/Y017/C005": {
+   "iter": 19,
+   "feasible": false,
+   "objective": 0.10573044637040883,
+   "sanity": false
+  },
+  "L028/Y033/M006": {
+   "iter": 20,
+   "feasible": false,
+   "objective": 0.11003596900943548,
+   "sanity": false
+  }
+ },
+ "best": {
+  "iter": 6,
+  "design": "L011/Y026/C008",
+  "objective": 0.10485195212877221,
+  "improvement": null,
+  "basis": "strict buckling criterion (no local buckling below 50,000 N mm), user decision 2026-11-19"
+ },
+ "best_history": [
+  null,
+  null,
+  null,
+  0.11003596900943548,
+  0.10773798649136596,
+  0.10485195212877221,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10218056481338945,
+  0.10485195212877221
+ ],
+ "calib": {
+  "k": [
+   0.9555934278600358,
+   0.9587679224403166,
+   0.9712580317429775,
+   0.9528939446009009,
+   0.9726666221795388,
+   0.9766321504659381,
+   0.9766321505610011,
+   0.9828757483409216,
+   0.9138405989264343,
+   0.9861750557277633,
+   0.9695179834128826,
+   0.9724699052433605,
+   0.9824280461033161,
+   0.9599499584961224,
+   0.9622433708041601,
+   0.9655073331000805,
+   0.9462945146861226
+  ],
+  "b": [
+   0.8773238724015846,
+   0.5904573883549153,
+   1.102827410995571,
+   1.094595479566538,
+   0.9258028017521064,
+   0.8454157373619305,
+   0.6060305340250985
+  ],
+  "t": [
+   0.9862036131716296,
+   0.9699200280352959,
+   0.9724964207166656,
+   0.9787803623992908,
+   0.9841614489588174,
+   0.9832336804070377,
+   0.9832336800756881,
+   0.9675632173518649,
+   0.9477671902556595,
+   0.9951263541661298,
+   0.9834599310779172,
+   0.9840969907527897,
+   0.9768904279234715,
+   0.9855931206505731,
+   0.9770117169825848,
+   0.9805132752729608,
+   0.9660502671220578
+  ],
+  "b_type": {
+   "CO": [
+    0.8773238724015846,
+    1.102827410995571,
+    1.094595479566538,
+    0.9258028017521064,
+    0.8454157373619305
+   ],
+   "OM": [
+    0.5904573883549153,
+    0.6060305340250985
+   ]
+  }
+ },
+ "verification": {
+  "min": 5,
+  "max": 10,
+  "records": [
+   {
+    "iter": 1,
+    "design": "L028/Y001/M006",
+    "type": "OM",
+    "status": "done",
+    "verdict": "agree",
+    "requested": "2026-11-17T17:45:52",
+    "k_ratio": 0.9133622185344948,
+    "objective": 0.06602158140566128,
+    "instructions": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it001/abaqus_it001_L028_Y001_M006_instructions.txt",
+    "comparison": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it001/abaqus_comparison/it001_L028_Y001_M006_comparison.md",
+    "comparisons": [
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it001/abaqus_comparison/it001_L028_Y001_M006_comparison.md"
+    ],
+    "note": "RESTORED 2026-11-18 (record lost to the stale-state bug fixed the same day; verdict and report unchanged from 2026-11-17): 81/82 checks pass; rz drilling rotation at webs differs (element formulation); results.txt stress CHECKs pair web section point 18 with the flange peak; like for like s1 47.508 vs 47.510 MPa.",
+    "k_ratio_basis": "Timoshenko (recomputed 2026-11-18)"
+   },
+   {
+    "iter": 6,
+    "design": "L011/Y026/C008",
+    "type": "CO",
+    "status": "done",
+    "verdict": "agree",
+    "requested": "2026-11-18T07:01:21",
+    "k_ratio": 0.9726666221795388,
+    "objective": 0.10485195212877221,
+    "instructions": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/abaqus_it006_L011_Y026_C008_instructions.txt",
+    "all_cases": false,
+    "cases": [
+     {
+      "case": "static",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/abaqus_it006_L011_Y026_C008.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/results/it006_L011_Y026_C008.npz"
+     }
+    ],
+    "comparison": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/it006_L011_Y026_C008_comparison.md",
+    "comparisons": [
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/it006_L011_Y026_C008_comparison.md"
+    ],
+    "note": "RESTORED 2026-11-18 (record lost to the stale-state bug): first CO verification (C008). Displacements/rotations within ~1% (tip uz -0.12%), flange ply stresses away from the ends 1-5% RMS; 72 CHECK lines all in the end zones; web stresses <= 1.7 MPa; results.txt stress CHECK pairs web section point 24 with a flange value."
+   },
+   {
+    "iter": 4,
+    "design": "L028/Y095/M006",
+    "type": "OM",
+    "status": "done",
+    "verdict": "agree",
+    "requested": "2026-11-18T16:11:24",
+    "k_ratio": 0.9712580317429775,
+    "objective": 0.11003596900943548,
+    "instructions": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it004/abaqus_it004_L028_Y095_M006_instructions.txt",
+    "all_cases": false,
+    "cases": [
+     {
+      "case": "static",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it004/abaqus_it004_L028_Y095_M006.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it004/results/it004_L028_Y095_M006.npz"
+     }
+    ],
+    "comparison": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it004/it004_L028_Y095_M006_comparison.md",
+    "comparisons": [
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it004/it004_L028_Y095_M006_comparison.md"
+    ],
+    "note": "RESTORED 2026-11-18 (record lost to the stale-state bug; Abaqus run 2026-11-18 12:59, comparator verdict agree): second OM verification (M006, 5-ply). Displacements, tip RP, curvatures, flange ply stresses, N11 within ~0.1-1%; 68 CHECK lines at the rigid ends, in tiny web stresses or rz; results.txt stress CHECK pairs web section point 30 with the flange top ply."
+   },
+   {
+    "iter": 12,
+    "design": "L038/Y031/C005",
+    "type": "CO",
+    "status": "done",
+    "verdict": "agree",
+    "requested": "2026-11-18T22:59:15",
+    "k_ratio": 0.9162268110552962,
+    "objective": 0.1263077326102194,
+    "instructions": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it012/abaqus_it012_L038_Y031_C005_instructions.txt",
+    "all_cases": false,
+    "cases": [
+     {
+      "case": "static",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it012/abaqus_it012_L038_Y031_C005.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it012/results/it012_L038_Y031_C005.npz"
+     }
+    ],
+    "comparison": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it012/it012_L038_Y031_C005_comparison.md",
+    "comparisons": [
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it012/it012_L038_Y031_C005_comparison.md"
+    ],
+    "note": "Second CO verification (C005, all-0 5-ply), requested after the sanity flag (FE/Timoshenko 0.916 vs 0.973 of it006): Abaqus reproduces the OpenSees stiffness (tip uz -0.13%), so the 0.916 is physics of the low-G all-0 laminate (thin-wall shear-area estimate less accurate), not a model error; all-0 designs it001/it011/it012 give 0.913-0.916. 83/119 PASS; 36 CHECK at the ends, web drilling rz, tiny web s2/t12. results.txt stress CHECK pairs web section point 30 with the flange top ply."
+   },
+   {
+    "iter": 7,
+    "design": "L006/Y025/C008",
+    "type": "CO",
+    "status": "done",
+    "verdict": "inconclusive",
+    "requested": "2026-11-19T14:24:34",
+    "k_ratio": 0.9766321504659381,
+    "objective": 0.10218056481338945,
+    "instructions": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/abaqus_it007_L006_Y025_C008_instructions.txt",
+    "all_cases": true,
+    "cases": [
+     {
+      "case": "static",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/abaqus_it007_L006_Y025_C008.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/results/it007_L006_Y025_C008.npz"
+     },
+     {
+      "case": "torsion",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/abaqus_it007_L006_Y025_C008_torsion.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/results/it007_L006_Y025_C008_torsion.npz"
+     },
+     {
+      "case": "lateral50N",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/abaqus_it007_L006_Y025_C008_lateral50N.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/results/it007_L006_Y025_C008_lateral50N.npz"
+     },
+     {
+      "case": "buckling",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/abaqus_it007_L006_Y025_C008_buckling.py",
+      "opensees_npz": null,
+      "opensees_reference": {
+       "value": 51013.87477969575,
+       "kind": "B LOWER BOUND: path passed the cutoff 50000 (= 1 x requirement) on the 4.5 mm B mesh still rising; stopped there by design"
+      }
+     }
+    ],
+    "comparison": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/it007_L006_Y025_C008_comparison.md",
+    "comparisons": [
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/it007_L006_Y025_C008_comparison.md",
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/it007_L006_Y025_C008_torsion_comparison.md",
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/it007_L006_Y025_C008_lateral50N_verification.md",
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it007/it007_L006_Y025_C008_buckling_comparison.md"
+    ],
+    "note": "All-cases verification. Static, torsion, lateral 50 N: AGREE (tip displacements/twist within 0.1-0.5%; CHECKs only in end zones). Buckling: Abaqus LBA 49,457 / NLB 48,445-48,786 N mm vs OpenSees path B >= 51,014: onset agrees within 3-5% but lies 1-3% below the 50,000 requirement; under the user's strict 'no local buckling' criterion (2026-11-19) iteration 7 fails by ~1%."
+   },
+   {
+    "iter": 6,
+    "design": "L011/Y026/C008",
+    "type": "CO",
+    "status": "done",
+    "verdict": "agree",
+    "requested": "2026-11-19T14:48:00",
+    "k_ratio": 0.9726666221795388,
+    "objective": 0.10485195212877221,
+    "instructions": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/abaqus_it006_L011_Y026_C008_instructions.txt",
+    "all_cases": true,
+    "cases": [
+     {
+      "case": "static",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/abaqus_it006_L011_Y026_C008.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/results/it006_L011_Y026_C008.npz"
+     },
+     {
+      "case": "torsion",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/abaqus_it006_L011_Y026_C008_torsion.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/results/it006_L011_Y026_C008_torsion.npz"
+     },
+     {
+      "case": "lateral50N",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/abaqus_it006_L011_Y026_C008_lateral50N.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/results/it006_L011_Y026_C008_lateral50N.npz"
+     },
+     {
+      "case": "buckling",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/abaqus_it006_L011_Y026_C008_buckling.py",
+      "opensees_npz": null,
+      "opensees_reference": {
+       "value": 52209.746088827764,
+       "kind": "B LOWER BOUND: path passed the cutoff 50000 (= 1 x requirement) on the 4.5 mm B mesh still rising; stopped there by design"
+      }
+     }
+    ],
+    "comparison": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/it006_L011_Y026_C008_comparison.md",
+    "comparisons": [
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/it006_L011_Y026_C008_comparison.md",
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/it006_L011_Y026_C008_torsion_comparison.md",
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/it006_L011_Y026_C008_lateral50N_comparison.md",
+     "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/it006_L011_Y026_C008_buckling_comparison.md"
+    ],
+    "note": "All-cases verification of the final design (strict 'no local buckling' criterion, user 2026-11-19). Static (2026-11-18 report, same model/mesh): agree, tip uz -0.12%. Torsion: agree, rx +0.36%. Lateral 50 N: agree, tip uy +0.11%. Buckling: Abaqus LBA 56,397 / NLB 55,436-55,737 N mm vs OpenSees path B >= 52,210 (lower bound): first bifurcation 10.9-12.8% above the 50,000 requirement. CHECK lines in all linear cases only at the rigid-end zones (S4R vs ASDShellQ4)."
+   },
+   {
+    "iter": 8,
+    "design": "L006/Y029/C008",
+    "type": "CO",
+    "status": "done",
+    "verdict": "inconclusive",
+    "requested": "2026-11-19T15:15:21",
+    "k_ratio": 0.9766321505610011,
+    "objective": 0.10218056481338945,
+    "instructions": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/abaqus_it008_L006_Y029_C008_instructions.txt",
+    "all_cases": true,
+    "cases": [
+     {
+      "case": "static",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/abaqus_it008_L006_Y029_C008.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/results/it008_L006_Y029_C008.npz"
+     },
+     {
+      "case": "torsion",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/abaqus_it008_L006_Y029_C008_torsion.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/results/it008_L006_Y029_C008_torsion.npz"
+     },
+     {
+      "case": "lateral50N",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/abaqus_it008_L006_Y029_C008_lateral50N.py",
+      "opensees_npz": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/results/it008_L006_Y029_C008_lateral50N.npz"
+     },
+     {
+      "case": "buckling",
+      "abaqus": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/abaqus_it008_L006_Y029_C008_buckling.py",
+      "opensees_npz": null,
+      "opensees_reference": {
+       "value": 50218.6343323904,
+       "kind": "B LOWER BOUND: path passed the cutoff 50000 (= 1 x requirement) on the 4.5 mm B mesh still rising; stopped there by design"
+      }
+     }
+    ],
+    "comparison": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/it008_L006_Y029_C008_buckling_comparison.md",
+    "note": "Buckling case only (design fails, so the three linear cases were not run): Abaqus LBA 49,457.8 / NLB 48,445.3-48,786.6 N mm, 1.1-3.1% below 50,000 -> fails the strict criterion; identical to mirror it007. Codes agree with OpenSees B (50,218.6) to 1.5-3.5%."
+   }
+  ]
+ },
+ "verification_due": null,
+ "convergence_due": null,
+ "converged": {
+  "1": {
+   "ok": true,
+   "size": 2.7,
+   "fine": 1.62,
+   "dk": 0.0004436009377624117,
+   "dF": 0.03925022204486339
+  },
+  "4": {
+   "ok": true,
+   "size": 2.7,
+   "fine": 1.62,
+   "dk": 0.00037503225969759413,
+   "dF": 0.039113450815293715
+  },
+  "5": {
+   "ok": true,
+   "size": 4.5,
+   "fine": 2.7,
+   "dk": 0.0022365582288486063,
+   "dF": 0.02513645627970873
+  },
+  "6": {
+   "ok": true,
+   "size": 4.5,
+   "fine": 2.7,
+   "dk": 0.0024060729058716923,
+   "dF": 0.03164674332135453
+  },
+  "7": {
+   "ok": true,
+   "size": 4.5,
+   "fine": 2.7,
+   "dk": 0.0025997187299215962,
+   "dF": 0.030697136043686735
+  }
+ },
+ "stop": {
+  "recommended": false
+ },
+ "regression_record": "395 checks, 395 passed, 0 failed (1901 s)",
+ "custom": false,
+ "custom_stop": null,
+ "verification_schedule": "schedule",
+ "notes": [
+  "2026-11-17: it003 calibration ratios recomputed against the corrected screen estimate (1/a66, commit dc58faa): k 0.8701 -> 0.9588, twist 3.5848 -> 0.9699",
+  "2026-11-18: verification record of it001 k_ratio 0.5852 (Euler-Bernoulli, before the shear term, commit 4a91822) -> 0.9134 (Timoshenko, kGA 5.136e+04 N from design_screen); it was flagging later OM designs against a stale reference (it010 flag)",
+  "2026-11-19: it020 'failure' step record restored (step had completed: failure.log, F_governing_fc 0.2306 in design.json); a concurrent `verify 7 --all-cases` saved stale state over it; cmd_verify now re-reads state before saving",
+  "2026-11-19: user chose the strict buckling criterion (\"does not buckle\" = first bifurcation above 50,000 N mm). The Abaqus all-cases check of the path-B best it007 (102.2 g) gave LBA 49,457 / NLB 48,445-48,786: fails by about 1 percent (it008, its mirror, likewise). Best set by hand from L006/Y025/C008 to it006 L011/Y026/C008 (104.9 g): Abaqus LBA 56,397 / NLB 55,436-55,737, all-cases verification agree; it006 is the lightest remaining feasible design. ledger.csv keeps the path-B feasibility; REPORT.md states the criterion.",
+  "2026-11-19: correction: it008 (mirror of it007) had been marked as failing the strict criterion without an Abaqus run; it is now being checked with study.py verify 8 + the Abaqus buckling job.",
+  "2026-11-19: it008 Abaqus buckling run: LBA 49,457.8 / NLB 48,445.3-48,786.6 N mm -> fails the strict criterion (same as it007); best stays it006.",
+  "2026-11-19: it008 verification record closed by hand (verify-result needs 4 comparisons; only the buckling case was run because it decides the design).",
+  "2026-11-19 16:40: it020 buckling run stopped at the 2 h check (user rule); TaskStop also killed study.py, so the phase it would have set on the failed run (step:buckling-FAILED) was set by hand before buckling-stopped."
+ ],
+ "finalized": {
+  "time": "2026-11-19T16:40:57",
+  "forced": "",
+  "open_problems": []
+ }
+}

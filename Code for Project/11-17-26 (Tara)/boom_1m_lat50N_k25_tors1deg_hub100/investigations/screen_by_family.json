@@ -1,0 +1,62 @@
+{
+ "GJ_required_Nmm2": 5729577.951308232,
+ "by_type": {
+  "TS": {
+   "evaluated": 179100,
+   "ok": 0,
+   "max_GJ": 13885.336604234439,
+   "max_GJ_id": "L028/Y119/T016",
+   "fail": {
+    "stiffness": 179100,
+    "buckling": 179100,
+    "torsion": 179100,
+    "F_flat >= 1": 74233,
+    "F_hub >= 1": 80289
+   },
+   "max_GJ_over_required": 0.002423448414915798
+  },
+  "TRAC": {
+   "evaluated": 179100,
+   "ok": 0,
+   "max_GJ": 49556.46776667698,
+   "max_GJ_id": "L028/Y119/R014",
+   "fail": {
+    "stiffness": 179092,
+    "torsion": 179100,
+    "F_hub >= 1": 76357,
+    "F_flat >= 1": 70490,
+    "torsion only": 8
+   },
+   "max_GJ_over_required": 0.008649235281869543
+  },
+  "OM": {
+   "evaluated": 179100,
+   "ok": 68,
+   "max_GJ": 4800993697.983705,
+   "max_GJ_id": "L028/Y123/M006",
+   "fail": {
+    "stiffness": 179031,
+    "buckling": 140041,
+    "torsion": 44638,
+    "F_flat >= 1": 74486,
+    "F_hub >= 1": 80115
+   },
+   "max_GJ_over_required": 837.931473973139
+  },
+  "CO": {
+   "evaluated": 179100,
+   "ok": 3254,
+   "max_GJ": 15628056825.169819,
+   "max_GJ_id": "L028/Y123/C008",
+   "fail": {
+    "stiffness": 159128,
+    "buckling": 83291,
+    "torsion": 57334,
+    "F_hub >= 1": 125816,
+    "F_flat >= 1": 116193,
+    "torsion only": 1414
+   },
+   "max_GJ_over_required": 2727.610472879852
+  }
+ }
+}

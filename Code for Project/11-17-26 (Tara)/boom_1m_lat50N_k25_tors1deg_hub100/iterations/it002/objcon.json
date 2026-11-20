@@ -1,0 +1,405 @@
+{
+ "results": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-17-26 (Tara)\\boom_1m_lat50N_k25_tors1deg_hub100\\iterations\\it002\\results\\it002_L038_Y001_C008.npz",
+ "title": "it002_L038_Y001_C008",
+ "laminate": "[0/0/0] h = 0.105 mm",
+ "objective": {
+  "name": "mass",
+  "sense": "minimize",
+  "value": 0.07563365336677358,
+  "units": "kg",
+  "note": "mass of the shell (web facets with the doubled laminate)"
+ },
+ "constraints": [
+  {
+   "name": "no failure",
+   "text": "always: the component must not fail (failure-check skill)",
+   "expr": "F_governing",
+   "op": "<",
+   "limit": 1.0,
+   "units": "",
+   "value": 0.25787718687598815,
+   "limit_value": 1.0,
+   "g": -0.7421228131240118,
+   "g_rel": -0.7421228131240118,
+   "satisfied": true,
+   "status": "satisfied"
+  },
+  {
+   "name": "boom length",
+   "text": "boom length 1000 mm (requirements.json)",
+   "expr": "L",
+   "op": "==",
+   "limit": 1000,
+   "units": "mm",
+   "tol": 0.01,
+   "value": 1000.0,
+   "limit_value": 1000.0,
+   "g": -0.01,
+   "g_rel": -1e-05,
+   "satisfied": true,
+   "status": "satisfied"
+  },
+  {
+   "name": "bending stiffness",
+   "text": "transverse bending stiffness such that it has no more than 1 mm deflection under 25 N tip load as a cantilever beam (k >= 25 N / 1 mm = 25 N/mm, tip load along z)",
+   "expr": "abs(force_z) / abs(tip_uz)",
+   "op": ">=",
+   "limit": 25.0,
+   "units": "N/mm",
+   "value": 25.015080207794576,
+   "limit_value": 25.0,
+   "g": -0.015080207794575529,
+   "g_rel": -0.0006032083117830211,
+   "satisfied": true,
+   "status": "satisfied"
+  },
+  {
+   "name": "buckling",
+   "text": "does not buckle under a 50 N lateral bending load in a cantilever beam configuration (50 N x 1000 mm = 50,000 N mm root moment, lateral = bending in y, about the z axis; checked as a uniform end moment, which puts the root moment along the whole boom: conservative)",
+   "expr": "buckling_load",
+   "op": ">=",
+   "limit": 50000,
+   "units": "N mm",
+   "value": 12655.8,
+   "limit_value": 50000.0,
+   "g": 37344.2,
+   "g_rel": 0.746884,
+   "satisfied": false,
+   "status": "VIOLATED"
+  },
+  {
+   "name": "torsional stiffness",
+   "text": "torsional stiffness such that it will not rotate more than 1 degree under 100 N*mm end torque (GJ >= T L / theta)",
+   "expr": "tip_twist_deg",
+   "op": "<=",
+   "limit": 1.0,
+   "units": "deg",
+   "value": 0.007351426599920992,
+   "limit_value": 1.0,
+   "g": -0.9926485734000791,
+   "g_rel": -0.9926485734000791,
+   "satisfied": true,
+   "status": "satisfied"
+  },
+  {
+   "name": "no failure under the torque",
+   "text": "Hashin F < 1 under the 100 N mm torque (study step loadcases)",
+   "expr": "F_torsion",
+   "op": "<",
+   "limit": 1,
+   "units": "-",
+   "value": 6.501e-07,
+   "limit_value": 1.0,
+   "g": -0.9999993499,
+   "g_rel": -0.9999993499,
+   "satisfied": true,
+   "status": "satisfied"
+  },
+  {
+   "name": "no failure: lateral50N",
+   "text": "ensure no material failure throughout the simulation runs: Hashin F < 1 under the 50 N lateral (y) tip load, linear, cantilever",
+   "expr": "F_lateral50N",
+   "op": "<",
+   "limit": 1,
+   "units": "-",
+   "value": 0.002107,
+   "limit_value": 1.0,
+   "g": -0.997893,
+   "g_rel": -0.997893,
+   "satisfied": true,
+   "status": "satisfied"
+  },
+  {
+   "name": "coiling on hub",
+   "text": "coils on 100 mm hub (radius, user answer 2026-11-17)",
+   "expr": "F_hub",
+   "op": "<",
+   "limit": 1,
+   "units": "-",
+   "value": 0.2743793282878532,
+   "limit_value": 1.0,
+   "g": -0.7256206717121467,
+   "g_rel": -0.7256206717121467,
+   "satisfied": true,
+   "status": "satisfied"
+  }
+ ],
+ "feasible": false,
+ "quantities": {
+  "mass": {
+   "value": 0.07563365336677358,
+   "units": "kg",
+   "description": "mass of the shell (web facets with the doubled laminate)"
+  },
+  "mass_g": {
+   "value": 75.63365336677357,
+   "units": "g",
+   "description": "mass in grams"
+  },
+  "mass_flange": {
+   "value": 0.06992585336677358,
+   "units": "kg",
+   "description": "mass of the flange (single-laminate) facets"
+  },
+  "mass_web": {
+   "value": 0.00570779999999999,
+   "units": "kg",
+   "description": "mass of the web (doubled-laminate) facets"
+  },
+  "areal_density": {
+   "value": 0.15855,
+   "units": "kg/m^2",
+   "description": "flange laminate mass per area"
+  },
+  "mass_per_length": {
+   "value": 0.07563365336677358,
+   "units": "kg/m",
+   "description": "mass / L"
+  },
+  "L": {
+   "value": 1000.0,
+   "units": "mm",
+   "description": "length along x"
+  },
+  "b": {
+   "value": 462.0745935604293,
+   "units": "mm",
+   "description": "cross-section arc length (flat width)"
+  },
+  "section_width": {
+   "value": 157.2135187616718,
+   "units": "mm",
+   "description": "cross-section extent along y"
+  },
+  "section_height": {
+   "value": 130.56149631446476,
+   "units": "mm",
+   "description": "cross-section extent along z"
+  },
+  "radius_min": {
+   "value": 9,
+   "units": "mm",
+   "description": "smallest arc radius of the section"
+  },
+  "radius_max": {
+   "value": 12,
+   "units": "mm",
+   "description": "largest arc radius of the section"
+  },
+  "area": {
+   "value": 459033.44917548785,
+   "units": "mm^2",
+   "description": "shell mid-surface area"
+  },
+  "h": {
+   "value": 0.10499999999999998,
+   "units": "mm",
+   "description": "flange laminate thickness"
+  },
+  "n_plies": {
+   "value": 3.0,
+   "units": "",
+   "description": "plies in the flange laminate"
+  },
+  "h_web": {
+   "value": 0.20999999999999996,
+   "units": "mm",
+   "description": "web (doubled) laminate thickness"
+  },
+  "h_max": {
+   "value": 0.20999999999999996,
+   "units": "mm",
+   "description": "largest laminate thickness anywhere"
+  },
+  "tip_ux": {
+   "value": -1.2146962875761076e-14,
+   "units": "mm",
+   "description": "tip ux (rigid end master node at xL)"
+  },
+  "tip_uy": {
+   "value": -1.5447872220097778e-13,
+   "units": "mm",
+   "description": "tip uy (rigid end master node at xL)"
+  },
+  "tip_uz": {
+   "value": -0.9993971553291331,
+   "units": "mm",
+   "description": "tip uz (rigid end master node at xL)"
+  },
+  "tip_rx": {
+   "value": -8.997725584006443e-15,
+   "units": "rad",
+   "description": "tip rx (rigid end master node at xL)"
+  },
+  "tip_ry": {
+   "value": 0.0011048296203094168,
+   "units": "rad",
+   "description": "tip ry (rigid end master node at xL)"
+  },
+  "tip_rz": {
+   "value": -1.3036902127339161e-16,
+   "units": "rad",
+   "description": "tip rz (rigid end master node at xL)"
+  },
+  "tip_u": {
+   "value": 0.9993971553291331,
+   "units": "mm",
+   "description": "tip translation magnitude"
+  },
+  "tip_rot": {
+   "value": 0.0011048296203094168,
+   "units": "rad",
+   "description": "tip rotation magnitude (small-rotation vector)"
+  },
+  "max_u": {
+   "value": 1.0019962876610993,
+   "units": "mm",
+   "description": "largest node translation magnitude"
+  },
+  "max_abs_ux": {
+   "value": 0.07224985230371231,
+   "units": "mm",
+   "description": "largest |ux| over all nodes"
+  },
+  "max_abs_uy": {
+   "value": 0.015768556767812473,
+   "units": "mm",
+   "description": "largest |uy| over all nodes"
+  },
+  "max_abs_uz": {
+   "value": 0.9993971553298389,
+   "units": "mm",
+   "description": "largest |uz| over all nodes"
+  },
+  "max_rot": {
+   "value": 0.004183145453144859,
+   "units": "rad",
+   "description": "largest node rotation magnitude"
+  },
+  "force_x": {
+   "value": 0.0,
+   "units": "N",
+   "description": "total applied force x at the final load factor"
+  },
+  "force_y": {
+   "value": 0.0,
+   "units": "N",
+   "description": "total applied force y at the final load factor"
+  },
+  "force_z": {
+   "value": -25.0,
+   "units": "N",
+   "description": "total applied force z at the final load factor"
+  },
+  "couple_x": {
+   "value": 0.0,
+   "units": "N mm",
+   "description": "applied couples x at the final load factor (not r x F)"
+  },
+  "couple_y": {
+   "value": 0.0,
+   "units": "N mm",
+   "description": "applied couples y at the final load factor (not r x F)"
+  },
+  "couple_z": {
+   "value": 0.0,
+   "units": "N mm",
+   "description": "applied couples z at the final load factor (not r x F)"
+  },
+  "load_factor": {
+   "value": 1.0,
+   "units": "",
+   "description": "final load factor (linear)"
+  },
+  "load_factor_peak": {
+   "value": null,
+   "units": "",
+   "description": "linear analysis: no load path"
+  },
+  "limit_point": {
+   "value": null,
+   "units": "",
+   "description": "linear analysis: no load path"
+  },
+  "control_disp": {
+   "value": null,
+   "units": "mm",
+   "description": "not a displacement-control analysis"
+  },
+  "buckling_load": {
+   "value": 12655.8,
+   "units": "",
+   "description": "given with --value"
+  },
+  "F_sim": {
+   "value": 0.0006644266620535989,
+   "units": "",
+   "description": "max Hashin 2D index of the simulation (all facets, plies, points)"
+  },
+  "F_coil": {
+   "value": 0.25787718687598815,
+   "units": "",
+   "description": "coiling (flattening) index"
+  },
+  "F_governing": {
+   "value": 0.25787718687598815,
+   "units": "",
+   "description": "governing failure index (coiling (flattening the flange))"
+  },
+  "strength_ratio_min": {
+   "value": 38.79506414404952,
+   "units": "",
+   "description": "smallest strength ratio of the simulation (a load factor only for a linear analysis)"
+  },
+  "tip_twist_deg": {
+   "value": 0.007351426599920992,
+   "units": "",
+   "description": "given with --value"
+  },
+  "F_torsion": {
+   "value": 6.501e-07,
+   "units": "",
+   "description": "given with --value"
+  },
+  "F_lateral50N": {
+   "value": 0.002107,
+   "units": "",
+   "description": "given with --value"
+  },
+  "F_hub": {
+   "value": 0.2743793282878532,
+   "units": "",
+   "description": "given with --value"
+  }
+ },
+ "failure": {
+  "F_sim": 0.0006644266620535989,
+  "R_min": 38.79506414404952,
+  "critical": {
+   "group": "flange",
+   "facet": 22201,
+   "i": 1,
+   "j": 100,
+   "ply": 3,
+   "theta": 0.0,
+   "at": "top",
+   "mode": "matrix compression",
+   "s1_s2_t12": [
+    1.696633597503942,
+    -0.05386407184740654,
+    1.262432808953531
+   ]
+  },
+  "F_coil": 0.25787718687598815,
+  "governing": "coiling (flattening the flange)",
+  "F_governing": 0.25787718687598815
+ },
+ "notes": [
+  "web facets: 888 of 23088 (the web facets of the FE model, which carry the doubled mirror laminate)",
+  "catalog L038 rho = 1510 kg/m^3 (estimate)",
+  "tip = free end xL: rigid end master node at xL",
+  "S23 = Yc/2 (default)",
+  "coiling: flange flattened from r = 9 mm (given with --flatten-radius), F = 0.2579 (matrix compression)",
+  "critical point of the simulation: {'group': 'flange', 'facet': 22201, 'i': 1, 'j': 100, 'ply': 3, 'theta': 0.0, 'at': 'top', 'mode': 'matrix compression', 's1_s2_t12': [1.696633597503942, -0.05386407184740654, 1.262432808953531]}"
+ ]
+}

@@ -1,0 +1,53 @@
+{
+ "name": "it005_L028_Y024_C005_fine",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-17-26 (Tara)\\boom_1m_lat50N_k25_tors1deg_hub100\\iterations\\it005\\lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "C005"
+  },
+  "size": 2.7,
+  "boom": "C005"
+ },
+ "element": {
+  "type": "ASDShellQ4",
+  "corotational": false
+ },
+ "supports": [
+  {
+   "rigid_end": "x0",
+   "dofs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "rigid_end": "xL"
+  }
+ ],
+ "loads": [
+  {
+   "node": {
+    "rigid": "xL"
+   },
+   "force": [
+    0.0,
+    0.0,
+    -25.0
+   ]
+  }
+ ],
+ "analysis": {
+  "type": "linear"
+ },
+ "report_node": {
+  "rigid": "xL"
+ }
+}

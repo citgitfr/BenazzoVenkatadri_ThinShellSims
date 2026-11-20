@@ -1,0 +1,21 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe objective-constraints/objective_constraints.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\results\it014_L030_Y026_C008.npz" --constraints "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\constraints.json" --boom C008 --flatten-radius 9.0 --json "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\objcon.json" --value tip_twist_deg=0.004416906324671224 --value F_torsion=1.342e-07 --value F_lateral50N=0.001121 --value F_hub=0.4351521364692757 --value buckling_load=52134.495246852435
+
+Objective / constraints: it014_L030_Y026_C008  [[60/0/0/60] h = 0.14 mm]
+OBJECTIVE  minimize mass: 0.106188 kg (106.2 g)
+CONSTRAINTS (g <= 0 is satisfied; g_rel = g / |limit|)
+  [satisfied    ] no failure: F_governing < 1.0  value 0.40912, limit 1, g -0.59088, g_rel -0.59088
+  [satisfied    ] boom length: L == 1000  value 1000, limit 1000, g -0.01, g_rel -1e-05
+  [satisfied    ] bending stiffness: abs(force_z) / abs(tip_uz) >= 25.0  value 26.9591, limit 25, g -1.95913, g_rel -0.0783652
+  [satisfied    ] buckling: buckling_load >= 50000  value 52134.5, limit 50000, g -2134.5, g_rel -0.0426899
+  [satisfied    ] torsional stiffness: tip_twist_deg <= 1.0  value 0.00441691, limit 1, g -0.995583, g_rel -0.995583
+  [satisfied    ] no failure under the torque: F_torsion < 1  value 1.342e-07, limit 1, g -1, g_rel -1
+  [satisfied    ] no failure: lateral50N: F_lateral50N < 1  value 0.001121, limit 1, g -0.998879, g_rel -0.998879
+  [satisfied    ] coiling on hub: F_hub < 1  value 0.435152, limit 1, g -0.564848, g_rel -0.564848
+FEASIBLE: yes
+  note: web facets: 888 of 23088 (the web facets of the FE model, which carry the doubled mirror laminate)
+  note: catalog L030 rho = 1590 kg/m^3
+  note: tip = free end xL: rigid end master node at xL
+  note: S23 = Yc/2 (default)
+  note: coiling: flange flattened from r = 9 mm (given with --flatten-radius), F = 0.4091 (fibre compression)
+  note: critical point of the simulation: {'group': 'flange', 'facet': 17094, 'i': 0, 'j': 77, 'ply': 3, 'theta': 0.0, 'at': 'top', 'mode': 'fibre compression', 's1_s2_t12': [-27.77377775262628, -0.40021546882072634, 0.26433465718279]}
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\objcon.json

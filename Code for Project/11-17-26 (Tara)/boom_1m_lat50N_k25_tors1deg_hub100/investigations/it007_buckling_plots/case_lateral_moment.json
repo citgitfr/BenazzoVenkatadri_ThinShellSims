@@ -1,0 +1,58 @@
+{
+ "name": "it007_lateral_moment_51014",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-17-26 (Tara)\\boom_1m_lat50N_k25_tors1deg_hub100\\iterations\\it007\\lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "C008"
+  },
+  "size": 4.5,
+  "boom": "C008"
+ },
+ "element": {
+  "type": "ASDShellQ4",
+  "corotational": false
+ },
+ "supports": [
+  {
+   "rigid_end": "x0",
+   "dofs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "rigid_end": "xL"
+  }
+ ],
+ "loads": [
+  {
+   "node": {
+    "rigid": "xL"
+   },
+   "force": [
+    0.0,
+    0.0,
+    0.0
+   ],
+   "moment": [
+    0.0,
+    0.0,
+    51013.9
+   ]
+  }
+ ],
+ "analysis": {
+  "type": "linear"
+ },
+ "report_node": {
+  "rigid": "xL"
+ }
+}

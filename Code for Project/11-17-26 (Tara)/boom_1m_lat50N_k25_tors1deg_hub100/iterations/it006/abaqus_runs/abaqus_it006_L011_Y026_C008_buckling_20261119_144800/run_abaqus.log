@@ -1,0 +1,70 @@
+$ C:\SIMULIA\Commands2026\abaqus.BAT cae noGUI=abaqus_it006_L011_Y026_C008_buckling.py
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\abaqus_runs\abaqus_it006_L011_Y026_C008_buckling_20261119_144800)
+Successfully checked out QAE/1 from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+Successfully checked out QAX/1 from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+Abaqus License Manager checked out the following license:
+"QAE" from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+<9 out of 11 licenses remain available>.
+shell normal flipped on the face through [-74.1067593808359, 0.0]
+shell normal flipped on the face through [74.1067593808359, 0.0]
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0.014 mm); scale S = 52209.7
+   shape written: it006_L011_Y026_C008_buc_shape_LBA_mode1.csv
+
+=== 1. LBA (*BUCKLE, linear perturbation): critical loads = eigenvalue x S
+   mode 1: eigenvalue 1.0802 -> 56397
+   mode 2: eigenvalue 1.0802 -> 56397
+   mode 3: eigenvalue 1.0819 -> 56485.7
+   mode 4: eigenvalue 1.082 -> 56490.9
+
+=== 2. NLB (nonlinear preload f x LBA, then *BUCKLE about the deformed state)
+   f = 0.50: preload 28198.5 + perturbation ['2.754e+04', '2.754e+04', '2.789e+04', '2.789e+04'] -> critical 55736.5
+   f = 0.80: preload 45117.6 + perturbation ['1.037e+04', '1.037e+04', '1.078e+04', '1.078e+04'] -> critical 55489.6
+   f = 0.95: preload 53577.1 + perturbation ['1859', '1859', '2271', '2271'] -> critical 55435.8
+
+=== 3. RIKS with the LBA mode-1 imperfection (0.014 mm)
+   shape written: it006_L011_Y026_C008_buc_shape_RIKS_peak.csv
+   shape written: it006_L011_Y026_C008_buc_shape_RIKS_last.csv
+   22 increments; peak LPF 2.0103 -> buckling strength 104955 (increment 22, LAST increment: check the path)
+   path (load, monitor UR3):
+                0             0
+          2610.48    0.00018279
+          5220.92    0.00036558
+          9136.47   0.000639768
+          14356.9    0.00100536
+          19576.8    0.00137096
+            24796    0.00173658
+          30013.8    0.00210223
+          35229.2    0.00246792
+          40439.5     0.0028337
+            45636    0.00319966
+          50790.9    0.00356608
+          55860.7     0.0039331
+          60851.4    0.00430039
+          65796.7    0.00466764
+          70718.4     0.0050348
+          75627.4    0.00540195
+          80528.4    0.00576914
+          85423.5     0.0061364
+          90313.4    0.00650373
+          95198.7    0.00687114
+           100079    0.00723863
+           104955    0.00760619
+   Southwell estimate (stable post-buckling paths): 2.0883e+06
+
+=== Comparison with OpenSees / theory (case load units)
+   reference OpenSees B (ASDShellQ4 imperfect path peak) 52209.7
+   Abaqus LBA mode 1                                  56397   +8.0% vs OpenSees B
+   Abaqus NLB f = 0.50                                55736.5   +6.8% vs OpenSees B
+   Abaqus NLB f = 0.80                                55489.6   +6.3% vs OpenSees B
+   Abaqus NLB f = 0.95                                55435.8   +6.2% vs OpenSees B
+   Abaqus RIKS peak                                   104955   +101.0% vs OpenSees B
+$ C:\SIMULIA\Commands2026\abaqus.BAT python F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\verification\odb_extract.py it006_L011_Y026_C008_buc_LBA.odb it006_L011_Y026_C008_buc_LBA_odb.npz
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\abaqus_runs\abaqus_it006_L011_Y026_C008_buckling_20261119_144800)
+$ C:\SIMULIA\Commands2026\abaqus.BAT python F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\verification\odb_extract.py it006_L011_Y026_C008_buc_NLB50.odb it006_L011_Y026_C008_buc_NLB50_odb.npz
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\abaqus_runs\abaqus_it006_L011_Y026_C008_buckling_20261119_144800)
+$ C:\SIMULIA\Commands2026\abaqus.BAT python F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\verification\odb_extract.py it006_L011_Y026_C008_buc_NLB80.odb it006_L011_Y026_C008_buc_NLB80_odb.npz
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\abaqus_runs\abaqus_it006_L011_Y026_C008_buckling_20261119_144800)
+$ C:\SIMULIA\Commands2026\abaqus.BAT python F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\verification\odb_extract.py it006_L011_Y026_C008_buc_NLB95.odb it006_L011_Y026_C008_buc_NLB95_odb.npz
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\abaqus_runs\abaqus_it006_L011_Y026_C008_buckling_20261119_144800)
+$ C:\SIMULIA\Commands2026\abaqus.BAT python F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\verification\odb_extract.py it006_L011_Y026_C008_buc_RIKS.odb it006_L011_Y026_C008_buc_RIKS_odb.npz
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\abaqus_runs\abaqus_it006_L011_Y026_C008_buckling_20261119_144800)

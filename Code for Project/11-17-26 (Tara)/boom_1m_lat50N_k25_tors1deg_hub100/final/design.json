@@ -1,0 +1,104 @@
+{
+ "iter": 6,
+ "key": "L011/Y026/C008",
+ "material": "L011",
+ "layup": "Y026",
+ "layup_str": "[60/0/0/60]",
+ "geometry": "C008",
+ "type": "CO",
+ "section": {
+  "type": "boom",
+  "id": "C008"
+ },
+ "R": 9,
+ "b": 462.0745935604293,
+ "L": 1000.0,
+ "size": 4.5,
+ "name": "it006_L011_Y026_C008",
+ "reason": "Family probe (user request 2026-11-17: test whether the buckling estimate is conservative for some section family, giving a boom lighter than the best). Material L011 (T1100G/3960 epoxy, E1 172 GPa, G12 5.38 GPa): the lightest buckling-limited C008 design. Geometry C008: the largest family (74 of 174) of lighter designs that fail only the buckling estimate. Layup Y026 [60/0/0/60] (0.140 mm): 105.5 g (-2.1% vs best it005 107.7 g), k_cal 27.4 N/mm, twist 0.004 deg, F_hub 0.45; buckling estimate 47,053 N mm (-6%).",
+ "override": "User-requested family probe: designs failing only the buckling estimate; it004 (est 65,790, FE B > 57,331) and it005 (est 51,731, FE B > 51,862) show the off-axis estimate is not unconservative, so whether it is conservative for C008 needs an FE B run.",
+ "screen_rank": 169,
+ "h_mm": 0.13999999999999999,
+ "k_est": 28.589582587885257,
+ "buckling_est": 47052.965584484016,
+ "Ex": 91434.99286906511,
+ "EIz": 10938086881.680714,
+ "EIy": 14347388603.256704,
+ "F_flat": 0.38348163657565465,
+ "F_hub": 0.4519615705740629,
+ "r_min": 9.0,
+ "cross_ply": false,
+ "GJ_est": 1527082324.7983074,
+ "twist_est": 0.0037519771254408162,
+ "kGAz": 222063.31514008364,
+ "kGAy": 298673.8894139296,
+ "buckling_est_cal": 47052.965584484016,
+ "abd_check": {
+  "A": 2.3e-16,
+  "B": 3.3e-16,
+  "D": 0.0042,
+  "D_expected": 0.0039,
+  "ok": true
+ },
+ "failure_log": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it006/logs/failure.log",
+ "F_governing_fc": 0.3835,
+ "tip_twist_deg": 0.0036925512442341725,
+ "GJ_fe": 1551658344.6891432,
+ "loadcase_F": {
+  "torsion": 1.351e-07,
+  "lateral50N": 0.001488
+ },
+ "buckling_value": 52209.746088827764,
+ "buckling_kind": "B LOWER BOUND: path passed the cutoff 50000 (= 1 x requirement) on the 4.5 mm B mesh still rising; stopped there by design",
+ "buckling_A": null,
+ "buckling_B": 52209.746088827764,
+ "buckling_amplitude": 0.014,
+ "buckling_imperfection": "segment LBA",
+ "buckling_notes": [
+  "seed: segment LBA (segment L 72 mm, 4 x 8 mm, tiled; 160 s, cached)"
+ ],
+ "buckling_pipeline": "fast",
+ "buckling_B_size": 4.5,
+ "buckling_seed": {
+  "method": "segment LBA",
+  "model": "segment L 72 mm, 4 x 8 mm, tiled",
+  "ndof": 6723,
+  "lam": [
+   12655.769593742032,
+   16329.617844007786,
+   26903.2696207535,
+   31800.768729421783
+  ],
+  "lam_small": 50.0,
+  "times": {
+   "K0": 16.607877800241113,
+   "K1": 127.80508270021528,
+   "eig": 15.75460149999708,
+   "total": 160.16756200045347
+  },
+  "time": 160.16756200045347,
+  "target_dofs": 139164,
+  "key": {
+   "section": {
+    "type": "boom",
+    "id": "C008"
+   },
+   "L": 1000.0,
+   "size": 4.5,
+   "load": {
+    "type": "bending",
+    "axis": "z",
+    "sign": 1
+   }
+  },
+  "cached": true
+ },
+ "buckling_fine_check": null,
+ "buckling_time_s": 6855.073833,
+ "k_fe": 27.80813272528131,
+ "k_beam": 28.589582587885257,
+ "k_ratio": 0.9726666221795388,
+ "sanity": [],
+ "feasible": true,
+ "objective": 0.10485195212877221
+}

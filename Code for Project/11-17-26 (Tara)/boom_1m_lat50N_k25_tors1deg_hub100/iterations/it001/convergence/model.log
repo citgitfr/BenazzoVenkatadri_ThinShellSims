@@ -1,0 +1,18 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe shell-assemble-run/assemble_run.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\convergence\case_fine.json" --laminate "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\lam.json"
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+WARNING: numeric analysis returns -1 -- Umfpackgenlinsolver::solve
+WARNING Linear::solveCurrentStep() -the LinearSOE failed in solve()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 1
+OpenSees > analyze failed, returned: -3 error flag
+UmfPack failed; retrying the linear step with SuperLU
+1000 x 379.979 mm shell, M006 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 617 x 236 = 145612 quads of 1.62 x 1.61-1.77 mm, 145848 nodes
+145612 elements, 875100 DOFs; linear solved in 562.3 s
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\convergence\results\it001_L028_Y001_M006_fine.npz
+report node 145850: u = [-0.0, 0.0, -1.482891, -0.0, 0.001302, 0.0]
+max |u| = 1.48421 mm
+laminate piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\convergence\it001_L028_Y001_M006_fine_code\laminate_code.py
+    mesh piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\convergence\it001_L028_Y001_M006_fine_code\mesh_code.py
+      bc piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\convergence\it001_L028_Y001_M006_fine_code\bc_code.py
+joined script: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\convergence\it001_L028_Y001_M006_fine_opensees.py (292147 lines)
+it001_L028_Y001_M006_fine_opensees.py ran in 633.7 s

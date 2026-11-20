@@ -1,0 +1,13 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe shell-assemble-run/assemble_run.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\case_lateral50N.json" --laminate "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\lam.json"
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+1000 x 462.075 mm shell, C008 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 222 x 104 = 23088 quads of 4.5 x 4.1-4.87 mm, 23192 nodes
+47064 elements, 139164 DOFs; linear solved in 30.4 s
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\results\it014_L030_Y026_C008_lateral50N.npz
+report node 23194: u = [-0.0, 1.451806, 0.002095, 0.0, -2.7e-05, 0.001757]
+max |u| = 1.45836 mm
+laminate piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\it014_L030_Y026_C008_lateral50N_code\laminate_code.py
+    mesh piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\it014_L030_Y026_C008_lateral50N_code\mesh_code.py
+      bc piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\it014_L030_Y026_C008_lateral50N_code\bc_code.py
+joined script: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it014\it014_L030_Y026_C008_lateral50N_opensees.py (46706 lines)
+it014_L030_Y026_C008_lateral50N_opensees.py ran in 41.1 s

@@ -1,0 +1,554 @@
+# -*- coding: mbcs -*-
+from mesh import *
+from interaction import *
+from step import *
+from load import *
+from job import *
+mdb.Model(name='ShellModel')
+del mdb.models['Model-1']
+mdb.models['ShellModel'].ConstrainedSketch(name='section', sheetSize=
+    1848.29837424172)
+mdb.models['ShellModel'].sketches['section'].Line(point1=(-78.6067593808359, 
+    0.0), point2=(-69.6067593808359, 0.0))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -69.6067593808359, 12.0), direction=COUNTERCLOCKWISE, point1=(
+    -69.6067593808359, 0.0), point2=(-58.839658944744, 17.2980702335009))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -48.072558508652, 22.5961404670019), direction=CLOCKWISE, point1=(
+    -58.839658944744, 17.2980702335009), point2=(-53.2953317011199, 
+    33.3999657238282))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -57.212411595471, 41.502834666448), direction=COUNTERCLOCKWISE, point1=(
+    -53.2953317011199, 33.3999657238282), point2=(-48.2894078431066, 
+    40.3280989364675))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -36.3920695066209, 38.7617846298269), direction=CLOCKWISE, point1=(
+    -48.2894078431066, 40.3280989364675), point2=(-37.2709278721525, 
+    50.7295583565204))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -37.9300716463011, 59.7053886515405), direction=COUNTERCLOCKWISE, point1=(
+    -37.2709278721525, 50.7295583565204), point2=(-30.066121638982, 
+    55.3283702277291))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -19.5808549625563, 49.4923456626471), direction=CLOCKWISE, point1=(
+    -30.066121638982, 55.3283702277291), point2=(-15.9923654554833, 
+    60.9432296048425))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -13.3009983251785, 69.531392561489), direction=COUNTERCLOCKWISE, point1=(
+    -15.9923654554833, 60.9432296048425), point2=(-7.6005704715306, 
+    62.5668306739505))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    4.9367310737459e-15, 53.2807481572325), direction=CLOCKWISE, point1=(
+    -7.6005704715306, 62.5668306739505), point2=(7.60057047153061, 
+    62.5668306739504))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    13.3009983251786, 69.5313925614891), direction=COUNTERCLOCKWISE, point1=(
+    7.60057047153061, 62.5668306739504), point2=(15.9923654554833, 
+    60.9432296048425))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    19.5808549625564, 49.4923456626472), direction=CLOCKWISE, point1=(
+    15.9923654554833, 60.9432296048425), point2=(30.066121638982, 
+    55.3283702277291))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    37.9300716463011, 59.7053886515403), direction=COUNTERCLOCKWISE, point1=(
+    30.066121638982, 55.3283702277291), point2=(37.2709278721525, 
+    50.7295583565204))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    36.3920695066208, 38.7617846298268), direction=CLOCKWISE, point1=(
+    37.2709278721525, 50.7295583565204), point2=(48.2894078431066, 
+    40.3280989364675))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    57.2124115954709, 41.502834666448), direction=COUNTERCLOCKWISE, point1=(
+    48.2894078431066, 40.3280989364675), point2=(53.29533170112, 
+    33.3999657238282))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    48.0725585086521, 22.5961404670019), direction=CLOCKWISE, point1=(
+    53.29533170112, 33.3999657238282), point2=(58.839658944744, 
+    17.298070233501))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    69.6067593808359, 12.0), direction=COUNTERCLOCKWISE, point1=(
+    58.839658944744, 17.298070233501), point2=(69.6067593808359, 
+    1.77635683940025e-14))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -69.6067593808359, -12.0), direction=CLOCKWISE, point1=(-69.6067593808359, 
+    0.0), point2=(-58.839658944744, -17.298070233501))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -48.0725585086521, -22.5961404670019), direction=COUNTERCLOCKWISE, point1=(
+    -58.839658944744, -17.298070233501), point2=(-53.2953317011199, 
+    -33.3999657238282))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -57.2124115954708, -41.5028346664479), direction=CLOCKWISE, point1=(
+    -53.2953317011199, -33.3999657238282), point2=(-48.2894078431066, 
+    -40.3280989364675))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -36.3920695066209, -38.7617846298269), direction=COUNTERCLOCKWISE, point1=(
+    -48.2894078431066, -40.3280989364675), point2=(-37.2709278721524, 
+    -50.7295583565204))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -37.9300716463011, -59.7053886515405), direction=CLOCKWISE, point1=(
+    -37.2709278721524, -50.7295583565204), point2=(-30.066121638982, 
+    -55.3283702277291))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -19.5808549625563, -49.4923456626471), direction=COUNTERCLOCKWISE, point1=(
+    -30.066121638982, -55.3283702277291), point2=(-15.9923654554833, 
+    -60.9432296048425))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    -13.3009983251786, -69.5313925614891), direction=CLOCKWISE, point1=(
+    -15.9923654554833, -60.9432296048425), point2=(-7.60057047153062, 
+    -62.5668306739504))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    5.01047030495312e-15, -53.2807481572325), direction=COUNTERCLOCKWISE, 
+    point1=(-7.60057047153062, -62.5668306739504), point2=(7.60057047153061, 
+    -62.5668306739504))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    13.3009983251786, -69.5313925614891), direction=CLOCKWISE, point1=(
+    7.60057047153061, -62.5668306739504), point2=(15.9923654554833, 
+    -60.9432296048425))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    19.5808549625564, -49.4923456626472), direction=COUNTERCLOCKWISE, point1=(
+    15.9923654554833, -60.9432296048425), point2=(30.066121638982, 
+    -55.3283702277291))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    37.9300716463011, -59.7053886515404), direction=CLOCKWISE, point1=(
+    30.066121638982, -55.3283702277291), point2=(37.2709278721525, 
+    -50.7295583565204))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    36.3920695066208, -38.7617846298268), direction=COUNTERCLOCKWISE, point1=(
+    37.2709278721525, -50.7295583565204), point2=(48.2894078431066, 
+    -40.3280989364675))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    57.212411595471, -41.502834666448), direction=CLOCKWISE, point1=(
+    48.2894078431066, -40.3280989364675), point2=(53.29533170112, 
+    -33.3999657238282))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    48.0725585086521, -22.5961404670019), direction=COUNTERCLOCKWISE, point1=(
+    53.29533170112, -33.3999657238282), point2=(58.839658944744, 
+    -17.298070233501))
+mdb.models['ShellModel'].sketches['section'].ArcByCenterEnds(center=(
+    69.6067593808359, -12.0), direction=CLOCKWISE, point1=(58.839658944744, 
+    -17.298070233501), point2=(69.6067593808359, -1.77635683940025e-14))
+mdb.models['ShellModel'].sketches['section'].Line(point1=(69.6067593808359, 
+    0.0), point2=(78.6067593808359, 0.0))
+mdb.models['ShellModel'].Part(dimensionality=THREE_D, name='Shell', type=
+    DEFORMABLE_BODY)
+mdb.models['ShellModel'].parts['Shell'].BaseShellExtrude(depth=1000.0, sketch=
+    mdb.models['ShellModel'].sketches['section'])
+mdb.models['ShellModel'].parts['Shell'].flipNormal(regions=Region(
+    side1Faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#40000000 ]', ), )))
+mdb.models['ShellModel'].parts['Shell'].flipNormal(regions=Region(
+    side1Faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#80000000 ]', ), )))
+mdb.models['ShellModel'].Material(name='MAT0')
+mdb.models['ShellModel'].materials['MAT0'].Elastic(table=((157900.0, 7650.0, 
+    0.361, 3900.0, 3900.0, 2637.93103448276), ), type=LAMINA)
+mdb.models['ShellModel'].CompositeShellSection(idealization=NO_IDEALIZATION, 
+    integrationRule=SIMPSON, layup=(SectionLayer(thickness=0.035, 
+    orientAngle=45.0, material='MAT0', plyName='ply1'), SectionLayer(
+    thickness=0.035, material='MAT0', plyName='ply2'), SectionLayer(
+    thickness=0.035, material='MAT0', plyName='ply3'), SectionLayer(
+    thickness=0.035, orientAngle=45.0, material='MAT0', plyName='ply4')), name=
+    'Section', poissonDefinition=DEFAULT, preIntegrate=OFF, symmetric=False, 
+    temperature=GRADIENT, thicknessType=UNIFORM)
+mdb.models['ShellModel'].CompositeShellSection(idealization=NO_IDEALIZATION, 
+    integrationRule=SIMPSON, layup=(SectionLayer(thickness=0.035, 
+    orientAngle=-45.0, material='MAT0', plyName='webply1'), SectionLayer(
+    thickness=0.035, material='MAT0', plyName='webply2'), SectionLayer(
+    thickness=0.035, material='MAT0', plyName='webply3'), SectionLayer(
+    thickness=0.035, orientAngle=-45.0, material='MAT0', plyName='webply4'), 
+    SectionLayer(thickness=0.035, orientAngle=45.0, material='MAT0', 
+    plyName='webply5'), SectionLayer(thickness=0.035, material='MAT0', 
+    plyName='webply6'), SectionLayer(thickness=0.035, material='MAT0', 
+    plyName='webply7'), SectionLayer(thickness=0.035, orientAngle=45.0, 
+    material='MAT0', plyName='webply8')), name='WebSection', poissonDefinition=
+    DEFAULT, preIntegrate=OFF, symmetric=False, temperature=GRADIENT, 
+    thicknessType=UNIFORM)
+mdb.models['ShellModel'].parts['Shell'].SectionAssignment(offsetType=
+    MIDDLE_SURFACE, region=Region(
+    faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#3fffffff ]', ), )), sectionName='Section', thicknessAssignment=
+    FROM_SECTION)
+mdb.models['ShellModel'].parts['Shell'].SectionAssignment(offsetType=
+    MIDDLE_SURFACE, region=Region(
+    faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#c0000000 ]', ), )), sectionName='WebSection', thicknessAssignment=
+    FROM_SECTION)
+mdb.models['ShellModel'].parts['Shell'].MaterialOrientation(
+    additionalRotationType=ROTATION_NONE, axis=AXIS_3, flipNormalDirection=
+    False, flipPrimaryDirection=False, normalAxisDefinition=SURFACE, 
+    normalAxisDirection=AXIS_3, normalAxisRegion=Region(
+    side1Faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#ffffffff ]', ), )), orientationType=DISCRETE, 
+    primaryAxisDefinition=VECTOR, primaryAxisDirection=AXIS_1, 
+    primaryAxisVector=(0.0, 0.0, 1.0), region=Region(
+    faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#ffffffff ]', ), )), stackDirection=STACK_3)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #8000000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#8 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#2 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#20 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#100 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#800 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#4000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#20000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#100000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#800000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#4000000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#20000000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #1 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #8 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #40 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #200 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #1000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #400000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #80000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #10000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #2000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #400 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #80 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #10 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #2 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #40000000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #8000000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #1000000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #200000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #40000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #8000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #80000000 ]', ), ), number=222)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #10000000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #4000000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#4 ]', ), ), number=5)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#1 ]', ), ), number=5)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#40 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#10 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#200 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#80 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#1000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#400 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#8000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#2000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#40000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#10000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#200000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#80000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#1000000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#400000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#8000000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#2000000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#40000000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#10000000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #2 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#80000000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #10 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #4 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #80 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #20 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #400 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #100 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #2000 ]', ), ), number=5)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #800 ]', ), ), number=5)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #2000000 ]', ), ), number=5)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #1000000 ]', ), ), number=5)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #800000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #200000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #100000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #40000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #20000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #8000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #4000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #1000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #800 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #200 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #100 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #40 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #20 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #8 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #4 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #1 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #80000000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #20000000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #10000000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #4000000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #2000000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #800000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #400000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #100000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #80000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #20000 ]', ), ), number=4)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #10000 ]', ), ), number=5)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0 #4000 ]', ), ), number=5)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #40000000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].seedEdgeByNumber(constraint=FIXED, 
+    edges=mdb.models['ShellModel'].parts['Shell'].edges.getSequenceFromMask(
+    mask=('[#0:2 #20000000 ]', ), ), number=2)
+mdb.models['ShellModel'].parts['Shell'].setMeshControls(elemShape=QUAD, 
+    regions=mdb.models['ShellModel'].parts['Shell'].faces, technique=
+    STRUCTURED)
+mdb.models['ShellModel'].parts['Shell'].setElementType(elemTypes=(ElemType(
+    elemCode=S4R, elemLibrary=STANDARD), ), regions=Region(
+    faces=mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(
+    mask=('[#ffffffff ]', ), )))
+mdb.models['ShellModel'].parts['Shell'].generateMesh()
+mdb.models['ShellModel'].rootAssembly.Instance(dependent=ON, name='Shell-1', 
+    part=mdb.models['ShellModel'].parts['Shell'])
+mdb.models['ShellModel'].rootAssembly.rotate(angle=120.0, axisDirection=(1.0, 
+    1.0, 1.0), axisPoint=(0.0, 0.0, 0.0), instanceList=('Shell-1', ))
+mdb.models['ShellModel'].rootAssembly.ReferencePoint(point=(0.0, 
+    1.04360964314765e-14, 4.92661467177413e-16))
+mdb.models['ShellModel'].rootAssembly.Set(name='RP-X0', referencePoints=(
+    mdb.models['ShellModel'].rootAssembly.referencePoints[3], ))
+mdb.models['ShellModel'].rootAssembly.Set(name='RIGID-X0', nodes=
+    mdb.models['ShellModel'].rootAssembly.instances['Shell-1'].nodes.getSequenceFromMask(
+    mask=('[#aaaaaaac #aaaaaaaa #0:7 #1e #0:13 #1c #0:6', 
+    ' #8 #0:6 #70 #0:6 #20 #0:6 #1c0', ' #0:6 #80 #0:6 #700 #0:6 #200 #0:6', 
+    ' #1c00 #0:6 #800 #0:6 #7000 #0:6 #2000', 
+    ' #0:6 #1c000 #0:6 #3c0000 #0:6 #7800000 #0:6', 
+    ' #38000000 #0:6 #10000000 #0:6 #e0000000 #0:6 #40000000', 
+    ' #0:6 #80000000 #3 #0:6 #1 #0:6 #e', ' #0:6 #4 #0:6 #38 #0:6 #10 #0:6', 
+    ' #e0 #0:6 #40 #0:6 #3c380 #0:6 #50000 ]', ), ))
+mdb.models['ShellModel'].Coupling(controlPoint=
+    mdb.models['ShellModel'].rootAssembly.sets['RP-X0'], couplingType=KINEMATIC
+    , influenceRadius=WHOLE_SURFACE, localCsys=None, name='Rigid-x0', surface=
+    mdb.models['ShellModel'].rootAssembly.sets['RIGID-X0'], u1=ON, u2=ON, u3=ON
+    , ur1=ON, ur2=ON, ur3=ON)
+mdb.models['ShellModel'].rootAssembly.ReferencePoint(point=(1000.0, 
+    1.04360964314765e-14, 4.92661467177413e-16))
+mdb.models['ShellModel'].rootAssembly.Set(name='RP-XL', referencePoints=(
+    mdb.models['ShellModel'].rootAssembly.referencePoints[6], ))
+mdb.models['ShellModel'].rootAssembly.Set(name='RIGID-XL', nodes=
+    mdb.models['ShellModel'].rootAssembly.instances['Shell-1'].nodes.getSequenceFromMask(
+    mask=('[#55555553 #55555555 #f #0:13 #1c #0:6 #20', 
+    ' #0:6 #70 #0:6 #80 #0:6 #1c0 #0:6', 
+    ' #200 #0:6 #700 #0:6 #800 #0:6 #1c00', 
+    ' #0:6 #2000 #0:6 #7000 #0:6 #8000 #0:6', 
+    ' #1c000 #0:6 #1e0000 #0:6 #3c00000 #0:6 #38000000', 
+    ' #0:6 #40000000 #0:6 #e0000000 #0:7 #1 #0:5', 
+    ' #80000000 #3 #0:6 #4 #0:6 #e #0:6', ' #10 #0:6 #38 #0:6 #40 #0:6 #e0', 
+    ' #0:6 #100 #0:6 #380 #0:6 #43c00 #0:6', ' #20000 ]', ), ))
+mdb.models['ShellModel'].Coupling(controlPoint=
+    mdb.models['ShellModel'].rootAssembly.sets['RP-XL'], couplingType=KINEMATIC
+    , influenceRadius=WHOLE_SURFACE, localCsys=None, name='Rigid-xL', surface=
+    mdb.models['ShellModel'].rootAssembly.sets['RIGID-XL'], u1=ON, u2=ON, u3=ON
+    , ur1=ON, ur2=ON, ur3=ON)
+mdb.models['ShellModel'].StaticStep(name='Load', nlgeom=OFF, previous=
+    'Initial')
+mdb.models['ShellModel'].DisplacementBC(createStepName='Initial', name='BC0', 
+    region=mdb.models['ShellModel'].rootAssembly.sets['RP-X0'], u1=0.0, u2=0.0, 
+    u3=0.0, ur1=0.0, ur2=0.0, ur3=0.0)
+mdb.models['ShellModel'].ConcentratedForce(cf2=50.0, createStepName='Load', 
+    name='L0F', region=mdb.models['ShellModel'].rootAssembly.sets['RP-XL'])
+mdb.models['ShellModel'].fieldOutputRequests['F-Output-1'].setValues(frequency=
+    1, variables=('S', 'E', 'SE', 'SF', 'U', 'UR', 'RF'))
+mdb.models['ShellModel'].parts['Shell'].Set(faces=
+    mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(mask=(
+    '[#3fffffff ]', ), ), name='PLIES-FLANGE')
+mdb.models['ShellModel'].FieldOutputRequest(createStepName='Load', frequency=1, 
+    name='F-Output-PLIES-FLANGE', region=
+    mdb.models['ShellModel'].rootAssembly.instances['Shell-1'].sets['PLIES-FLANGE']
+    , sectionPoints=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12), variables=('S', 
+    'E'))
+mdb.models['ShellModel'].parts['Shell'].Set(faces=
+    mdb.models['ShellModel'].parts['Shell'].faces.getSequenceFromMask(mask=(
+    '[#c0000000 ]', ), ), name='PLIES-WEB')
+mdb.models['ShellModel'].FieldOutputRequest(createStepName='Load', frequency=1, 
+    name='F-Output-PLIES-WEB', region=
+    mdb.models['ShellModel'].rootAssembly.instances['Shell-1'].sets['PLIES-WEB']
+    , sectionPoints=(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 
+    18, 19, 20, 21, 22, 23, 24), variables=('S', 'E'))
+mdb.Job(memory=90, memoryUnits=PERCENTAGE, model='ShellModel', name=
+    'it007_L006_Y025_C008_lateral50_S4R_4p5mm', nodalOutputPrecision=SINGLE, 
+    numCpus=1, numDomains=1, type=ANALYSIS)
+mdb.jobs['it007_L006_Y025_C008_lateral50_S4R_4p5mm'].submit(
+    consistencyChecking=OFF)
+mdb.jobs['it007_L006_Y025_C008_lateral50_S4R_4p5mm'].waitForCompletion()
+# Save by tvenkata on 2026_11_19-14.30.35; build 2026 2025_09_23-07.43.03 RELr428 206049

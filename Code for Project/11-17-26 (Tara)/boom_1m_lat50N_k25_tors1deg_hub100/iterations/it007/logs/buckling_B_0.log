@@ -1,0 +1,33 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\skills\shell-buckling\boom_buckling.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it007\buckling.json" --out "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it007\buckling" --only B
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+A skipped: off-axis plies (ShellNLDKGQ takes 0/90 only)
+  step   1: param  0.00049352, load factor  6606.25, iters 5
+  step   2: param  0.0014806, load factor  19816.7, iters 8
+  step   3: param  0.0024676, load factor  33020.3, iters 13
+  step   4: param  0.0034546, load factor  46183.9, iters 29
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 0.00152422 (max: 1e-06, Norm deltaR: 0.185511)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 58854.6
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 5.12721e-05 (max: 1e-06, Norm deltaR: 0.0447115)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 52595.2
+OpenSees > analyze failed, returned: -3 error flag
+  step   5: param  0.0037014, load factor  49419.7, iters 38
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 0.000104156 (max: 1e-06, Norm deltaR: 0.0279216)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 55733.8
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 1.7369e-05 (max: 1e-06, Norm deltaR: 0.0329109)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 52595.2
+OpenSees > analyze failed, returned: -3 error flag
+  step   6: param  0.0038248, load factor  51013.9, iters 37
+  cutoff: load factor 51013.9 >= 50000, path stopped
+B (ASDShellQ4 imperfect path, amplitude 0.014 mm): peak 51014 at 0.0038248 (last point: path stopped or still rising); 15110 s
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it007\buckling\it007_L006_Y025_C008_buck.json

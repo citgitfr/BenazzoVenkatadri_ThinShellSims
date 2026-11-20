@@ -1,0 +1,50 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe failure-check/failure_check.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it009\results\it009_L028_Y009_C008.npz" --boom C008 --flatten-radius 9.0
+
+S23 = Yc/2 (default)
+boom C008 (CO)
+web facets: 888 of 23088 (the web facets of the FE model, which carry the doubled mirror laminate)
+web laminate: [[-30/0/-30/30/0/30] h = 0.21 mm] (also in the FE model)
+Hashin 2D check (flange): it009_L028_Y009_C008  [[30/0/30] h = 0.105 mm], 22200 facets, Gauss points, 3 points through each ply
+rank         F        R  facet        x        y        z ply  theta     at         s1         s2        t12  mode
+   1  0.003817    16.19  17094    2.252    2.018   -64.93   2      0    top     -49.86    -0.2681     0.9824  fibre compression
+   2   0.00381     16.2  17094    2.252    2.018   -64.93   2      0    top     -49.81   -0.09979      0.973  fibre compression
+   3  0.003791    16.24  16872    2.252   -2.018   -64.93   2      0    top     -49.69    -0.2442      0.794  fibre compression
+   4   0.00378    16.26  16872    2.252   -2.018   -64.93   2      0    top     -49.62   -0.01382      0.812  fibre compression
+   5  0.003774    16.28  17095    6.757    2.018   -64.93   2      0 bottom     -49.57    0.01347     0.8866  fibre compression
+   6  0.003769    16.29  17095    6.757    2.018   -64.93   2      0 bottom     -49.54     0.1135     0.8763  fibre compression
+   7  0.003767    16.29  16873    6.757   -2.018   -64.93   2      0 bottom     -49.53    0.08013     0.7612  fibre compression
+   8  0.003762     16.3  16873    6.757   -2.018   -64.93   2      0 bottom      -49.5     0.1809      0.775  fibre compression
+   9  0.003756    16.32  17094    2.252    2.018   -64.93   2      0 middle     -49.45     -0.264     0.9842  fibre compression
+  10  0.003748    16.33  17094    2.252    2.018   -64.93   2      0 middle      -49.4   -0.09171     0.9761  fibre compression
+Per ply (max over the model):
+  ply  1 (    30 deg, z -0.0525..-0.0175): max F 0.000891 (matrix tension), min R 33.5, max |s1| 12.48, max |s2| 0.9987, max |t12| 1.193 MPa
+  ply  2 (     0 deg, z -0.0175..+0.0175): max F 0.003817 (fibre compression), min R 16.19, max |s1| 49.86, max |s2| 0.5898, max |t12| 0.9861 MPa
+  ply  3 (    30 deg, z +0.0175..+0.0525): max F 0.0009188 (matrix tension), min R 32.99, max |s1| 14.25, max |s2| 1.012, max |t12| 1.209 MPa
+flange: MAX F = 0.003817 -> no failure predicted (fibre compression); min strength ratio R = 16.19 (at the max F point: 16.19; facet 17094, i = 0, j = 77, ply 2, top)
+Hashin 2D check (web): it009_L028_Y009_C008  [[-30/0/-30/30/0/30] h = 0.21 mm], 888 facets, Gauss points, 3 points through each ply
+rank         F        R  facet        x        y        z ply  theta     at         s1         s2        t12  mode
+   1  7.83e-05      113  23087    997.7    76.36        0   6     30    top     -7.141   -0.02494    0.07353  fibre compression
+   2 7.283e-05    117.2  23087    997.7    76.36        0   5      0    top     -6.887   -0.01094     -0.049  fibre compression
+   3 7.224e-05    117.7  23087    997.7    76.36        0   5      0    top     -6.859    0.08374   -0.03161  fibre compression
+   4 7.136e-05    118.4  23087    997.7    76.36        0   6     30 middle     -6.817     -0.021    0.06974  fibre compression
+   5 6.473e-05    124.3  23087    997.7    76.36        0   6     30 bottom     -6.493   -0.01706    0.06595  fibre compression
+   6  6.47e-05    124.3  23087    997.7    76.36        0   5      0 middle     -6.491  -0.008119   -0.04831  fibre compression
+   7 6.413e-05    124.9  23087    997.7    76.36        0   5      0 middle     -6.462     0.0871   -0.03032  fibre compression
+   8 6.104e-05      128  23082    975.2    76.36        0   2      0 bottom     -6.305     0.1817    -0.0241  fibre compression
+   9 6.102e-05      128  23082    975.2    76.36        0   2      0 bottom     -6.304      0.184   -0.01758  fibre compression
+  10 6.085e-05    128.2  23086    993.2    76.36        0   5      0    top     -6.295     0.1297  -0.005064  fibre compression
+Per ply (max over the model):
+  ply  1 (   -30 deg, z -0.105..-0.07): max F 1.987e-05 (matrix tension), min R 224.3, max |s1| 7.141, max |s2| 0.1495, max |t12| 0.1937 MPa
+  ply  2 (     0 deg, z -0.07..-0.035): max F 6.104e-05 (fibre compression), min R 128, max |s1| 6.887, max |s2| 0.2043, max |t12| 0.06382 MPa
+  ply  3 (   -30 deg, z -0.035..+1.388e-17): max F 2.996e-05 (fibre compression), min R 182.7, max |s1| 5.845, max |s2| 0.1429, max |t12| 0.1842 MPa
+  ply  4 (    30 deg, z +1.388e-17..+0.035): max F 5.245e-05 (fibre compression), min R 138.1, max |s1| 5.845, max |s2| 0.1429, max |t12| 0.1842 MPa
+  ply  5 (     0 deg, z +0.035..+0.07): max F 7.283e-05 (fibre compression), min R 117.2, max |s1| 6.887, max |s2| 0.2043, max |t12| 0.06382 MPa
+  ply  6 (    30 deg, z +0.07..+0.105): max F 7.83e-05 (fibre compression), min R 113, max |s1| 7.141, max |s2| 0.1495, max |t12| 0.1937 MPa
+web: MAX F = 7.83e-05 -> no failure predicted (fibre compression); min strength ratio R = 113 (at the max F point: 113; facet 23087, i = 221, j = 103, ply 6, top)
+SIMULATION MAX F = 0.003817 -> no failure predicted (in the flange)
+Coiling check: flange [[30/0/30] h = 0.105 mm] flattened from r = 9 mm (given with --flatten-radius): k = +0.11111 1/mm transverse (k_xx = k_xy = 0, N = 0), eps0 = [-0, -0, -0]
+  max F = 0.764 (matrix tension), R = 1.144, ply 3 (30 deg), top: s1 462, s2 32.93, t12 19.35 MPa
+  ply  1 (    30 deg, z -0.0525..-0.0175): max F 0.3277
+  ply  2 (     0 deg, z -0.0175..+0.0175): max F 0.109
+  ply  3 (    30 deg, z +0.0175..+0.0525): max F 0.764
+GOVERNING F = 0.764 from the coiling (flattening the flange) -> no failure predicted

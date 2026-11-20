@@ -1,0 +1,54 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe failure-check/failure_check.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\results\it006_L011_Y026_C008.npz" --boom C008 --flatten-radius 9.0
+
+S23 = Yc/2 (default)
+boom C008 (CO)
+web facets: 888 of 23088 (the web facets of the FE model, which carry the doubled mirror laminate)
+web laminate: [[-60/0/0/-60/60/0/0/60] h = 0.28 mm] (also in the FE model)
+Hashin 2D check (flange): it006_L011_Y026_C008  [[60/0/0/60] h = 0.14 mm], 22200 facets, Gauss points, 3 points through each ply
+rank         F        R  facet        x        y        z ply  theta     at         s1         s2        t12  mode
+   1 0.0004452    47.39   5772    2.252   -2.018    64.93   4     60    top      1.654       1.39    -0.5982  matrix tension
+   2 0.0004398    47.68   5772    2.252   -2.018    64.93   4     60 middle      1.581      1.382     -0.592  matrix tension
+   3 0.0004345    47.97   5772    2.252   -2.018    64.93   4     60 bottom      1.509      1.374    -0.5859  matrix tension
+   4 0.0004171    48.97   5550    2.252   -5.818    63.57   4     60    top     0.8943      1.353    -0.5286  matrix tension
+   5 0.0004152    49.08   5550    2.252   -5.818    63.57   4     60 middle      0.846      1.351    -0.5245  matrix tension
+   6 0.0004134    49.18   5772    2.252   -2.018    64.93   1     60    top      1.217      1.342    -0.5612  matrix tension
+   7 0.0004132    49.19   5550    2.252   -5.818    63.57   4     60 bottom     0.7977      1.348    -0.5204  matrix tension
+   8 0.0004083    49.49   5772    2.252   -2.018    64.93   1     60 middle      1.144      1.334    -0.5551  matrix tension
+   9 0.0004077    49.52   5772    2.252   -2.018    64.93   4     60    top      2.595      1.321    -0.6218  matrix tension
+  10 0.0004057    49.65   5550    2.252   -5.818    63.57   1     60    top     0.6046      1.337     -0.504  matrix tension
+Per ply (max over the model):
+  ply  1 (    60 deg, z -0.07..-0.035): max F 0.0004134 (matrix tension), min R 49.18, max |s1| 7.786, max |s2| 1.342, max |t12| 1.067 MPa
+  ply  2 (     0 deg, z -0.035..+0): max F 0.0001741 (fibre compression), min R 75.78, max |s1| 27.21, max |s2| 0.5623, max |t12| 0.6762 MPa
+  ply  3 (     0 deg, z +0..+0.035): max F 0.0001756 (fibre compression), min R 75.46, max |s1| 27.33, max |s2| 0.5518, max |t12| 0.6762 MPa
+  ply  4 (    60 deg, z +0.035..+0.07): max F 0.0004452 (matrix tension), min R 47.39, max |s1| 7.583, max |s2| 1.39, max |t12| 1.079 MPa
+flange: MAX F = 0.0004452 -> no failure predicted (matrix tension); min strength ratio R = 47.39 (at the max F point: 47.39; facet 5772, i = 0, j = 26, ply 4, top)
+Hashin 2D check (web): it006_L011_Y026_C008  [[-60/0/0/-60/60/0/0/60] h = 0.28 mm], 888 facets, Gauss points, 3 points through each ply
+rank         F        R  facet        x        y        z ply  theta     at         s1         s2        t12  mode
+   1 3.189e-06      560  22866    2.252    76.36        0   8     60    top       0.12     0.1191    -0.0408  matrix tension
+   2 3.148e-06    563.6  22866    2.252    76.36        0   8     60    top     0.3113     0.1182   -0.04157  matrix tension
+   3 3.113e-06    566.8    443    997.7   -71.86        0   1    -60 bottom   -0.08035     0.1175    0.04186  matrix tension
+   4 2.961e-06    581.1    222    2.252   -71.86        0   8     60    top    -0.1316      0.115   -0.03802  matrix tension
+   5 2.682e-06    610.6  22866    2.252    76.36        0   8     60    top   0.006536     0.1099   -0.03237  matrix tension
+   6 2.659e-06    613.3  22866    2.252    76.36        0   8     60 middle    0.05337     0.1091   -0.03483  matrix tension
+   7 2.644e-06      615  22866    2.252    76.36        0   8     60    top     0.1979      0.109   -0.03314  matrix tension
+   8 2.638e-06    615.7    443    997.7   -71.86        0   1    -60 bottom     -0.216     0.1054    0.05406  matrix tension
+   9 2.603e-06    619.8  22866    2.252    76.36        0   8     60 middle     0.2317     0.1078   -0.03608  matrix tension
+  10 2.592e-06    621.2    443    997.7   -71.86        0   1    -60 middle    -0.1343     0.1076    0.03568  matrix tension
+Per ply (max over the model):
+  ply  1 (   -60 deg, z -0.14..-0.105): max F 3.113e-06 (matrix tension), min R 566.8, max |s1| 0.7925, max |s2| 0.1191, max |t12| 0.05406 MPa
+  ply  2 (     0 deg, z -0.105..-0.07): max F 7.51e-07 (fibre compression), min R 1154, max |s1| 1.787, max |s2| 0.03772, max |t12| 0.04456 MPa
+  ply  3 (     0 deg, z -0.07..-0.035): max F 4.217e-07 (fibre compression), min R 1540, max |s1| 1.339, max |s2| 0.03032, max |t12| 0.04445 MPa
+  ply  4 (   -60 deg, z -0.035..+1.388e-17): max F 7.212e-07 (matrix tension), min R 1178, max |s1| 0.6327, max |s2| 0.05902, max |t12| 0.03617 MPa
+  ply  5 (    60 deg, z +1.388e-17..+0.035): max F 7.49e-07 (matrix tension), min R 1155, max |s1| 0.6327, max |s2| 0.05902, max |t12| 0.03617 MPa
+  ply  6 (     0 deg, z +0.035..+0.07): max F 4.098e-07 (fibre compression), min R 1562, max |s1| 1.339, max |s2| 0.03032, max |t12| 0.04445 MPa
+  ply  7 (     0 deg, z +0.07..+0.105): max F 7.368e-07 (fibre compression), min R 1165, max |s1| 1.787, max |s2| 0.03772, max |t12| 0.04456 MPa
+  ply  8 (    60 deg, z +0.105..+0.14): max F 3.189e-06 (matrix tension), min R 560, max |s1| 0.7925, max |s2| 0.1191, max |t12| 0.05406 MPa
+web: MAX F = 3.189e-06 -> no failure predicted (matrix tension); min strength ratio R = 560 (at the max F point: 560; facet 22866, i = 0, j = 103, ply 8, top)
+SIMULATION MAX F = 0.0004452 -> no failure predicted (in the flange)
+Coiling check: flange [[60/0/0/60] h = 0.14 mm] flattened from r = 9 mm (given with --flatten-radius): k = +0.11111 1/mm transverse (k_xx = k_xy = 0, N = 0), eps0 = [-0, -0, -0]
+  max F = 0.3835 (matrix tension), R = 1.615, ply 4 (60 deg), top: s1 1015, s2 35.41, t12 36.24 MPa
+  ply  1 (    60 deg, z -0.07..-0.035): max F 0.2421
+  ply  2 (     0 deg, z -0.035..+0): max F 0.01946
+  ply  3 (     0 deg, z +0..+0.035): max F 0.2799
+  ply  4 (    60 deg, z +0.035..+0.07): max F 0.3835
+GOVERNING F = 0.3835 from the coiling (flattening the flange) -> no failure predicted

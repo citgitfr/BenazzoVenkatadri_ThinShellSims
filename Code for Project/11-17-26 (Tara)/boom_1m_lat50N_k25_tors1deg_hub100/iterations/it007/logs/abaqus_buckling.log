@@ -1,0 +1,7 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\skills\shell-buckling\buckling_to_abaqus.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it007\abaqus_buckling_case.json" --out "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it007\abaqus_it007_L006_Y025_C008_buckling.py" --mock
+
+wrote F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it007\abaqus_it007_L006_Y025_C008_buckling.py
+WARNING: keyword block '*Buckle' not found; '*NODE FILE\nU' not inserted
+WARNING: keyword block '*Step' not found; '*IMPERFECTION, FILE=it007_L006_Y025_C008_buc_LBA, STEP=1\n1, 0.014' not inserted
+Models defined: LBA, RIKS (imperfection = LBA mode 1, amplitude 0.014 mm); scale S = 51013.9
+  mock run: 341 API calls up to the first job; BuckleStep 1, StaticRiksStep 1, DisplacementBC 2, ConcentratedForce 0, Moment 2, Coupling 2, keyword inserts 0

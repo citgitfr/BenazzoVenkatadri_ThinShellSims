@@ -1,0 +1,53 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe opensees-to-abaqus/opensees_to_abaqus.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\it001_L028_Y001_M006_opensees.py"
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+OpenSees reference from F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\results\it001_L028_Y001_M006.npz (newer than the script; --rerun to run it again)
+wrote F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\abaqus_it001_L028_Y001_M006.py
+  8 cross-section piece(s), 370 elements along x, 3 ply/plies ([0/0/0] h = 0.105 mm), 1 support(s), 1 load(s), linear, S4R
+  OpenSees reference (it001_L028_Y001_M006.npz): report node u = [-0.0, 0.0, -1.483549], max |u_i| = 1.4835 mm, top-ply stress (s1, s2, t12) = [47.5081, -0.3775, -1.4781] MPa
+model check: it001_L028_Y001_M006_opensees.py (recorded OpenSees calls) vs abaqus_it001_L028_Y001_M006.py (stand-in Abaqus API)
+  [PASS] shell nodes = 370 x 141 grid of the case geometry (52682 nodes)  (max distance 0.0e+00 mm)
+  [PASS] shell normal of each of the 8 section piece(s) = OpenSees facet normal  (min cos 1.0000)
+  [PASS] Abaqus script runs on the stand-in API up to the job
+  [PASS] Abaqus seeds: 370 along x, 142 across the section  ([370] along, 142 across)
+  [PASS] flange: ply angle of each section the same on every facet (from the -local axes)  (max spread 0.0e+00 deg)
+  [PASS] flange: total thickness: Abaqus layup = OpenSees LayeredShell  (0.105 / 0.105 mm)
+  [PASS] flange: ply angles through the thickness (15 OpenSees layers in 3 Abaqus plies, bottom = SNEG)  (0 layer(s) differ)
+  [PASS] flange: ply E1, E2, nu12, G12, transverse G13 = OpenSees  (0 layer(s) differ)
+  [PASS] web: ply angle of each section the same on every facet (from the -local axes)  (max spread 0.0e+00 deg)
+  [PASS] web: total thickness: Abaqus layup = OpenSees LayeredShell  (0.21 / 0.21 mm)
+  [PASS] web: ply angles through the thickness (18 OpenSees layers in 6 Abaqus plies, bottom = SNEG)  (0 layer(s) differ)
+  [PASS] web: ply E1, E2, nu12, G12, transverse G13 = OpenSees  (0 layer(s) differ)
+  [PASS] fixed DOFs = OpenSees (1 nodes)  (0 node(s) differ)
+  [PASS] rigid ends: reference point and coupled nodes = OpenSees rigid end (rigidLink or spokes, 2)
+  [PASS] nodal forces and moments = OpenSees (1 loaded nodes)  (max |diff| / max |load| 0.0e+00)
+  [PASS] linear static (OpenSees LoadControl 1.0, Linear) -> Abaqus StaticStep nlgeom OFF
+  [PASS] report node 52684 = the Abaqus report point
+17/17 checks pass
+Abaqus run: python .claude/orchestrator/tools/run_abaqus.py <this abaqus_*.py> [--cpus N<=8]
+
+=== Abaqus verification of "it001_L028_Y001_M006" ===
+
+ON THE MACHINE WITH ABAQUS
+  1. Copy this ONE file into an empty folder there:
+       abaqus_it001_L028_Y001_M006.py
+  2. In that folder run:
+       abaqus cae noGUI=abaqus_it001_L028_Y001_M006.py
+     (2.7 mm mesh, S4R, job "it001_L028_Y001_M006_S4R_2p7mm". For another mesh / element, e.g.
+      abaqus cae noGUI=abaqus_it001_L028_Y001_M006.py -- 1.35 S4
+      the job and every file name below become "it001_L028_Y001_M006_S4_1p35mm".)
+  3. When it finishes, open it001_L028_Y001_M006_S4R_2p7mm_results.txt and check that it does NOT say
+     "ODB extraction failed". If it does, copy .claude/verification/odb_extract.py
+     from the project into the same folder and run:
+       abaqus python odb_extract.py it001_L028_Y001_M006_S4R_2p7mm.odb
+     Optional: open the model in Abaqus/CAE to check the set-up:
+       abaqus cae database=it001_L028_Y001_M006_S4R_2p7mm.cae
+
+COPY BACK TO THIS MACHINE, into F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001
+  it001_L028_Y001_M006_S4R_2p7mm_odb.npz        REQUIRED: the Abaqus results as plain arrays
+  it001_L028_Y001_M006_S4R_2p7mm_results.txt    recommended: run log and Abaqus vs embedded OpenSees values
+  not needed: it001_L028_Y001_M006_S4R_2p7mm.odb / .cae / .dat / .msg / .sta (keep them there for inspection)
+
+THEN TELL CLAUDE (paste):
+  Run the OpenSeesAbaqusResultsComparator agent on F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\results\it001_L028_Y001_M006.npz and F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\it001_L028_Y001_M006_S4R_2p7mm_odb.npz
+(also in F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\abaqus_it001_L028_Y001_M006_instructions.txt)

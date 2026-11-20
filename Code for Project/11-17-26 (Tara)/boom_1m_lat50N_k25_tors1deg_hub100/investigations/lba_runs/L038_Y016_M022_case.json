@@ -1,0 +1,25 @@
+{
+ "name": "L038_Y016_M022",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-17-26 (Tara)\\boom_1m_lat50N_k25_tors1deg_hub100\\investigations\\lba_runs\\lam_L038_Y016.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "M022"
+  },
+  "size": 4.5
+ },
+ "load": {
+  "type": "bending",
+  "axis": "z",
+  "sign": 1
+ },
+ "B": {
+  "step": 0.0001,
+  "max": 0.01,
+  "amplitude": 0.01,
+  "control": "disp"
+ }
+}

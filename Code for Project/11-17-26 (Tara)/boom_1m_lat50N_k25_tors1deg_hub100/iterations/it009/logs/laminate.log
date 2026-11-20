@@ -1,0 +1,73 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe laminate-properties/laminate_properties.py --catalog L028 --layup [30/0/30] --check --save-json "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it009\lam.json"
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+Ply material: L028 M55JB / LM-PAEK (Toray Cetex TC1225)  (N, mm, MPa)
+E1          310000 MPa     input
+E2            6830 MPa     input
+E3            6830 MPa     = E2
+G12           3830 MPa     input
+G13           3830 MPa     = G12
+G23        2291.95 MPa     = E2 / (2 (1 + nu23))
+nu12           0.3         input
+nu13           0.3         = nu12
+nu23          0.49         input
+nu21    0.00660968         = nu12 E2 / E1
+nu31    0.00660968         = nu13 E3 / E1 (OpenSees vzx)
+nu32          0.49         = nu23 E3 / E2
+rho              0 t/mm^3  input
+Xt            1827 MPa     strength
+Xc             807 MPa     strength
+Yt            40.3 MPa     strength
+Yc             160 MPa     strength
+S             62.4 MPa     strength
+t_ply        0.035 mm      catalog ply thickness
+NOTE: nu23 is an estimate (* in the catalog)
+NOTE: G23_catalog is an estimate (* in the catalog)
+
+Layup bottom (-z) to top (+z): [30/0/30] h = 0.105 mm, 5 layers per ply (15 through h)
+ply   theta        t        z0        z1  element
+  1      30    0.035   -0.0525   -0.0175  1
+  2       0    0.035   -0.0175    0.0175  2
+  3      30    0.035    0.0175    0.0525  1
+2 coincident ASDShellQ4 per facet (one per distinct angle), each "-noeas" and "-local" at its angle
+
+Q11 = 310616, Q22 = 6843.57, Q12 = 2053.07, Q66 = 3830 MPa
+
+ABD from classical lamination theory:
+A [N/mm]  (N = A eps + B k)
+               eps_xx       eps_yy       gam_xy
+Nxx             23387      4127.26      6862.22
+Nyy           4127.26       2122.9      2345.39
+Nxy           6862.22      2345.39      4313.84
+B [N]
+                 k_xx         k_yy         k_xy
+Nxx       2.84217e-14            0            0
+Nyy                 0            0            0
+Nxy                 0            0            0
+D [N mm]  (M = B eps + D k)
+                 k_xx         k_yy         k_xy
+Mxx           17.7188      5.38919      9.10674
+Myy           5.38919      2.52385      3.11253
+Mxy           9.10674      3.11253      5.56061
+(CLT with Q_bar from rotation vs Tsai-Pagano invariants: max rel. difference 1.6e-16)
+
+ABD measured from OpenSeesPy (one facet, imposed strains, work):
+A [N/mm]  (N = A eps + B k)
+               eps_xx       eps_yy       gam_xy
+Nxx             23387      4127.26      6862.22
+Nyy           4127.26       2122.9      2345.39
+Nxy           6862.22      2345.39      4313.84
+B [N]
+                 k_xx         k_yy         k_xy
+Nxx        1.0285e-13  2.51577e-14   2.4321e-14
+Nyy       3.64073e-14  1.21118e-14  8.50148e-15
+Nxy       6.37339e-14  1.36558e-14  1.53942e-14
+D [N mm]  (M = B eps + D k)
+                 k_xx         k_yy         k_xy
+Mxx           17.6233      5.37234      9.07872
+Myy           5.37234      2.51518      3.10295
+Mxy           9.07872      3.10295        5.543
+
+OpenSeesPy vs CLT, max relative difference: A 1.6e-16, B 1.2e-16, D 5.4e-03   (expect A, B ~1e-15; D ~1/(layers)^2 = 4.4e-03, OpenSees lower)
+
+Laminate definition saved to F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it009\lam.json

@@ -1,0 +1,27 @@
+{
+ "_help": "Written by the orchestrator from the user's prompt (PROTOCOL.md step 1), then checked by study.py init. Units N, mm. Keys starting with _ are ignored.",
+ "prompt": "Use the optimization orchestrator agent (including Abaqus verification) to design a composite boom with minimum mass and the following constraints:\n1 m long, any cross-section/material/layup from the respective catalogs, does not buckle under a 50 N lateral bending load in a cantilever beam configuration, transverse bending stiffness such that it has no more than 1 mm deflection under 25 N tip load as a cantilever beam, torsional stiffness such that it will not rotate more than 1 degree under 100 N*mm end torque, coils on 100 mm hub, ensure no material failure throughout the simulation runs.\nDo not use more than 16 CPU cores, and do not modify anything outside the BenazzoVenkatadri_ThinShellSims folder.  Provide a status update every 15 minutes.  Put all code you create during this optimization in Code for Project / 11/17/26 (Tara).",
+ "study_name": "boom_1m_lat50N_k25_tors1deg_hub100",
+ "length_mm": 1000,
+ "section_classes": ["TS", "TRAC", "OM", "CO"],
+ "objective": {"sense": "minimize", "quantity": "mass"},
+ "requirements": {
+  "bending_stiffness": {"text": "transverse bending stiffness such that it has no more than 1 mm deflection under 25 N tip load as a cantilever beam (k >= 25 N / 1 mm = 25 N/mm, tip load along z)",
+                        "direction": "z", "sign": -1, "min_N_per_mm": 25.0, "load_N": 25.0},
+  "buckling": {"text": "does not buckle under a 50 N lateral bending load in a cantilever beam configuration (50 N x 1000 mm = 50,000 N mm root moment, lateral = bending in y, about the z axis; checked as a uniform end moment, which puts the root moment along the whole boom: conservative)",
+               "load": "bending", "axis": "z", "min_value": 50000, "units": "N mm"},
+  "torsional_stiffness": {"text": "torsional stiffness such that it will not rotate more than 1 degree under 100 N*mm end torque (GJ >= T L / theta)",
+                          "torque_Nmm": 100.0, "max_twist_deg": 1.0},
+  "failure_load_cases": [{"name": "lateral50N", "text": "ensure no material failure throughout the simulation runs: Hashin F < 1 under the 50 N lateral (y) tip load, linear, cantilever",
+                          "force": [0.0, 50.0, 0.0]}],
+  "coiling": {"text": "coils on 100 mm hub (radius, user answer 2026-11-17)", "hub_radius_mm": 100}
+ },
+ "extra_constraints": [],
+ "limits": {"max_thickness_mm": null, "max_width_mm": null, "max_height_mm": null},
+ "materials": {"allow": "all", "exclude": [], "allow_caution": false},
+ "layups": {"allow": "all", "min_plies": 3, "max_plies": 5, "cross_ply_only": false},
+ "geometries": {"allow": "all", "exclude": []},
+ "max_iterations": 100,
+ "verification": {"min": 5, "max": 10},
+ "_clarifications": "User answers 2026-11-17 (chat): lateral bending load = y direction (buckling about z axis); transverse stiffness = tip load along z (sign -1, opposite sense as in earlier studies); hub 100 mm is the RADIUS; torsion added to study.py as a new constraint (step loadcases; user-approved); Abaqus scratch under F:/Tara/abaqus_scratch allowed (temporary, removed by run_abaqus.py). 'No material failure throughout': Hashin F < 1 in the static 25 N case (objective-constraints), the 100 N mm torque case and the 50 N lateral tip-load case (linear); the nonlinear buckling path is not failure-checked (the skill does not save its fields). CPU cap: user 16; PROTOCOL 6a caps Abaqus at 8 per job; OpenSees buckling scan workers 16 (study.py BUCKLING_SOLVER)."
+}

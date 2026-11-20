@@ -1,0 +1,29 @@
+ Abaqus/Standard 2026                  DATE 19-Nov-2026 TIME 14:40:42
+ SUMMARY OF JOB INFORMATION:
+ STEP  INC ATT SEVERE EQUIL TOTAL  TOTAL      STEP       INC OF       DOF    IF
+               DISCON ITERS ITERS  TIME/    TIME/LPF    TIME/LPF    MONITOR RIKS
+               ITERS               FREQ
+   1     1   1     0     3     3             0.0500     0.05000               R
+   1     2   1     0     3     3             0.100      0.05000               R
+   1     3   1     0     3     3             0.175      0.07500               R
+   1     4   1     0     3     3             0.275      0.09999               R
+   1     5   1     0     3     3             0.375      0.09998               R
+   1     6   1     0     3     3             0.475      0.09996               R
+   1     7   1     0     3     3             0.575      0.09993               R
+   1     8   1     0     3     3             0.675      0.09986               R
+   1     9   1     0     3     3             0.774      0.09964               R
+   1    10   1     0     3     3             0.873      0.09885               R
+   1    11   1     0     3     3             0.970      0.09696               R
+   1    12   1     0     3     3             1.07       0.09538               R
+   1    13   1     0     3     3             1.16       0.09464               R
+   1    14   1     0     3     3             1.25       0.09425               R
+   1    15   1     0     3     3             1.35       0.09402               R
+   1    16   1     0     3     3             1.44       0.09384               R
+   1    17   1     0     3     3             1.54       0.09367               R
+   1    18   1     0     3     3             1.63       0.09349               R
+   1    19   1     0     3     3             1.72       0.09327               R
+   1    20   1     0     3     3             1.82       0.09299               R
+   1    21   1     0     3     3             1.91       0.09262               R
+   1    22   1     0     3     3             2.00       0.09212               R
+                          
+ THE ANALYSIS HAS COMPLETED SUCCESSFULLY

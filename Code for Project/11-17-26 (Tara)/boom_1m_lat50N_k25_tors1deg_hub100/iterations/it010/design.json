@@ -1,0 +1,61 @@
+{
+ "iter": 10,
+ "key": "L028/Y031/M022",
+ "material": "L028",
+ "layup": "Y031",
+ "layup_str": "[0/0/0/0/0]",
+ "geometry": "M022",
+ "type": "OM",
+ "section": {
+  "type": "boom",
+  "id": "M022"
+ },
+ "R": 37.3,
+ "b": 366.41714339008655,
+ "L": 1000.0,
+ "size": 2.5,
+ "name": "it010_L028_Y031_M022",
+ "reason": "Plan row 10 (user-agreed): omega-family calibration of the closed-boom bending-buckling estimate. Material L028 (M55J/PAEK): the omega designs' material (it001/3/4). Geometry M022: an omega not yet run, whose lightest stiffness-feasible design is buckling-limited. Layup Y031 [0/0/0/0/0] (0.175 mm): all-0 is inside the LBA-fit domain (0/90 plies), so the result tests the fit itself on an omega; 106.1 g, k_cal 25.5 N/mm, F_hub 0.20, buckling estimate 45,834 (-8%); its B runs on the 4 mm coarse mesh (cheap).",
+ "override": "Calibration probe per the agreed plan: C008 results it006/it007/it008 (estimate >= 11-17% conservative, 4-ply off-axis) and it009 (3-ply off-axis: strength 25,269-28,809 vs estimate 28,803, i.e. not conservative) show the estimate's accuracy is family/laminate dependent; the omega family has no B peak yet.",
+ "screen_rank": 174,
+ "h_mm": 0.175,
+ "k_est": 26.62448351686512,
+ "buckling_est": 45834.01007059011,
+ "Ex": 310000.00000000006,
+ "EIz": 13763346506.093061,
+ "EIy": 38124757231.73183,
+ "F_flat": 0.15869154749805653,
+ "F_hub": 0.19619378949618874,
+ "r_min": 37.3,
+ "cross_ply": true,
+ "GJ_est": 284439518.0777455,
+ "twist_est": 0.020143396353744958,
+ "kGAz": 74959.72034467263,
+ "kGAy": 177369.78935999115,
+ "buckling_est_cal": 40211.27120282334,
+ "abd_check": {
+  "A": 6.7e-16,
+  "B": 1e-16,
+  "D": 0.0044,
+  "D_expected": 0.0044,
+  "ok": true
+ },
+ "failure_log": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it010/logs/failure.log",
+ "F_governing_fc": 0.1587,
+ "tip_twist_deg": 0.019278457994626443,
+ "GJ_fe": 297201049.63297683,
+ "loadcase_F": {
+  "torsion": 6.875e-07,
+  "lateral50N": 0.003001
+ },
+ "buckling_value": null,
+ "buckling_kind": "skipped: already violates bending stiffness",
+ "k_fe": 24.573295978997294,
+ "k_beam": 26.62448351686512,
+ "k_ratio": 0.9229585979923888,
+ "sanity": [
+  "FE/beam ratio 0.923 differs > 5% from the Abaqus-verified iteration 1 (0.585)"
+ ],
+ "feasible": false,
+ "objective": 0.10606211030002667
+}

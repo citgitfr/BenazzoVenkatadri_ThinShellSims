@@ -1,0 +1,18 @@
+# === OpenSeesPy piece: laminate (written by the laminate-properties skill) ===
+# [30/0/0/30] h = 0.14 mm, L029 AS4D / PEEK (Toray Cetex TC1200)
+# 2 section(s): one coincident ASDShellQ4 per facet and distinct ply angle
+# provides: SECTIONS [(section tag, ply angle from the facet x axis)], LAMINATE (JSON, results file)
+# needs:    a model with 6 DOFs per node: ops.model('basic', '-ndm', 3, '-ndf', 6)
+LAMINATE = '{"kind": "laminate", "name": "", "n_sub": 4, "merge": true, "G_out": null, "materials": [{"E1": 135000.0, "E2": 10000.0, "E3": 10000.0, "nu12": 0.32, "nu13": 0.32, "nu23": 0.49, "G12": 5200.0, "G13": 5200.0, "G23": 3355.7046979865772, "rho": 0.0, "nu23_assumed": false, "nu21": 0.023703703703703703, "nu31": 0.023703703703703703, "nu32": 0.49, "Xt": 2410.0, "Xc": 1300.0, "Yt": 86.0, "Yc": 176.0, "S": 152.0, "t_ply": 0.034999999999999996, "name": "L029 AS4D / PEEK (Toray Cetex TC1200)"}], "plies": [{"theta": 30.0, "t": 0.034999999999999996, "mat": 0}, {"theta": 0.0, "t": 0.034999999999999996, "mat": 0}, {"theta": 0.0, "t": 0.034999999999999996, "mat": 0}, {"theta": 30.0, "t": 0.034999999999999996, "mat": 0}]}'
+
+# --- ply materials: ElasticOrthotropic -> PlaneStress -> PlateFromPlaneStress ---
+ops.nDMaterial('ElasticIsotropic', 1, 0.0, 0.0)
+ops.nDMaterial('ElasticOrthotropic', 2, 135000.0, 10000.0, 10000.0, 0.32, 0.49, 0.023703703703703703, 5200.0, 3355.7046979865772, 5200.0, 0.0)
+ops.nDMaterial('PlaneStress', 3, 2)
+ops.nDMaterial('PlateFromPlaneStress', 4, 3, 5200.0)
+
+# --- shell sections, layers bottom (-z) to top (+z): material, thickness ---
+ops.section('LayeredShell', 1, 16, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999)
+ops.section('LayeredShell', 2, 16, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 4, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999, 1, 0.008749999999999999)
+
+SECTIONS = [(1, 30.0), (2, 0.0)]

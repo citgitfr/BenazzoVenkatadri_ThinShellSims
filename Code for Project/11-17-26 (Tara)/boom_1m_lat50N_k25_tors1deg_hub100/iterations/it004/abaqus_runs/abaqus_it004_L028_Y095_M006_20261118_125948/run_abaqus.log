@@ -1,0 +1,25 @@
+$ C:\SIMULIA\Commands2026\abaqus.BAT cae noGUI=abaqus_it004_L028_Y095_M006.py
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it004\abaqus_runs\abaqus_it004_L028_Y095_M006_20261118_125948)
+Successfully checked out QAE/1 from DSLS server r1132102715640-usw1-licensing-2.3dexperience.3ds.com
+Successfully checked out QAX/1 from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+Abaqus License Manager checked out the following license:
+"QAE" from DSLS server r1132102715640-usw1-licensing.3dexperience.3ds.com
+<10 out of 11 licenses remain available>.
+shell normal flipped on the face through [-75.3713218055051, 0.0]
+shell normal flipped on the face through [75.371321805505, 0.0]
+ODB extraction: done by run_abaqus.py after this script (abaqus python odb_extract.py)
+=== it004_L028_Y095_M006_S4R_2p7mm: S4R, 2.7 mm mesh, 52540 elements, 52682 nodes
+Report node displacement (final frame)
+[PASS] uy                                 Abaqus = -0.0084441   OpenSees = -0.008451   diff = +0.08%
+[PASS] uz                                 Abaqus = -0.93561   OpenSees = -0.93519   diff = -0.04%
+[PASS] ry                                 Abaqus = +0.0012276   OpenSees = +0.0012271   diff = +0.04%
+[PASS] rz                                 Abaqus = +9.2645e-05   OpenSees = +9.257e-05   diff = +0.08%
+[PASS] max |u_i| over the model [mm]      Abaqus = +0.93561   OpenSees = +0.93519   diff = +0.04%
+Top-ply top-surface stress, ply axes [MPa] (section point 30), largest magnitude
+[CHECK] s1 (S11)                           Abaqus = -4.9814   OpenSees = +13.059   diff = -138.15%
+[CHECK] s2 (S22)                           Abaqus = -0.10458   OpenSees = +0.7529   diff = -113.89%
+[CHECK] t12 (S12)                          Abaqus = +0.181   OpenSees = -0.90872   diff = +119.92%
+
+SOME COMPARISONS DIFFER BY MORE THAN 3% (see CHECK lines)
+$ C:\SIMULIA\Commands2026\abaqus.BAT python F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\verification\odb_extract.py it004_L028_Y095_M006_S4R_2p7mm.odb it004_L028_Y095_M006_S4R_2p7mm_odb.npz
+(cwd F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it004\abaqus_runs\abaqus_it004_L028_Y095_M006_20261118_125948)

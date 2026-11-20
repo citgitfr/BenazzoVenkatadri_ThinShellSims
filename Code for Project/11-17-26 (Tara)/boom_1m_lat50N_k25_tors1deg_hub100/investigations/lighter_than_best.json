@@ -1,0 +1,167 @@
+{
+ "final_design_screen_mass_g": 105.51466859394158,
+ "assumptions": {
+  "K_CAL_MAX": 0.986,
+  "B_FACTOR_MAX": {
+   "C008": 1.37,
+   "C006": 1.27,
+   "C007": 1.11,
+   "C005": 1.05
+  },
+  "B_FACTOR_OTHER": 1.37,
+  "GJ_required_Nmm2": 5729577.951308232
+ },
+ "counts": {
+  "total combinations": 716400,
+  "heavier than the final design": 69437,
+  "lighter than the final design": 646963
+ },
+ "lighter_first_failed_check": {
+  "1 coiling: Hashin F >= 1 flattened or on the hub": 314931,
+  "2 torsion: GJ below the requirement": 232896,
+  "3 stiffness: k_est x 0.986 < 25 N/mm": 98976,
+  "4 buckling: estimate x best measured family factor < 50,000 N mm": 151,
+  "5 not excluded by the screen": 9
+ },
+ "lighter_by_type": {
+  "TS": {
+   "2 torsion: GJ below the requirement": 98811,
+   "1 coiling: Hashin F >= 1 flattened or on the hub": 80289
+  },
+  "TRAC": {
+   "2 torsion: GJ below the requirement": 102743,
+   "1 coiling: Hashin F >= 1 flattened or on the hub": 76357
+  },
+  "OM": {
+   "3 stiffness: k_est x 0.986 < 25 N/mm": 71557,
+   "2 torsion: GJ below the requirement": 18987,
+   "1 coiling: Hashin F >= 1 flattened or on the hub": 76422
+  },
+  "CO": {
+   "3 stiffness: k_est x 0.986 < 25 N/mm": 27419,
+   "4 buckling: estimate x best measured family factor < 50,000 N mm": 151,
+   "2 torsion: GJ below the requirement": 12355,
+   "1 coiling: Hashin F >= 1 flattened or on the hub": 81863,
+   "5 not excluded by the screen": 9
+  }
+ },
+ "not_excluded": [
+  {
+   "design": "L006/Y025/C008",
+   "type": "CO",
+   "layup": "Y025",
+   "mass_g": 102.83,
+   "k_est": 27.12,
+   "k_opt": 26.74,
+   "buckling_est": 43644,
+   "buckling_opt": 59792,
+   "F_hub": 0.868,
+   "k_with_C008_60_calibration": 26.39,
+   "tested_iteration": 7
+  },
+  {
+   "design": "L006/Y026/C008",
+   "type": "CO",
+   "layup": "Y026",
+   "mass_g": 102.83,
+   "k_est": 25.41,
+   "k_opt": 25.05,
+   "buckling_est": 44672,
+   "buckling_opt": 61200,
+   "F_hub": 0.59,
+   "k_with_C008_60_calibration": 24.72,
+   "tested_iteration": null
+  },
+  {
+   "design": "L006/Y029/C008",
+   "type": "CO",
+   "layup": "Y029",
+   "mass_g": 102.83,
+   "k_est": 27.12,
+   "k_opt": 26.74,
+   "buckling_est": 43644,
+   "buckling_opt": 59792,
+   "F_hub": 0.868,
+   "k_with_C008_60_calibration": 26.39,
+   "tested_iteration": 8
+  },
+  {
+   "design": "L006/Y030/C008",
+   "type": "CO",
+   "layup": "Y030",
+   "mass_g": 102.83,
+   "k_est": 25.41,
+   "k_opt": 25.05,
+   "buckling_est": 44672,
+   "buckling_opt": 61200,
+   "F_hub": 0.59,
+   "k_with_C008_60_calibration": 24.72,
+   "tested_iteration": null
+  },
+  {
+   "design": "L011/Y025/C006",
+   "type": "CO",
+   "layup": "Y025",
+   "mass_g": 105.5,
+   "k_est": 28.33,
+   "k_opt": 27.93,
+   "buckling_est": 43504,
+   "buckling_opt": 55251,
+   "F_hub": 0.706,
+   "k_with_C008_60_calibration": 27.57,
+   "tested_iteration": null
+  },
+  {
+   "design": "L011/Y026/C006",
+   "type": "CO",
+   "layup": "Y026",
+   "mass_g": 105.5,
+   "k_est": 26.78,
+   "k_opt": 26.41,
+   "buckling_est": 44285,
+   "buckling_opt": 56242,
+   "F_hub": 0.452,
+   "k_with_C008_60_calibration": 26.06,
+   "tested_iteration": 17
+  },
+  {
+   "design": "L011/Y027/C006",
+   "type": "CO",
+   "layup": "Y027",
+   "mass_g": 105.5,
+   "k_est": 25.36,
+   "k_opt": 25.01,
+   "buckling_est": 39536,
+   "buckling_opt": 50211,
+   "F_hub": 0.427,
+   "k_with_C008_60_calibration": 24.68,
+   "tested_iteration": null
+  },
+  {
+   "design": "L011/Y029/C006",
+   "type": "CO",
+   "layup": "Y029",
+   "mass_g": 105.5,
+   "k_est": 28.33,
+   "k_opt": 27.93,
+   "buckling_est": 43504,
+   "buckling_opt": 55251,
+   "F_hub": 0.706,
+   "k_with_C008_60_calibration": 27.57,
+   "tested_iteration": null
+  },
+  {
+   "design": "L011/Y030/C006",
+   "type": "CO",
+   "layup": "Y030",
+   "mass_g": 105.5,
+   "k_est": 26.78,
+   "k_opt": 26.41,
+   "buckling_est": 44285,
+   "buckling_opt": 56242,
+   "F_hub": 0.452,
+   "k_with_C008_60_calibration": 26.06,
+   "tested_iteration": null
+  }
+ ]
+}

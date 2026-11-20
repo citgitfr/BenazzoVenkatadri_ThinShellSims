@@ -1,0 +1,38 @@
+{
+ "name": "it010_L028_Y031_M022_buck",
+ "laminate": {
+  "json": "lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "M022"
+  },
+  "size": 2.5
+ },
+ "load": {
+  "type": "bending",
+  "axis": "z",
+  "sign": 1
+ },
+ "A": {
+  "step": 0.0008333333333333334,
+  "max": 0.05,
+  "n_coarse": 8,
+  "tol": 1e-06,
+  "max_iter": 10,
+  "workers": 16,
+  "n_rounds": 2,
+  "max_step": 0.006666666666666667
+ },
+ "B": {
+  "step": 0.0008333333333333334,
+  "max": 0.05,
+  "amplitude": 0.0175,
+  "control": "disp",
+  "tol": 1e-06,
+  "max_iter": 40,
+  "max_step": 0.006666666666666667
+ }
+}

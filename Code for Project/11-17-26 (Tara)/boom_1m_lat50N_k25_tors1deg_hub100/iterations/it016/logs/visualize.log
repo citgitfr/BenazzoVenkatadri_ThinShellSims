@@ -1,0 +1,7 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe shell-visualize/shell_visualize.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it016\results\it016_L029_Y024_C008.npz" --png "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it016\results\it016_L029_Y024_C008.png" --no-gui --boom C008
+
+web facets: 888 of 23088 (the web facets of the FE model, which carry the doubled mirror laminate)
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it016\results\it016_L029_Y024_C008.vtp: 23088 facets, 23194 nodes
+k_xx [1/mm]: min -0.00016216, max 0.00016215
+hashin_max [-]: min 1.2687e-08, max 0.00036025
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it016\results\it016_L029_Y024_C008.png

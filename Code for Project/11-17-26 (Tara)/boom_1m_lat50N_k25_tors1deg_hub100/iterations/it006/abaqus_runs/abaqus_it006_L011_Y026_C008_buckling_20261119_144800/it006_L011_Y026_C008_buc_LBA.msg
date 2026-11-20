@@ -1,0 +1,243 @@
+1
+
+   Abaqus 2026                                  Date 19-Nov-2026   Time 14:49:03
+   For use by CAL TECH under license from Dassault Systemes or its subsidiary.
+
+                                                                                 
+                                                                                 
+ STEP    1     INCREMENT     1     STEP TIME    0.00    
+
+
+                        S T E P       1     C A L C U L A T I O N   O F   E I G E N V A L U E S
+
+                                            F O R   B U C K L I N G   P R E D I C T I O N
+
+
+
+                                                                                          
+
+     THE LANCZOS EIGENSOLVER IS USED FOR THIS ANALYSIS
+     SYSTEM DATA WILL BE WRITTEN TO THE .SIM FILE
+
+     Abaqus WILL COMPUTE UNCOUPLED
+      STRUCTURAL AND ACOUSTIC MODES
+     NUMBER OF EIGENVALUES                      4
+     SMALLEST EIGENVALUE OF INTEREST                 0.0000    
+     MAXIMUM NUMBER OF STEPS WITHIN RUN               30
+     BLOCK SIZE FOR LANCZOS PROCEDURE                  4
+     THE BUCKLING MODE CONSTRAINTS 
+      ARE DEFINED AS LOAD CASE 2
+                              ONLY INITIAL STRESS EFFECTS ARE INCLUDED IN THE
+                              STIFFNESS MATRIX
+
+     THIS IS A LINEAR PERTURBATION STEP.
+     ALL LOADS ARE DEFINED AS CHANGE IN LOAD TO THE REFERENCE STATE
+
+     EXTRAPOLATION WILL NOT BE USED
+
+     CHARACTERISTIC ELEMENT LENGTH      4.46    
+
+     DETAILS REGARDING ACTUAL SOLUTION WAVEFRONT REQUESTED
+
+     DETAILED OUTPUT OF DIAGNOSTICS TO DATABASE REQUESTED
+
+     PRINT OF INCREMENT NUMBER, TIME, ETC., TO THE MESSAGE FILE EVERY     1  INCREMENTS
+
+     ELEMENT OPERATIONS WILL NOT BE CARRIED OUT IN PARALLEL
+ 
+	SYMMETRIC HYBRID DIRECT SPARSE SOLVER RUNNING ON
+ 	1 HOST x 1 MPI RANK PER HOST x 8 THREADS PER RANK
+        NUMBER OF EQUATIONS:  137916
+        NUMBER OF RHS:        1
+        NUMBER OF FLOPS:      1.973e+10
+        SOLVER ELAPSED TIME:  459ms
+
+     CHECK POINT  START OF SOLVER     
+ 
+	DMP LANCZOS RUNNING ON
+ 	1 HOST x 1 MPI RANK PER HOST x 8 THREADS PER RANK
+  
+ COMPUTER PRECISION USED BY ABAQUS       2.22045e-16
+ CONVERGENCE CRITERION FOR LANCZOS RUN   1.81899e-12
+  
+ NUMBER OF EQUATIONS                                                          137916
+ NUMBER OF UNRESTRAINED DEGREES OF FREEDOM                                    128033
+ HEURISTIC SCALE FOR THE FIRST NONZERO EIGENVALUES (PROBLEM SCALE)   2.40996e-05
+ INITIAL SHIFT VALUE                                                 2.40996e-05
+  
+ NUMBER OF CPUS USED BY DIRECT SOLVER     8
+  
+ NUMBER OF NEGATIVE EIGENVALUES     0
+ NUMBER OF POSITIVE EIGENVALUES    137916
+ NUMBER OF NEGATIVE EIGENVALUES NOT ASSOCIATED WITH LAGRANGE MULTIPLIERS     0
+ NUMBER OF LAGRANGE MULTIPLIERS     0
+  
+ COMPUTATIONAL INTERVAL FOR THE INITIAL LANCZOS RUN
+ 
+ EIGENVALUES NEEDED TO THE RIGHT OF SHIFT VALUE    4
+ EIGENVALUES NEEDED TO THE LEFT OF SHIFT VALUE     4
+ RIGHT BOUNDARY OF THE COMPUTATIONAL INTERVAL   5.42675e+10
+ LEFT BOUNDARY OF THE COMPUTATIONAL INTERVAL    0.00000e+00
+ INITIAL BLOCK CONTAINS LINEARLY DEPENDENT VECTORS. REDUCING THE BLOCK SIZE ACCORDINGLY
+  
+ NEW BLOCK SIZE               3
+  
+ LANCZOS RUN TERMINATED. NUMBER OF STEPS:   30
+ MAXIMUM NUMBER OF STEPS IS DONE
+  
+ NUMBER OF ACCEPTED EIGENVALUES    0
+  
+ FACTORIZATION WITH NEW SHIFT VALUE IS REQUIRED
+  
+ TRUST INTERVALS AFTER LANCZOS RUN AND COMPRESSION
+  
+ NUMBER OF TRUST INTERVALS    1
+  
+ -------------------------------------------------------------------------------------
+ | KEY | INSIDE |      INERTIAS     |  SENTINELS  |   OUTSIDE   |  NEED TO FIND      |
+ |      ENDS OF INTERVAL     |     ENDS OF SENTINEL      |   COMPUTATIONAL INTERVAL  |
+ -------------------------------------------------------------------------------------
+ |  +  |      0 |        0        0 |     0     0 |     0     0 |      4     4       |
+ |  0.00000e+00  2.40996e-05 |  0.00000e+00  2.40996e-05 |  0.00000e+00  5.42675e+10 |
+ -------------------------------------------------------------------------------------
+  
+ DATA FOR CHOOSING SHIFT
+  
+ NUMBER OF EIGENVALUES NEEDED IN THE PRIMARY TRUST INTERVAL    4
+  
+ NUMBER OF MODES FORMING SENTINEL TO THE RIGHT    0
+ SHIFT RIGHT         1.07227e+00
+  
+ NUMBER OF MODES FORMING SENTINEL TO THE LEFT     0
+ SHIFT LEFT         -2.16897e-04
+  
+ SHIFTING TO THE RIGHT DIRECTION
+ NEW SHIFT           1.07227e+00
+  
+ NUMBER OF NEGATIVE EIGENVALUES     0
+ NUMBER OF POSITIVE EIGENVALUES    137916
+ NUMBER OF NEGATIVE EIGENVALUES NOT ASSOCIATED WITH LAGRANGE MULTIPLIERS     0
+ NUMBER OF LAGRANGE MULTIPLIERS     0
+  
+ NEW LANCZOS RUN IS REQUIRED
+  
+ TYPE OF RUN: EXPAND THE TRUST INTERVAL TO THE RIGHT
+ EIGENVALUES NEEDED TO THE RIGHT     4
+ EIGENVALUES NEEDED TO THE LEFT      0
+ RIGHT BOUNDARY OF THE INTERVAL   5.42675e+10
+ LEFT BOUNDARY OF THE INTERVAL    1.07227e+00
+  
+ TRUST INTERVALS AFTER FACTORIZATION AND COMPRESSION
+  
+ -------------------------------------------------------------------------------------
+ | KEY | INSIDE |      INERTIAS     |  SENTINELS  |   OUTSIDE   |  NEED TO FIND      |
+ |      ENDS OF INTERVAL     |     ENDS OF SENTINEL      |   COMPUTATIONAL INTERVAL  |
+ -------------------------------------------------------------------------------------
+ |  +  |      0 |        0        0 |     0     0 |     0     0 |      4     4       |
+ |  0.00000e+00  1.07227e+00 |  0.00000e+00  1.07227e+00 |  0.00000e+00  5.42675e+10 |
+ -------------------------------------------------------------------------------------
+  
+ LANCZOS RUN TERMINATED. NUMBER OF STEPS:   10
+ ALL THE EIGENVALUES REQUESTED ON THIS LANCZOS RUN ARE FOUND
+  
+ NUMBER OF ACCEPTED EIGENVALUES    4
+  
+ ACCEPTED EIGENVALUES
+   1.08021e+00  1.08023e+00  1.08195e+00  1.08202e+00
+  
+ FACTORIZATION WITH NEW SHIFT VALUE IS REQUIRED
+  
+ TRUST INTERVALS AFTER LANCZOS RUN AND COMPRESSION
+  
+ NUMBER OF TRUST INTERVALS    1
+  
+ -------------------------------------------------------------------------------------
+ | KEY | INSIDE |      INERTIAS     |  SENTINELS  |   OUTSIDE   |  NEED TO FIND      |
+ |      ENDS OF INTERVAL     |     ENDS OF SENTINEL      |   COMPUTATIONAL INTERVAL  |
+ -------------------------------------------------------------------------------------
+ |  +  |      0 |        0        0 |     0     0 |     0     0 |      4     4       |
+ |  0.00000e+00  1.07227e+00 |  0.00000e+00  1.07227e+00 |  0.00000e+00  5.42675e+10 |
+ -------------------------------------------------------------------------------------
+  
+ DATA FOR CHOOSING SHIFT
+  
+ NUMBER OF EIGENVALUES NEEDED IN THE PRIMARY TRUST INTERVAL    4
+  
+ NUMBER OF MODES FORMING SENTINEL TO THE RIGHT    4
+ SHIFT RIGHT         1.08379e+00
+  
+ NUMBER OF MODES FORMING SENTINEL TO THE LEFT     0
+ SHIFT LEFT          1.07227e+00
+  
+ SHIFTING TO THE RIGHT DIRECTION
+ NEW SHIFT           1.08379e+00
+  
+ NUMBER OF NEGATIVE EIGENVALUES     4
+ NUMBER OF POSITIVE EIGENVALUES    137912
+ NUMBER OF NEGATIVE EIGENVALUES NOT ASSOCIATED WITH LAGRANGE MULTIPLIERS     4
+ NUMBER OF LAGRANGE MULTIPLIERS     0
+  
+ THE REQUIRED NUMBER OF EIGENVALUES IS FOUND
+  
+ FINAL TRUST INTERVAL
+  
+ -------------------------------------------------------------------------------------
+ | KEY | INSIDE |      INERTIAS     |  SENTINELS  |   OUTSIDE   |  NEED TO FIND      |
+ |      ENDS OF INTERVAL     |     ENDS OF SENTINEL      |   COMPUTATIONAL INTERVAL  |
+ -------------------------------------------------------------------------------------
+ |  +  |      4 |        0        4 |     0     0 |     0     0 |      4     0       |
+ |  0.00000e+00  1.08379e+00 |  0.00000e+00  1.08379e+00 |  0.00000e+00  1.08379e+00 |
+ -------------------------------------------------------------------------------------
+  
+ FIRST EIGENVALUE REQUESTED BY THE USER     1
+
+ ***WARNING: THERE MAY BE MORE EIGENVALUES IN THE SPECIFIED RANGE THAN 
+             REQUESTED. IF THE NUMBER OF EIGENVALUES WAS NOT EXPLICITLY 
+             REQUESTED, SPECIFY THE MAXIMUM NUMBER OF EIGENVALUES TO BE 
+             EXTRACTED.
+  
+ EIGENVALUES REQUESTED BY THE USER : 4
+   1.08021e+00  1.08023e+00  1.08195e+00  1.08202e+00
+  
+ EIGENVALUE EXTRACTION USING THE LANCZOS EIGENSOLVER IS COMPLETE
+ NUMBER OF LANCZOS RUNS       :   2
+ NUMBER OF LANCZOS STEPS      :  40
+ NUMBER OF FACTORIZATIONS     :   3
+ NUMBER OF BACK SUBSTITUTIONS :  42
+
+     CHECK POINT  END OF SOLVER       
+
+       ELAPSED USER TIME (SEC)      =       5.E+01
+       ELAPSED SYSTEM TIME (SEC)    =       5.E+00
+       ELAPSED TOTAL CPU TIME (SEC) =       5.E+01
+       ELAPSED WALLCLOCK TIME (SEC) =           18
+
+
+          THE ANALYSIS HAS BEEN COMPLETED
+
+
+
+     ANALYSIS SUMMARY:
+     TOTAL OF          1  INCREMENTS
+                       0  CUTBACKS IN AUTOMATIC INCREMENTATION
+                       1  ITERATIONS INCLUDING CONTACT ITERATIONS IF PRESENT
+                      45  PASSES THROUGH THE EQUATION SOLVER OF WHICH 
+                       3  INVOLVE MATRIX DECOMPOSITION, INCLUDING
+                       0  DECOMPOSITION(S) OF THE MASS MATRIX
+                       1  REORDERING OF EQUATIONS TO MINIMIZE WAVEFRONT
+                       0  ADDITIONAL RESIDUAL EVALUATIONS FOR LINE SEARCHES
+                       0  ADDITIONAL OPERATOR EVALUATIONS FOR LINE SEARCHES
+                       1  WARNING MESSAGES DURING USER INPUT PROCESSING
+                       1  WARNING MESSAGES DURING ANALYSIS
+                       0  ANALYSIS WARNINGS ARE NUMERICAL PROBLEM MESSAGES
+                       0  ANALYSIS WARNINGS ARE NEGATIVE EIGENVALUE MESSAGES
+                       0  ERROR MESSAGES
+
+
+
+     JOB TIME SUMMARY
+       USER TIME (SEC)      =       6.E+01
+       SYSTEM TIME (SEC)    =       6.E+00
+       TOTAL CPU TIME (SEC) =       6.E+01
+       WALLCLOCK TIME (SEC) =           28
+       MEMORY PEAK (GB)     =            2

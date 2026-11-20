@@ -1,0 +1,18 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe shell-assemble-run/assemble_run.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\case_lateral50N.json" --laminate "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\lam.json"
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+WARNING: numeric analysis returns -1 -- Umfpackgenlinsolver::solve
+WARNING Linear::solveCurrentStep() -the LinearSOE failed in solve()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 1
+OpenSees > analyze failed, returned: -3 error flag
+UmfPack failed; retrying the linear step with SuperLU
+1000 x 379.979 mm shell, M006 branched section: 4 branches, 2 web(s) with the doubled (mirror) laminate; 370 x 142 = 52540 quads of 2.7 x 2.66-2.68 mm, 52682 nodes
+52540 elements, 316104 DOFs; linear solved in 167.8 s
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\results\it001_L028_Y001_M006_lateral50N.npz
+report node 52684: u = [0.0, 1.336758, -0.0, -0.0, 0.0, 0.001069]
+max |u| = 1.33936 mm
+laminate piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\it001_L028_Y001_M006_lateral50N_code\laminate_code.py
+    mesh piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\it001_L028_Y001_M006_lateral50N_code\mesh_code.py
+      bc piece: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\it001_L028_Y001_M006_lateral50N_code\bc_code.py
+joined script: F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it001\it001_L028_Y001_M006_lateral50N_opensees.py (105721 lines)
+it001_L028_Y001_M006_lateral50N_opensees.py ran in 192.5 s

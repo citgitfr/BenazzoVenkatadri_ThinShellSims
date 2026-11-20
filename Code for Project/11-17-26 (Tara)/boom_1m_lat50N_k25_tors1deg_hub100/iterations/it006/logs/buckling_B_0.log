@@ -1,0 +1,21 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe F:\Tara\BenazzoVenkatadri_ThinShellSims\.claude\skills\shell-buckling\boom_buckling.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\buckling.json" --out "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\buckling" --only B
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+A skipped: off-axis plies (ShellNLDKGQ takes 0/90 only)
+  step   1: param  0.00045712, load factor  6532.26, iters 5
+  step   2: param  0.0013714, load factor  19595.6, iters 7
+  step   3: param  0.0031998, load factor  45704, iters 18
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 0.00569214 (max: 1e-06, Norm deltaR: 0.122977)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 71785.9
+OpenSees > analyze failed, returned: -3 error flag
+WARNING: CTestNormDispIncr::test() - failed to converge 
+after: 40 iterations  current Norm: 2.05254e-05 (max: 1e-06, Norm deltaR: 0.0372788)
+AcceleratedNewton::solveCurrentStep() -The ConvergenceTest object failed in test()
+StaticAnalysis::analyze() - the Algorithm failed at step: 0 with domain at load factor 58611.6
+OpenSees > analyze failed, returned: -3 error flag
+  step   4: param  0.0036569, load factor  52209.7, iters 26
+  cutoff: load factor 52209.7 >= 50000, path stopped
+B (ASDShellQ4 imperfect path, amplitude 0.014 mm): peak 52210 at 0.0036569 (last point: path stopped or still rising); 6852 s
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\buckling\it006_L011_Y026_C008_buck.json

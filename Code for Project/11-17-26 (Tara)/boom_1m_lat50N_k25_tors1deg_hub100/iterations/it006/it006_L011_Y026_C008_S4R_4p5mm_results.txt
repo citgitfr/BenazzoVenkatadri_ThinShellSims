@@ -1,0 +1,16 @@
+shell normal flipped on the face through [-74.1067593808359, 0.0]
+shell normal flipped on the face through [74.1067593808359, 0.0]
+ODB extraction: done by run_abaqus.py after this script (abaqus python odb_extract.py)
+=== it006_L011_Y026_C008_S4R_4p5mm: S4R, 4.5 mm mesh, 23088 elements, 23192 nodes
+Report node displacement (final frame)
+[PASS] uy                                 Abaqus = -0.0018391   OpenSees = -0.0018585   diff = +1.04%
+[PASS] uz                                 Abaqus = -0.90006   OpenSees = -0.89902   diff = -0.12%
+[PASS] ry                                 Abaqus = +0.0011514   OpenSees = +0.0011507   diff = +0.06%
+[PASS] rz                                 Abaqus = +1.9995e-05   OpenSees = +2.0055e-05   diff = -0.30%
+[PASS] max |u_i| over the model [mm]      Abaqus = +0.90006   OpenSees = +0.89902   diff = +0.12%
+Top-ply top-surface stress, ply axes [MPa] (section point 24), largest magnitude
+[CHECK] s1 (S11)                           Abaqus = -0.81305   OpenSees = -4.2962   diff = +81.08%
+[CHECK] s2 (S22)                           Abaqus = +0.12527   OpenSees = +1.3122   diff = -90.45%
+[CHECK] t12 (S12)                          Abaqus = -0.05951   OpenSees = -1.0507   diff = +94.34%
+
+SOME COMPARISONS DIFFER BY MORE THAN 3% (see CHECK lines)

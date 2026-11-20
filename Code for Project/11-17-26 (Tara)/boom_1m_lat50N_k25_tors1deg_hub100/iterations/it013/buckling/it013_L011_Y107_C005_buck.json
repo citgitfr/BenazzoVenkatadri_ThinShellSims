@@ -1,0 +1,80 @@
+{
+ "case": {
+  "name": "it013_L011_Y107_C005_buck",
+  "laminate": {
+   "json": "lam.json"
+  },
+  "geometry": {
+   "L": 1000.0,
+   "section": {
+    "type": "boom",
+    "id": "C005"
+   },
+   "size": 4.5
+  },
+  "load": {
+   "type": "bending",
+   "axis": "z",
+   "sign": 1
+  },
+  "A": {
+   "step": 0.0008333333333333334,
+   "max": 0.05,
+   "n_coarse": 8,
+   "tol": 1e-06,
+   "max_iter": 10,
+   "workers": 16,
+   "n_rounds": 2,
+   "max_step": 0.006666666666666667
+  },
+  "B": {
+   "step": 0.0004898900293435737,
+   "max": 0.009797800586871474,
+   "amplitude": 0.0175,
+   "control": "disp",
+   "tol": 1e-06,
+   "max_iter": 40,
+   "max_step": 0.006666666666666667
+  },
+  "B_cutoff": 50000.0,
+  "B_pass": 50000,
+  "mode_file": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-17-26 (Tara)\\boom_1m_lat50N_k25_tors1deg_hub100\\buckling_seeds\\seed_40c27d6de04c.npz",
+  "mode_label": "segment LBA"
+ },
+ "B": {
+  "peak_load": 66551.07995375009,
+  "param_at_peak": 0.00538879032277931,
+  "amplitude": 0.0175,
+  "imperfection": "segment LBA",
+  "history": [
+   [
+    0.0,
+    0.0,
+    0.0
+   ],
+   [
+    0.0004898900293435737,
+    6060.556790958413,
+    4.0
+   ],
+   [
+    0.001469670088030721,
+    18179.65046736369,
+    5.0
+   ],
+   [
+    0.0034292302054050156,
+    42395.42929458388,
+    9.0
+   ],
+   [
+    0.00538879032277931,
+    66551.07995375009,
+    13.0
+   ]
+  ],
+  "time": 1732.7004068996757,
+  "peak_is_last_point": true,
+  "stop": "cutoff"
+ }
+}

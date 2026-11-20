@@ -1,0 +1,104 @@
+{
+ "iter": 8,
+ "key": "L006/Y029/C008",
+ "material": "L006",
+ "layup": "Y029",
+ "layup_str": "[-45/0/0/-45]",
+ "geometry": "C008",
+ "type": "CO",
+ "section": {
+  "type": "boom",
+  "id": "C008"
+ },
+ "R": 9,
+ "b": 462.0745935604293,
+ "L": 1000.0,
+ "size": 4.5,
+ "name": "it008_L006_Y029_C008",
+ "reason": "Mirror-layup check of the best design (plan row 8, user-agreed): it007 L006 [45/0/0/45] C008 102.2 g passed buckling by only 2% (B >= 51,014 N mm on the design mesh). Material L006 and geometry C008 kept (one variable changed). Layup Y029 [-45/0/0/-45] is its mirror (same mass, stiffness, coiling); the unbalanced layup's bend-twist coupling could make lateral buckling depend on the sign of the off-axis plies.",
+ "override": "it007 (L006/Y025/C008): FE B >= 51,014 N mm vs screen estimate 43,644 (C008 estimate >= 17% conservative); mirror check of the best design per the agreed plan.",
+ "screen_rank": 72,
+ "h_mm": 0.13999999999999999,
+ "k_est": 27.11894048449788,
+ "buckling_est": 43643.76043969391,
+ "Ex": 84691.28330825212,
+ "EIz": 10131357655.085571,
+ "EIy": 13289209249.154997,
+ "F_flat": 0.7839980639468165,
+ "F_hub": 0.8677486163177708,
+ "r_min": 9.0,
+ "cross_ply": false,
+ "GJ_est": 1730686844.0515056,
+ "twist_est": 0.003310580403959966,
+ "kGAz": 251670.7524561896,
+ "kGAy": 338495.7233499045,
+ "buckling_est_cal": 43643.76043969391,
+ "abd_check": {
+  "A": 3.8e-16,
+  "B": 4.6e-16,
+  "D": 0.0066,
+  "D_expected": 0.0039,
+  "ok": true
+ },
+ "failure_log": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it008/logs/failure.log",
+ "F_governing_fc": 0.784,
+ "tip_twist_deg": 0.0032550741537720157,
+ "GJ_fe": 1760198901.972397,
+ "loadcase_F": {
+  "torsion": 4.684e-08,
+  "lateral50N": 0.001719
+ },
+ "buckling_value": 50218.6343323904,
+ "buckling_kind": "B LOWER BOUND: path passed the cutoff 50000 (= 1 x requirement) on the 4.5 mm B mesh still rising; stopped there by design",
+ "buckling_A": null,
+ "buckling_B": 50218.6343323904,
+ "buckling_amplitude": 0.014,
+ "buckling_imperfection": "segment LBA",
+ "buckling_notes": [
+  "seed: segment LBA (segment L 72 mm, 4 x 8 mm, tiled; 160 s, cached)"
+ ],
+ "buckling_pipeline": "fast",
+ "buckling_B_size": 4.5,
+ "buckling_seed": {
+  "method": "segment LBA",
+  "model": "segment L 72 mm, 4 x 8 mm, tiled",
+  "ndof": 6723,
+  "lam": [
+   12655.769593742032,
+   16329.617844007786,
+   26903.2696207535,
+   31800.768729421783
+  ],
+  "lam_small": 50.0,
+  "times": {
+   "K0": 16.607877800241113,
+   "K1": 127.80508270021528,
+   "eig": 15.75460149999708,
+   "total": 160.16756200045347
+  },
+  "time": 160.16756200045347,
+  "target_dofs": 139164,
+  "key": {
+   "section": {
+    "type": "boom",
+    "id": "C008"
+   },
+   "L": 1000.0,
+   "size": 4.5,
+   "load": {
+    "type": "bending",
+    "axis": "z",
+    "sign": 1
+   }
+  },
+  "cached": true
+ },
+ "buckling_fine_check": null,
+ "buckling_time_s": 17166.670942,
+ "k_fe": 26.485229166310962,
+ "k_beam": 27.11894048449788,
+ "k_ratio": 0.9766321505610011,
+ "sanity": [],
+ "feasible": true,
+ "objective": 0.10218056481338945
+}

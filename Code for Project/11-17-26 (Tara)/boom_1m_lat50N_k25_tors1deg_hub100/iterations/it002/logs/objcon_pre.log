@@ -1,0 +1,21 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe objective-constraints/objective_constraints.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it002\results\it002_L038_Y001_C008.npz" --constraints "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\constraints.json" --boom C008 --flatten-radius 9.0 --json "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it002\objcon_pre.json" --value F_hub=0.2743793282878532 --value tip_twist_deg=0.007351426599920992 --value F_torsion=6.501e-07 --value F_lateral50N=0.002107
+
+Objective / constraints: it002_L038_Y001_C008  [[0/0/0] h = 0.105 mm]
+OBJECTIVE  minimize mass: 0.0756337 kg (75.63 g)
+CONSTRAINTS (g <= 0 is satisfied; g_rel = g / |limit|)
+  [satisfied    ] no failure: F_governing < 1.0  value 0.257877, limit 1, g -0.742123, g_rel -0.742123
+  [satisfied    ] boom length: L == 1000  value 1000, limit 1000, g -0.01, g_rel -1e-05
+  [satisfied    ] bending stiffness: abs(force_z) / abs(tip_uz) >= 25.0  value 25.0151, limit 25, g -0.0150802, g_rel -0.000603208
+  [not evaluated] buckling: buckling_load >= 50000  -- not evaluated: buckling_load not available (not in a static results file: run the shell-buckling skill and pass --value buckling_load=...)
+  [satisfied    ] torsional stiffness: tip_twist_deg <= 1.0  value 0.00735143, limit 1, g -0.992649, g_rel -0.992649
+  [satisfied    ] no failure under the torque: F_torsion < 1  value 6.501e-07, limit 1, g -0.999999, g_rel -0.999999
+  [satisfied    ] no failure: lateral50N: F_lateral50N < 1  value 0.002107, limit 1, g -0.997893, g_rel -0.997893
+  [satisfied    ] coiling on hub: F_hub < 1  value 0.274379, limit 1, g -0.725621, g_rel -0.725621
+FEASIBLE: unknown (constraints not evaluated)
+  note: web facets: 888 of 23088 (the web facets of the FE model, which carry the doubled mirror laminate)
+  note: catalog L038 rho = 1510 kg/m^3 (estimate)
+  note: tip = free end xL: rigid end master node at xL
+  note: S23 = Yc/2 (default)
+  note: coiling: flange flattened from r = 9 mm (given with --flatten-radius), F = 0.2579 (matrix compression)
+  note: critical point of the simulation: {'group': 'flange', 'facet': 22201, 'i': 1, 'j': 100, 'ply': 3, 'theta': 0.0, 'at': 'top', 'mode': 'matrix compression', 's1_s2_t12': [1.696633597503942, -0.05386407184740654, 1.262432808953531]}
+saved F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it002\objcon_pre.json

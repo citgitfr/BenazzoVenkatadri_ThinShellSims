@@ -1,0 +1,62 @@
+{
+ "iter": 1,
+ "key": "L028/Y001/M006",
+ "material": "L028",
+ "layup": "Y001",
+ "layup_str": "[0/0/0]",
+ "geometry": "M006",
+ "type": "OM",
+ "section": {
+  "type": "boom",
+  "id": "M006"
+ },
+ "R": 30.94,
+ "b": 379.97882704516115,
+ "L": 1000.0,
+ "size": 2.7,
+ "name": "it001_L028_Y001_M006",
+ "reason": "Material L028 (M55JB/LM-PAEK, E1 310 GPa) gives the highest stiffness per mass, and the 25 N/mm stiffness requirement governs the screen. Geometry M006 is the lightest predicted-feasible closed omega: k_est 28.8 N/mm vs 25, twist_est 0.033 deg vs 1 deg (Bredt), F_hub 0.099 on the 100 mm hub. Layup Y001 [0/0/0] is the thinnest (0.105 mm) with all plies on EI. First iteration checks the chain, including the new loadcases step.",
+ "override": "",
+ "screen_rank": 2,
+ "h_mm": 0.10499999999999998,
+ "k_est": 28.794513889935114,
+ "buckling_est": null,
+ "Ex": 310000.00000000006,
+ "EIz": 9598171296.645039,
+ "EIy": 23382915038.905113,
+ "F_flat": 0.08302967555558827,
+ "F_hub": 0.09915865104623184,
+ "r_min": 30.94,
+ "cross_ply": true,
+ "GJ_est": 173914884.10488647,
+ "twist_est": 0.03294472454613359,
+ "buckling_est_cal": 50000.0,
+ "abd_check": {
+  "A": 3.3e-16,
+  "B": 9.3e-17,
+  "D": 0.0044,
+  "D_expected": 0.0044,
+  "ok": true
+ },
+ "failure_log": "Code for Project/11-17-26 (Tara)/boom_1m_lat50N_k25_tors1deg_hub100/iterations/it001/logs/failure.log",
+ "F_governing_fc": 0.08303,
+ "tip_twist_deg": 0.031247349278169242,
+ "GJ_fe": 183362047.77891877,
+ "loadcase_F": {
+  "torsion": 1.896e-06,
+  "lateral50N": 0.008266
+ },
+ "buckling_value": null,
+ "buckling_kind": "skipped: already violates bending stiffness",
+ "k_fe": 16.851483465432,
+ "k_beam": 28.794513889935114,
+ "k_ratio": 0.5852324345479678,
+ "sanity": [
+  "tip stiffness -41.5% from thin-walled beam theory (tolerance 15%)"
+ ],
+ "feasible": false,
+ "objective": 0.06602158140566128,
+ "kGAz": 51356.15322906474,
+ "k_beam_timoshenko": 18.44994584127915,
+ "k_ratio_timoshenko": 0.9133622185344948
+}

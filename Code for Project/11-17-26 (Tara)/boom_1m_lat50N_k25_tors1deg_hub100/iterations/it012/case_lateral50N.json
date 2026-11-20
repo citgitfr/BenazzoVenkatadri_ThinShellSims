@@ -1,0 +1,53 @@
+{
+ "name": "it012_L038_Y031_C005_lateral50N",
+ "laminate": {
+  "json": "lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "C005"
+  },
+  "size": 4.5,
+  "boom": "C005"
+ },
+ "element": {
+  "type": "ASDShellQ4",
+  "corotational": false
+ },
+ "supports": [
+  {
+   "rigid_end": "x0",
+   "dofs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "rigid_end": "xL"
+  }
+ ],
+ "loads": [
+  {
+   "node": {
+    "rigid": "xL"
+   },
+   "force": [
+    0.0,
+    50.0,
+    0.0
+   ]
+  }
+ ],
+ "analysis": {
+  "type": "linear"
+ },
+ "report_node": {
+  "rigid": "xL"
+ }
+}

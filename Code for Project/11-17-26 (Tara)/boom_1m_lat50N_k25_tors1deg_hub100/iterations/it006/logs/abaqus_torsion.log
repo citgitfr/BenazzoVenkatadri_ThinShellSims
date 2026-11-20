@@ -1,0 +1,53 @@
+$ C:\Users\tvenkata\miniforge3\envs\shells\python.exe opensees-to-abaqus/opensees_to_abaqus.py "F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\it006_L011_Y026_C008_torsion_opensees.py"
+
+Using ASDShellQ4 - Developed by: Massimo Petracca, Guido Camata, ASDEA Software Technology
+OpenSees reference from F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\results\it006_L011_Y026_C008_torsion.npz (newer than the script; --rerun to run it again)
+wrote F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\abaqus_it006_L011_Y026_C008_torsion.py
+  32 cross-section piece(s), 222 elements along x, 4 ply/plies ([60/0/0/60] h = 0.14 mm), 1 support(s), 1 load(s), linear, S4R
+  OpenSees reference (it006_L011_Y026_C008_torsion.npz): report node u = [4.6e-05, 0.0, 0.0], max |u_i| = 0.005066 mm, top-ply stress (s1, s2, t12) = [-0.1232, 0.0216, 0.0199] MPa
+model check: it006_L011_Y026_C008_torsion_opensees.py (recorded OpenSees calls) vs abaqus_it006_L011_Y026_C008_torsion.py (stand-in Abaqus API)
+  [PASS] shell nodes = 222 x 103 grid of the case geometry (23192 nodes)  (max distance 0.0e+00 mm)
+  [PASS] shell normal of each of the 32 section piece(s) = OpenSees facet normal  (min cos 0.9696)
+  [PASS] Abaqus script runs on the stand-in API up to the job
+  [PASS] Abaqus seeds: 222 along x, 104 across the section  ([222] along, 104 across)
+  [PASS] flange: ply angle of each section the same on every facet (from the -local axes)  (max spread 2.8e-14 deg)
+  [PASS] flange: total thickness: Abaqus layup = OpenSees LayeredShell  (0.14 / 0.14 mm)
+  [PASS] flange: ply angles through the thickness (16 OpenSees layers in 4 Abaqus plies, bottom = SNEG)  (0 layer(s) differ)
+  [PASS] flange: ply E1, E2, nu12, G12, transverse G13 = OpenSees  (0 layer(s) differ)
+  [PASS] web: ply angle of each section the same on every facet (from the -local axes)  (max spread 0.0e+00 deg)
+  [PASS] web: total thickness: Abaqus layup = OpenSees LayeredShell  (0.28 / 0.28 mm)
+  [PASS] web: ply angles through the thickness (16 OpenSees layers in 8 Abaqus plies, bottom = SNEG)  (0 layer(s) differ)
+  [PASS] web: ply E1, E2, nu12, G12, transverse G13 = OpenSees  (0 layer(s) differ)
+  [PASS] fixed DOFs = OpenSees (1 nodes)  (0 node(s) differ)
+  [PASS] rigid ends: reference point and coupled nodes = OpenSees rigid end (rigidLink or spokes, 2)
+  [PASS] nodal forces and moments = OpenSees (1 loaded nodes)  (max |diff| / max |load| 0.0e+00)
+  [PASS] linear static (OpenSees LoadControl 1.0, Linear) -> Abaqus StaticStep nlgeom OFF
+  [PASS] report node 23194 = the Abaqus report point
+17/17 checks pass
+Abaqus run: python .claude/orchestrator/tools/run_abaqus.py <this abaqus_*.py> [--cpus N<=8]
+
+=== Abaqus verification of "it006_L011_Y026_C008_torsion" ===
+
+ON THE MACHINE WITH ABAQUS
+  1. Copy this ONE file into an empty folder there:
+       abaqus_it006_L011_Y026_C008_torsion.py
+  2. In that folder run:
+       abaqus cae noGUI=abaqus_it006_L011_Y026_C008_torsion.py
+     (4.5 mm mesh, S4R, job "it006_L011_Y026_C008_torsion_S4R_4p5mm". For another mesh / element, e.g.
+      abaqus cae noGUI=abaqus_it006_L011_Y026_C008_torsion.py -- 2.25 S4
+      the job and every file name below become "it006_L011_Y026_C008_torsion_S4_2p25mm".)
+  3. When it finishes, open it006_L011_Y026_C008_torsion_S4R_4p5mm_results.txt and check that it does NOT say
+     "ODB extraction failed". If it does, copy .claude/verification/odb_extract.py
+     from the project into the same folder and run:
+       abaqus python odb_extract.py it006_L011_Y026_C008_torsion_S4R_4p5mm.odb
+     Optional: open the model in Abaqus/CAE to check the set-up:
+       abaqus cae database=it006_L011_Y026_C008_torsion_S4R_4p5mm.cae
+
+COPY BACK TO THIS MACHINE, into F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006
+  it006_L011_Y026_C008_torsion_S4R_4p5mm_odb.npz        REQUIRED: the Abaqus results as plain arrays
+  it006_L011_Y026_C008_torsion_S4R_4p5mm_results.txt    recommended: run log and Abaqus vs embedded OpenSees values
+  not needed: it006_L011_Y026_C008_torsion_S4R_4p5mm.odb / .cae / .dat / .msg / .sta (keep them there for inspection)
+
+THEN TELL CLAUDE (paste):
+  Run the OpenSeesAbaqusResultsComparator agent on F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\results\it006_L011_Y026_C008_torsion.npz and F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\it006_L011_Y026_C008_torsion_S4R_4p5mm_odb.npz
+(also in F:\Tara\BenazzoVenkatadri_ThinShellSims\Code for Project\11-17-26 (Tara)\boom_1m_lat50N_k25_tors1deg_hub100\iterations\it006\abaqus_it006_L011_Y026_C008_torsion_instructions.txt)

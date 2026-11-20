@@ -1,0 +1,76 @@
+{
+ "name": "it004_L028_Y095_M006_buck",
+ "laminate": {
+  "json": "F:\\Tara\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-17-26 (Tara)\\boom_1m_lat50N_k25_tors1deg_hub100\\iterations\\it004\\lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "M006"
+  },
+  "size": 2.7
+ },
+ "supports": [
+  {
+   "rigid_end": "x0",
+   "dofs": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1
+   ]
+  },
+  {
+   "rigid_end": "xL",
+   "dofs": [
+    0,
+    0,
+    1,
+    1,
+    1,
+    0
+   ]
+  }
+ ],
+ "loads": [
+  {
+   "node": {
+    "rigid": "xL"
+   },
+   "moment": [
+    0,
+    0,
+    1
+   ]
+  }
+ ],
+ "buckling": {
+  "scale": 57331.06523493721,
+  "n_modes": 4,
+  "preload_fractions": [
+   0.5,
+   0.8,
+   0.95
+  ],
+  "riks": {
+   "amplitude": 0.0175,
+   "control": {
+    "rigid": "xL",
+    "dof": 6
+   },
+   "max_disp": 0.1,
+   "max_lpf": 2.0,
+   "max_inc": 300
+  },
+  "monitor": {
+   "rigid": "xL",
+   "dof": 6
+  }
+ },
+ "reference": {
+  "OpenSees B (ASDShellQ4 imperfect path peak)": 57331.06523493721
+ }
+}
