@@ -144,8 +144,8 @@ ax.set_xscale('log')
 ax.set_xlim(1, 3e6)
 ax.set_yticks(y, labels, fontsize=8)
 ax.set_xlabel('number of catalog designs (log scale)')
-ax.set_title(f'{lt["counts"]["lighter than the final design"]:,} catalog designs are lighter than the final design: '
-             'the first check each one fails', fontsize=9, loc='left', color=INK)
+ax.set_title(f'{lt["counts"]["lighter than the final design"]:,} catalog designs are lighter than the final '
+             'design:\nthe first check each one fails', fontsize=9, loc='left', color=INK)
 ax.grid(axis='y', visible=False)
 fig.tight_layout()
 fig.savefig(OUT / '1_screen_funnel.png')
@@ -224,7 +224,7 @@ cloud_figure('3_mass_vs_buckling.png', sel3, b_opt, 'b_s', 1e3, REQ_M, 'requirem
              notes=[(102.83, 61.2, 100.3, 70.5, 'untested L006 [+-60/0/0/+-60] C008:\nstiffness 24.7 N/mm with the C008\n[60/0/0/60] calibration (< 25)')])
 
 # ---- figure 4: iteration history ----
-fig, ax = plt.subplots(figsize=(7.2, 3.6))
+fig, ax = plt.subplots(figsize=(7.2, 4.2))
 best, bx, by = None, [], []
 for it in IT:
     if it['out'] == 'feasible' and (best is None or it['mass'] < best):
@@ -244,9 +244,9 @@ ax.scatter(6, [it['mass'] for it in IT if it['i'] == 6][0], s=260, marker='*', c
 ax.set_xticks(range(1, 21))
 ax.set_xlabel('iteration')
 ax.set_ylabel('mass (FE model, g)')
-ax.set_ylim(55, 140)
+ax.set_ylim(55, 150)
 ax.set_title('Path through the iterations: mass, outcome and section of each design', fontsize=9, loc='left', color=INK)
-ax.legend(fontsize=7, loc='upper left', ncol=2, frameon=True)
+ax.legend(fontsize=7, loc='upper center', bbox_to_anchor=(0.5, -0.17), ncol=3, frameon=False)
 fig.tight_layout()
 fig.savefig(OUT / '4_iteration_history.png')
 plt.close(fig)
@@ -256,7 +256,7 @@ fig, ax = plt.subplots(figsize=(7.2, 4.4))
 xs = np.array([10, 80])
 ax.plot(xs, xs, color=INK2, lw=1, label='path B = raw estimate')
 ax.axhline(REQ_M / 1e3, color=INK2, lw=1, ls='--')
-ax.text(79, REQ_M / 1e3 + 1.2, 'requirement', ha='right', fontsize=7.5, color=INK2)
+ax.text(71, REQ_M / 1e3 - 2.6, 'requirement', ha='right', fontsize=7.5, color=INK2)
 seen = set()
 for it in IT:
     if it['fe'] is None or it['est'] is None:
@@ -269,15 +269,16 @@ for it in IT:
     ax.scatter(it['est'] / 1e3, it['fe'] / 1e3, s=48, c=c, marker=mk, edgecolors='white', linewidths=1.2, zorder=5,
                label=None if key in seen else lab)
     seen.add(key)
-    off = {8: (4, -9), 15: (4, -10), 14: (-11, 4), 6: (-9, 4), 11: (4, -9), 20: (4, 3)}.get(it['i'], (4, 3))
+    off = {7: (-38, 6), 8: (-38, -6), 17: (6, -10), 6: (-30, 7), 14: (-2, 7), 15: (5, -9), 11: (4, -9), 20: (4, 3),
+           9: (-4, 6), 19: (4, -9), 2: (4, 3)}.get(it['i'], (4, 3))
     ax.annotate(f'{it["i"]} {it["geo"]}', (it['est'] / 1e3, it['fe'] / 1e3), xytext=off, textcoords='offset points',
                 fontsize=6.5, color=INK)
 ax.set_xlim(25, 72)
 ax.set_ylim(20, 72)
 ax.set_xlabel('raw buckling estimate of the screen (kN mm)')
 ax.set_ylabel('OpenSees path B buckling value (kN mm)')
-ax.set_title('Buckling estimate vs simulation: conservative for C008/C006 with angled outer plies, '
-             'too high for omegas', fontsize=9, loc='left', color=INK)
+ax.set_title('Buckling estimate vs simulation: conservative for C008/C006 with angled outer plies,\n'
+             'too high for omegas (M006)', fontsize=9, loc='left', color=INK)
 ax.legend(fontsize=7, loc='upper left', frameon=True)
 fig.tight_layout()
 fig.savefig(OUT / '5_buckling_calibration.png')
