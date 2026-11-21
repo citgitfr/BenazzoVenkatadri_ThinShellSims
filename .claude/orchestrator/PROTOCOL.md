@@ -174,8 +174,10 @@ an Abaqus verification or a stop is due.
 
 **Step 10. Next.** Do what `record` printed:
 - `converge <i>`: required for the first iteration and for every new best
-  design. Element size x 0.6; tip stiffness within 2%, F_sim within 10%. A
-  best design that does not converge is withdrawn.
+  design. Element size x 0.6; tip stiffness within 2%, F_sim within 10% or
+  both F_sim peaks below 0.5 (a clamp peak far from failure; user-approved
+  2026-11-20). A best design that does not converge is withdrawn; a converged
+  feasible design better than the current best becomes the best.
 - `verify <i>`: see section 5.
 - Back to steps 2-4 until `record` says STOP (diminishing returns: < 1%
   improvement over 15 iterations after at least 20; no untried candidate; or

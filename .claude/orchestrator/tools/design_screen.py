@@ -41,6 +41,11 @@ What is exact and what is an estimate
                        Open sections (TS/TRAC): St Venant only, which overstates the twist of a root-clamped
                        boom (warping restraint; 10-25% for 1 m booms), hence the looser open margin.
     twist_est_deg    = T L / GJ_est for the required torque T (requirements torsional_stiffness).
+                       Open sections (2026-11-20, user-approved): Vlasov with warping restrained at the clamped
+                       root AND the rigid tip fitting (the study's FE boundary conditions), torsion.vlasov_tip
+                       'restrained', E Cw = Ex h Cw(flange chain); GJ_est is then the effective T L / twist
+                       (St Venant alone kept in GJ_stvenant_Nmm2) and the open margin is 0.85. it019 TRAC R014:
+                       St Venant 109 deg vs FE 0.032 deg.
   study.py multiplies the estimates by FE/estimate ratios learned from the runs (calibration).
 
 Feasibility by estimate (screen_ok): strengths complete, F_flat < 1, F_hub < 1 (if a hub
@@ -169,6 +174,7 @@ def geometries(req):
                    s_total=sum(_len(p) * m for p, m in parts), fe_supported=fe_buildable(g),
                    I1=section_inertia(parts, 1.0), props1=None)
         geo['tors'] = torsion_geometry(parts)
+        geo['tors']['Cw1'] = open_warping_constant(parts) if not geo['tors']['A_cell'] else None
         geo['shear'] = shear_geometry(parts)
         if g['type'] == 'TS':
             import shell_buckling as sb
@@ -209,6 +215,28 @@ def torsion_geometry(parts):
         out['s_f'] = sum(seg_len(pa, pb) for pa, pb, lab, *_ in cell if lab == 'flange')
         out['s_w'] = sum(seg_len(pa, pb) for pa, pb, lab, *_ in cell if lab == 'web')
     return out
+
+
+def open_warping_constant(parts):
+    """Warping constant Cw [mm^6] at t = 1 of an open section's flange chain about its shear centre (as
+    shell-bc-load torsion.section_torsion: a TS arc, or the two TRAC flanges joined at the web; the web lies on
+    the symmetry axis through the pole, so its sectorial coordinate is 0). None if the flanges are not one chain."""
+    import torsion
+    import shell_buckling as sb
+    segs = [(a, b, 'web' if m > 1 else 'flange', 1.0, 1.0, 1.0) for P, m in parts for a, b in zip(P[:-1], P[1:])]
+    pts = torsion._chain_points(segs, 'flange')
+    return None if pts is None else float(sb.section_properties(pts, 1.0)['Cw'])
+
+
+def open_twist(Lm, tg, T, L):
+    """Tip twist [rad] of a root-clamped open section with the torque applied through a rigid tip fitting
+    (warping restrained at both ends, the study's FE boundary conditions): Vlasov, torsion.vlasov_tip
+    'restrained', E Cw = (Ex h) Cw1. Added 2026-11-20 (user-approved) after it019 (TRAC R014 L028 [0/0/0]):
+    St Venant alone predicted 109 deg, FE and Abaqus gave 0.032 deg. None if Cw is unknown."""
+    import torsion
+    if not tg.get('Cw1'):
+        return None
+    return torsion.vlasov_tip(T, L, torsion_GJ(Lm, tg), Lm.Ex * Lm.h * tg['Cw1'], tip='restrained')
 
 
 def torsion_GJ(Lm, tg):
@@ -438,9 +466,14 @@ def screen(req, top=30, max_rows=20000):
                         b_est = M_opp if buck.get('sense', 'opposite') == 'opposite' else M_eq
                     if b_est is not None and b_est < BUCK_MARGIN * buck['min_value']:
                         why.append('buckling estimate')
-                GJ_est = torsion_GJ(Lm, geo['tors'])
+                GJ_est = GJ_stv = torsion_GJ(Lm, geo['tors'])
                 twist_est = math.degrees(tors['torque_Nmm'] * length / GJ_est) if tors else None
-                if tors and GJ_est < TORS_MARGIN['closed' if geo['tors']['A_cell'] else 'open'] * GJ_req:
+                margin = TORS_MARGIN['closed' if geo['tors']['A_cell'] else 'open']
+                if tors and not geo['tors']['A_cell']:
+                    phi = open_twist(Lm, geo['tors'], tors['torque_Nmm'], length)
+                    if phi:   # effective GJ = T L / phi (Vlasov, warping restrained at both ends; verified 0.03%)
+                        twist_est, GJ_est, margin = math.degrees(phi), tors['torque_Nmm'] * length / phi, 0.85
+                if tors and GJ_est < margin * GJ_req:
                     why.append('torsion estimate')
                 mpl = Lm.areal * geo['s_total'] * 1e-3               # kg/m
                 for w in why:
@@ -455,7 +488,8 @@ def screen(req, top=30, max_rows=20000):
                                  Ex_MPa=Lm.Ex, EIz_Nmm2=EIz, EIy_Nmm2=EIy, kGAz_N=kGAz, kGAy_N=kGAy,
                                  k_est_N_mm=k_est,
                                  buckling_est=b_est, P_col=P_col, P_loc=P_loc, M_fold_opp=M_opp, M_fold_eq=M_eq,
-                                 F_flat=F_flat, F_hub=F_hub, GJ_est_Nmm2=GJ_est, twist_est_deg=twist_est))
+                                 F_flat=F_flat, F_hub=F_hub, GJ_est_Nmm2=GJ_est, twist_est_deg=twist_est,
+                                 GJ_stvenant_Nmm2=GJ_stv))
     sense = req.get('objective', {}).get('sense', 'minimize')
     q = req.get('objective', {}).get('quantity', 'mass')
     key = {'mass': 'mass_kg', 'bending_stiffness': 'k_est_N_mm', 'buckling': 'buckling_est'}.get(q, 'mass_kg')

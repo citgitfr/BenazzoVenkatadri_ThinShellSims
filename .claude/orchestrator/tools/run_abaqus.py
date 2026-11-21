@@ -22,7 +22,9 @@ Rules it enforces (the server is shared; see PROTOCOL.md):
 
 What it does:
   1. copies the script alone into a new, empty run folder
-     <script dir>/abaqus_runs/<script stem>_<YYYYmmdd_HHMMSS>/; Abaqus scratch (TEMP/TMP) goes to the
+     <ME295>/abaqus_runs/<iteration folder>_<YYYYmmdd_HHMMSS>/ (short path; since 2026-11-20, user-approved:
+     run folders inside study folders exceeded the 260-character limit), with a pointer file
+     <script dir>/abaqus_runs/<script stem>_<YYYYmmdd_HHMMSS>.txt; Abaqus scratch (TEMP/TMP) goes to the
      short path <ME295>/abaqus_scratch/<time>_<pid>/ (study paths exceed the 260-character Windows
      limit for scratch files) and is removed after the run;
   2. runs `abaqus cae noGUI=<script> [-- args]` there (cwd = run folder);
@@ -121,7 +123,16 @@ def main():
         die(f'arguments after -- are only "<size> <S4R|S4>", got {extra}')
 
     stamp = dt.datetime.now().strftime('%Y%m%d_%H%M%S')
-    rdir = script.parent / 'abaqus_runs' / f'{script.stem}_{stamp}'
+    # Run folder on a short path inside ME295 (user-approved 2026-11-20): inside a study's iteration folder the
+    # Abaqus job's own files exceeded the Windows 260-character limit ("CreateDirectory: The filename or
+    # extension is too long", study 11-19-26 (Orchestrator)/boom_1m_comp50N_k10_tors1deg_hub40). Results are
+    # still copied next to the script, and <script dir>/abaqus_runs/<stem>_<time>.txt points to the run folder.
+    rdir = ME295 / 'abaqus_runs' / f'{script.parent.name}_{stamp}'
+    ptr = script.parent / 'abaqus_runs' / f'{script.stem}_{stamp}.txt'
+    if not inside_me295(ptr):
+        die(f'pointer file {ptr} would be outside {ME295}: refused')
+    ptr.parent.mkdir(parents=True, exist_ok=True)
+    ptr.write_text(f'run folder: {rdir}\nscript: {script}\n', encoding='utf-8')
     # Scratch: short path inside ME295. A scratch folder inside the study's run folder exceeds the
     # Windows 260-character path limit ("Unable to create a temporary directory", 2026-11-06).
     scratch = ME295 / 'abaqus_scratch' / f'{stamp}_{os.getpid()}'

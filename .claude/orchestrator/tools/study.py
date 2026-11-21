@@ -11,6 +11,8 @@ ACTION; the orchestrator follows that line (PROTOCOL.md).
     study.py status [<study>] [--brief]            phase, iteration, best design, verifications, next action
     study.py candidates [<study>] [--n 10]         untried designs, calibrated estimates (choose from these)
     study.py choose --material L### --geometry T### --layup Y### --reason "..." [--override "..."]
+    study.py choose ... --override "..." --exploratory-screen <study>/<dir>/screen/screen.csv
+                                                   (a design rejected only on an estimate, at the user's request)
     study.py choose --r1 R1 --alpha ALPHA --reason "..."      (custom-design mode, see below)
     study.py run <iter> --step laminate|model|visualize|failure|loadcases|buckling|objcon|all
     study.py record <iter>                         sanity checks, ledger, calibration, verification/stop decisions
@@ -79,6 +81,10 @@ LEDGER_COLS = ('iter', 'material', 'layup', 'geometry', 'type', 'h_mm', 'size_mm
                'F_loadcases')
 K_TOL = 0.15            # FE tip stiffness vs thin-walled beam theory (rigid-end tape spring: 0.4% in v2.0 tests)
 CONV_TOL = dict(k=0.02, F=0.10, buckling=0.05)   # buckling: custom mode (objective = buckling value)
+# F_sim convergence only matters near failure (user-approved 2026-11-20, study boom_1m_comp50N_k10_tors1deg_hub40:
+# it019's clamp peak went 0.038 -> 0.043, +13%, 25x below failure): the F check passes if the relative change is
+# within CONV_TOL['F'] OR both the coarse and the fine peak stay below CONV_F_FLOOR.
+CONV_F_FLOOR = 0.5
 # Buckling path cutoff (threshold requirements only): path B stops once it carries this multiple of the required
 # load and the value is recorded as a lower bound (the design passes with that margin). Override per study with
 # requirements.json "buckling": {"cutoff_factor": ...}; 0 or null = no cutoff. Added 2026-11-06 at the user's request.
@@ -755,6 +761,24 @@ def cmd_choose(a):
     if key in st['designs']:
         die(f'{key} was already evaluated (iteration {st["designs"][key]["iter"]}); pick another design')
     rows = {f'{r["material"]}/{r["layup"]}/{r["geometry"]}': r for r in read_screen(sd)}
+    exploratory = False
+    if key not in rows and getattr(a, 'exploratory_screen', None):
+        # Exploratory designs (user-approved 2026-11-20, study boom_1m_comp50N_k10_tors1deg_hub40): a design the
+        # study screen rejected ONLY on an estimate (stiffness / buckling / torsion) may be run when the user asks,
+        # with --override. Its row comes from a screen of the same requirements with only those estimate
+        # thresholds relaxed (written by design_screen.py), so the exact checks (F_flat, F_hub, limits) still apply.
+        if not a.override:
+            die('--exploratory-screen needs --override "<the user request that justifies it>"')
+        xs = Path(a.exploratory_screen)
+        xs = xs if xs.is_absolute() else Path.cwd() / xs
+        try:
+            xs.resolve().relative_to(sd.resolve())
+        except ValueError:
+            die(f'{xs} is not inside the study folder')
+        with open(xs, newline='') as fh:
+            xrows = {f'{r["material"]}/{r["layup"]}/{r["geometry"]}': r for r in csv.DictReader(fh)}
+        if key in xrows:
+            rows[key], exploratory = xrows[key], True
     if key not in rows:
         die(f'{key} is not in the screen (wrong ID, excluded by the requirements, or rejected by an exact check: '
             'coiling F >= 1 or a limit). Choose from study.py candidates')
@@ -805,7 +829,7 @@ def cmd_choose(a):
                   Ex=float(row['Ex_MPa']), EIz=float(row['EIz_Nmm2']), EIy=float(row['EIy_Nmm2']), F_flat=float(row['F_flat']),
                   F_hub=_num(row['F_hub']), r_min=float(row['r_min_mm']), cross_ply=row['cross_ply'] == 'True',
                   GJ_est=_num(row.get('GJ_est_Nmm2')), twist_est=_num(row.get('twist_est_deg')),
-                  kGAz=_num(row.get('kGAz_N')), kGAy=_num(row.get('kGAy_N')))
+                  kGAz=_num(row.get('kGAz_N')), kGAy=_num(row.get('kGAy_N')), exploratory=exploratory)
     bq = req['requirements'].get('buckling')
     if bq:
         design['buckling_est_cal'] = (design['buckling_est'] or bq['min_value']) * calib_factor(st, 'b', row['type'])
@@ -1743,8 +1767,10 @@ def cmd_converge(a):
     F0 = F0.get('value') if isinstance(F0, dict) else F0
     F1 = F1.get('value') if isinstance(F1, dict) else F1
     dF = abs(F1 / F0 - 1) if F0 else 0.0
-    ok = dk <= CONV_TOL['k'] and dF <= CONV_TOL['F']
-    conv = dict(ok=ok, size=d['size'], fine=fine, dk=dk, dF=dF)
+    F_low = F0 is not None and F1 is not None and max(F0, F1) < CONV_F_FLOOR
+    ok = dk <= CONV_TOL['k'] and (dF <= CONV_TOL['F'] or F_low)
+    conv = dict(ok=ok, size=d['size'], fine=fine, dk=dk, dF=dF, F_coarse=F0, F_fine=F1, F_floor=CONV_F_FLOOR,
+                F_low=F_low)
     if d.get('custom') and d.get('buckling_value') and (idir / 'buckling.json').exists():
         # custom mode: the objective is the buckling value, so it is converged too (A and B on the fine mesh)
         bc = solver_settings(jload(idir / 'buckling.json'))
@@ -1780,9 +1806,21 @@ def cmd_converge(a):
         if prev:
             obj, key = min(prev)
             st['best'] = dict(iter=st['designs'][key]['iter'], design=key, objective=obj, improvement=None)
+    if ok:
+        # a converged feasible design better than the current best (e.g. one withdrawn earlier and re-checked)
+        # becomes the best again
+        key = d.get('key') or next((k for k, v in st['designs'].items() if v.get('iter') == i), None)
+        v = st['designs'].get(key, {})
+        sense = jload(sd / 'requirements.clean.json').get('objective', {}).get('sense', 'minimize')
+        if (v.get('feasible') is True and not v.get('sanity') and v.get('objective') is not None
+                and (not st['best'] or (v['objective'] < st['best']['objective'] if sense == 'minimize'
+                                        else v['objective'] > st['best']['objective']))):
+            st['best'] = dict(iter=i, design=key, objective=v['objective'], improvement=None)
+            print(f'iteration {i} is the best converged feasible design (objective {v["objective"]:.6g})')
     save_state(sd, st)
     print(f'mesh convergence of iteration {i}: size {d["size"]} -> {fine} mm: tip stiffness {100 * dk:.2f}% '
-          f'(tol {100 * CONV_TOL["k"]:.0f}%), F_sim {100 * dF:.1f}% (tol {100 * CONV_TOL["F"]:.0f}%) -> '
+          f'(tol {100 * CONV_TOL["k"]:.0f}%), F_sim {100 * dF:.1f}% (tol {100 * CONV_TOL["F"]:.0f}%'
+          f'{f", or both peaks < {CONV_F_FLOOR}: {F0:.3g} -> {F1:.3g}" if F0 is not None and F1 is not None else ""}) -> '
           f'{"CONVERGED" if ok else "NOT CONVERGED"}')
     print('NEXT: ' + next_action(st))
 
@@ -2112,6 +2150,9 @@ def main():
     p.add_argument('--alpha', type=float, help='custom-design mode (CTM): subtended angle [rad]')
     p.add_argument('--reason', required=True)
     p.add_argument('--override')
+    p.add_argument('--exploratory-screen', help='screen.csv (inside the study folder) of the same requirements with '
+                   'only the estimate thresholds relaxed: lets --override pick a design the study screen rejected '
+                   'only on an estimate (user request; user-approved 2026-11-20)')
     p.set_defaults(f=cmd_choose)
     p = sp.add_parser('run')
     p.add_argument('iter', type=int)
