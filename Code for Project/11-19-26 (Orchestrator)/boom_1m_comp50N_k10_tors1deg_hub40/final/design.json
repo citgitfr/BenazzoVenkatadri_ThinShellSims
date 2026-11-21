@@ -1,0 +1,107 @@
+{
+ "iter": 20,
+ "key": "L021/Y001/R014",
+ "material": "L021",
+ "layup": "Y001",
+ "layup_str": "[0/0/0]",
+ "geometry": "R014",
+ "type": "TRAC",
+ "section": {
+  "type": "boom",
+  "id": "R014"
+ },
+ "R": 78.2,
+ "b": 237.83232146463774,
+ "L": 1000.0,
+ "size": 5.0,
+ "name": "it020_L021_Y001_R014",
+ "reason": "Best untried TOP design after the warping-restraint fix of the screen (rank 5, 41.7 g, 3% lighter than best it019). Material L021 (M40JB/TP80EP thin ply, 1.56 g/cc vs M55J's 1.61) on the same TRAC R014 and [0/0/0] as it019 so only the material changes: k_cal 11.9 N/mm (19% margin), twist_cal 0.026 deg (Vlasov, rigid tip), F_hub 0.11. Watch: it019's B buckling stopped at 51.3 N (lower bound at the 50 N cutoff) and M40JB is less stiff than M55J, so buckling is the open risk.",
+ "override": "",
+ "screen_rank": 5,
+ "h_mm": 0.10499999999999998,
+ "k_est": 12.362818817769588,
+ "buckling_est": 130.94930169066723,
+ "Ex": 222000.0,
+ "EIz": 4913588862.8828745,
+ "EIy": 4932463509.554947,
+ "F_flat": 0.04213023502534628,
+ "F_hub": 0.10973141490026189,
+ "r_min": 78.2,
+ "cross_ply": true,
+ "GJ_est": 2160845.821780022,
+ "twist_est": 0.02651544082209635,
+ "kGAz": 76636.42944652573,
+ "kGAy": 48047.415591026685,
+ "exploratory": false,
+ "buckling_est_cal": 130.94930169066723,
+ "abd_check": {
+  "A": 4.9e-18,
+  "B": 1.7e-16,
+  "D": 0.0044,
+  "D_expected": 0.0044,
+  "ok": true
+ },
+ "failure_log": "Code for Project/11-19-26 (Orchestrator)/boom_1m_comp50N_k10_tors1deg_hub40/iterations/it020/logs/failure.log",
+ "F_governing_fc": 0.04213,
+ "tip_twist_deg": 0.03781333148644684,
+ "GJ_fe": 1515226.9652204127,
+ "loadcase_F": {
+  "torsion": 1.022e-07,
+  "axial50N": 4.585e-06
+ },
+ "buckling_value": 50.14450173246996,
+ "buckling_kind": "B LOWER BOUND: path passed the cutoff 50 (= 1 x requirement) on the 5 mm B mesh still rising; stopped there by design",
+ "buckling_A": null,
+ "buckling_B": 50.14450173246996,
+ "buckling_amplitude": 0.0105,
+ "buckling_imperfection": "segment LBA",
+ "buckling_notes": [
+  "seed: segment LBA (segment L 152 mm, 4 x 8 mm, tiled; 98 s, cached)"
+ ],
+ "buckling_pipeline": "fast",
+ "buckling_B_size": 5.0,
+ "buckling_seed": {
+  "method": "segment LBA",
+  "model": "segment L 152 mm, 4 x 8 mm, tiled",
+  "ndof": 7321,
+  "lam": [
+   73.31440019203045,
+   114.21018799908573,
+   114.21018826069498,
+   114.25760949140196
+  ],
+  "lam_small": 0.05,
+  "times": {
+   "K0": 12.576506501063704,
+   "K1": 69.61531320028007,
+   "eig": 16.016335198655725,
+   "total": 98.2081548999995
+  },
+  "time": 98.2081548999995,
+  "target_dofs": 57900,
+  "global_scan": {
+   "skipped": "Euler 67718 >= segment 73.314"
+  },
+  "key": {
+   "section": {
+    "type": "boom",
+    "id": "R014"
+   },
+   "L": 1000.0,
+   "size": 5.0,
+   "load": {
+    "type": "compression",
+    "ends": "pinned"
+   }
+  },
+  "cached": true
+ },
+ "buckling_fine_check": null,
+ "buckling_time_s": 2188.128271,
+ "k_fe": 12.025151587722164,
+ "k_beam": 12.362818817769588,
+ "k_ratio": 0.9726868738412568,
+ "sanity": [],
+ "feasible": true,
+ "objective": 0.0417353262896334
+}
