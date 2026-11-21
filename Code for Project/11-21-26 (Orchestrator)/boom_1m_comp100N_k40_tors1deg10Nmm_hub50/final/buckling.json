@@ -1,0 +1,41 @@
+{
+ "name": "it002_L017_Y016_C008_buck",
+ "laminate": {
+  "json": "lam.json"
+ },
+ "geometry": {
+  "L": 1000.0,
+  "section": {
+   "type": "boom",
+   "id": "C008"
+  },
+  "size": 4.5
+ },
+ "load": {
+  "type": "compression",
+  "ends": "pinned"
+ },
+ "A": {
+  "step": 0.11161591281002098,
+  "max": 6.696954768601259,
+  "n_coarse": 8,
+  "tol": 1e-06,
+  "max_iter": 10,
+  "workers": 16,
+  "n_rounds": 2,
+  "max_step": 0.8929273024801678
+ },
+ "B": {
+  "step": 0.0009368626601276641,
+  "max": 0.018737253202553282,
+  "amplitude": 0.014,
+  "control": "disp",
+  "tol": 1e-06,
+  "max_iter": 40,
+  "max_step": 0.8929273024801678
+ },
+ "B_cutoff": 100.0,
+ "B_pass": 100.0,
+ "mode_file": "C:\\Users\\fbenazzo\\Desktop\\ME295\\BenazzoVenkatadri_ThinShellSims\\Code for Project\\11-21-26 (Orchestrator)\\boom_1m_comp100N_k40_tors1deg10Nmm_hub50\\buckling_seeds\\seed_e7e28fdf78df.npz",
+ "mode_label": "segment LBA"
+}

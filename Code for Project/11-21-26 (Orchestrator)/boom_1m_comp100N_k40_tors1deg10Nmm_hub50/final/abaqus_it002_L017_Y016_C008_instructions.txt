@@ -1,0 +1,24 @@
+=== Abaqus verification of "it002_L017_Y016_C008" ===
+
+ON THE MACHINE WITH ABAQUS
+  1. Copy this ONE file into an empty folder there:
+       abaqus_it002_L017_Y016_C008.py
+  2. In that folder run:
+       abaqus cae noGUI=abaqus_it002_L017_Y016_C008.py
+     (4.5 mm mesh, S4R, job "it002_L017_Y016_C008_S4R_4p5mm". For another mesh / element, e.g.
+      abaqus cae noGUI=abaqus_it002_L017_Y016_C008.py -- 2.25 S4
+      the job and every file name below become "it002_L017_Y016_C008_S4_2p25mm".)
+  3. When it finishes, open it002_L017_Y016_C008_S4R_4p5mm_results.txt and check that it does NOT say
+     "ODB extraction failed". If it does, copy .claude/verification/odb_extract.py
+     from the project into the same folder and run:
+       abaqus python odb_extract.py it002_L017_Y016_C008_S4R_4p5mm.odb
+     Optional: open the model in Abaqus/CAE to check the set-up:
+       abaqus cae database=it002_L017_Y016_C008_S4R_4p5mm.cae
+
+COPY BACK TO THIS MACHINE, into C:\Users\fbenazzo\Desktop\ME295\BenazzoVenkatadri_ThinShellSims\Code for Project\11-21-26 (Orchestrator)\boom_1m_comp100N_k40_tors1deg10Nmm_hub50\iterations\it002
+  it002_L017_Y016_C008_S4R_4p5mm_odb.npz        REQUIRED: the Abaqus results as plain arrays
+  it002_L017_Y016_C008_S4R_4p5mm_results.txt    recommended: run log and Abaqus vs embedded OpenSees values
+  not needed: it002_L017_Y016_C008_S4R_4p5mm.odb / .cae / .dat / .msg / .sta (keep them there for inspection)
+
+THEN TELL CLAUDE (paste):
+  Run the OpenSeesAbaqusResultsComparator agent on C:\Users\fbenazzo\Desktop\ME295\BenazzoVenkatadri_ThinShellSims\Code for Project\11-21-26 (Orchestrator)\boom_1m_comp100N_k40_tors1deg10Nmm_hub50\iterations\it002\results\it002_L017_Y016_C008.npz and C:\Users\fbenazzo\Desktop\ME295\BenazzoVenkatadri_ThinShellSims\Code for Project\11-21-26 (Orchestrator)\boom_1m_comp100N_k40_tors1deg10Nmm_hub50\iterations\it002\it002_L017_Y016_C008_S4R_4p5mm_odb.npz
