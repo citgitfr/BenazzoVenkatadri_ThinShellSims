@@ -1,0 +1,79 @@
+{
+ "_help": "Written by the orchestrator from the user's prompt (PROTOCOL.md step 1), then checked by study.py init. Units N, mm. Keys starting with _ are ignored.",
+ "prompt": "1 m long, any cross-section, 100 N under compression buckling load pin-pin, transverse bending stiffness such that no more than 2 mm deflection under 100 N, torsional stiffness such that it will not rotate more than 1 degrees under 10 Nmm torque, include any layups and materials, coil on 50 mm hub, ensure to check no material failure throughout the simulation runs.\n\n-do not modify any files outside of the current folder\n-do not use more than 16 CPUs with abaqus anlaysis\n-give me an update every 3 hours\n\nDo not ask me for anything, you should be able to do everything on your own",
+ "study_name": "boom_1m_comp100N_k50_tors1deg10Nmm_hub50",
+ "length_mm": 1000,
+ "section_classes": [
+  "TS",
+  "TRAC",
+  "OM",
+  "CO"
+ ],
+ "objective": {
+  "sense": "minimize",
+  "quantity": "mass"
+ },
+ "requirements": {
+  "bending_stiffness": {
+   "text": "relaxed by the user 2026-11-21: tip deflection <= 2.5 mm under 100 N (cantilever, load along z): k >= 40 N/mm",
+   "direction": "z",
+   "sign": -1,
+   "min_N_per_mm": 40.0,
+   "load_N": 100.0
+  },
+  "buckling": {
+   "text": "100 N under compression buckling load pin-pin",
+   "load": "compression",
+   "ends": "pinned",
+   "min_value": 100.0,
+   "units": "N"
+  },
+  "torsional_stiffness": {
+   "text": "torsional stiffness such that it will not rotate more than 1 degrees under 10 Nmm torque",
+   "torque_Nmm": 10.0,
+   "max_twist_deg": 1.0
+  },
+  "failure_load_cases": [
+   {
+    "name": "axial100N",
+    "text": "ensure to check no material failure throughout the simulation runs: Hashin F < 1 under a 100 N axial compression tip load, linear, cantilever (interpreted as in the 11-19-26 study)",
+    "force": [
+     -100.0,
+     0.0,
+     0.0
+    ]
+   }
+  ],
+  "coiling": {
+   "text": "coil on 50 mm hub (taken as the hub RADIUS, as the user answered for the 11-19-26 study)",
+   "hub_radius_mm": 50
+  }
+ },
+ "extra_constraints": [],
+ "limits": {
+  "max_thickness_mm": null,
+  "max_width_mm": null,
+  "max_height_mm": null
+ },
+ "materials": {
+  "allow": "all",
+  "exclude": [],
+  "allow_caution": false
+ },
+ "layups": {
+  "allow": "all",
+  "min_plies": 3,
+  "max_plies": 5,
+  "cross_ply_only": false
+ },
+ "geometries": {
+  "allow": "all",
+  "exclude": []
+ },
+ "max_iterations": 100,
+ "verification": {
+  "min": 5,
+  "max": 10
+ },
+ "_clarifications": "The user asked not to be asked anything (2026-11-20). Ambiguities resolved with the user's own answers to the identical prompt form in the 11-19-26 study boom_1m_comp50N_k10_tors1deg_hub40: bending check = cantilever with the 100 N tip load along z (sign -1), k_min = 100/2 = 50 N/mm; hub 50 mm = RADIUS; 'no material failure throughout' = Hashin F < 1 in the static 100 N case, the 10 N mm torque case and an extra linear 100 N axial compression case, plus the hub coiling check F_hub < 1; the nonlinear buckling path is not failure-checked (the skill does not save its fields). CPU cap: user 16; PROTOCOL 6a caps Abaqus at 8 per job (the stricter rule applies); the user's 16-CPU allowance counts as approval for >1 CPU on long jobs. Updates to the user every 3 hours."
+}

@@ -1,0 +1,81 @@
+{
+ "_help": "Written by the orchestrator from the user's prompt (PROTOCOL.md step 1), then checked by study.py init. Units N, mm. Keys starting with _ are ignored.",
+ "prompt": "1 m long, any cross-section, 100 N under compression buckling load pin-pin, transverse bending stiffness such that no more than 2 mm deflection under 100 N, torsional stiffness such that it will not rotate more than 1 degrees under 10 Nmm torque, include any layups and materials, coil on 50 mm hub, ensure to check no material failure throughout the simulation runs.\n\n-do not modify any files outside of the current folder\n-do not use more than 16 CPUs with abaqus anlaysis\n-give me an update every 3 hours\n\nDo not ask me for anything, you should be able to do everything on your own\n\n[2026-11-21, user] drop the requirementto 40 N/mm and assess the iterations you have done so far according to the new requirement\n[2026-11-21, user] approve all the changes necessary to do that and push to the main in github\n[2026-11-21, user] can you do 10 more designs that also look at the feasibility of lighter options and check that they actually fail, as the initial screening would suggest?",
+ "study_name": "explore_lighter",
+ "length_mm": 1000,
+ "section_classes": [
+  "TS",
+  "TRAC",
+  "OM",
+  "CO"
+ ],
+ "objective": {
+  "sense": "minimize",
+  "quantity": "mass"
+ },
+ "requirements": {
+  "bending_stiffness": {
+   "text": "bending stiffness relaxed by the user on 2026-11-21 to 40 N/mm (cantilever, 100 N tip load along z: tip deflection <= 2.5 mm); originally 50 N/mm (2 mm), unreachable with the catalogs (study 11-20-26 boom_1m_comp100N_k50_tors1deg10Nmm_hub50)",
+   "direction": "z",
+   "sign": -1,
+   "min_N_per_mm": 0.01,
+   "load_N": 100.0
+  },
+  "buckling": {
+   "text": "100 N under compression buckling load pin-pin",
+   "load": "compression",
+   "ends": "pinned",
+   "min_value": 0.01,
+   "units": "N"
+  },
+  "torsional_stiffness": {
+   "text": "torsional stiffness such that it will not rotate more than 1 degrees under 10 Nmm torque",
+   "torque_Nmm": 10.0,
+   "max_twist_deg": 1000
+  },
+  "failure_load_cases": [
+   {
+    "name": "axial100N",
+    "text": "ensure to check no material failure throughout the simulation runs: Hashin F < 1 under a 100 N axial compression tip load, linear, cantilever (interpreted as in the 11-19-26 study)",
+    "force": [
+     -100.0,
+     0.0,
+     0.0
+    ]
+   }
+  ],
+  "coiling": {
+   "text": "coil on 50 mm hub (taken as the hub RADIUS, as the user answered for the 11-19-26 study)",
+   "hub_radius_mm": 50
+  }
+ },
+ "extra_constraints": [],
+ "limits": {
+  "max_thickness_mm": null,
+  "max_width_mm": null,
+  "max_height_mm": null
+ },
+ "materials": {
+  "allow": "all",
+  "exclude": [],
+  "allow_caution": false
+ },
+ "layups": {
+  "allow": "all",
+  "min_plies": 3,
+  "max_plies": 5,
+  "cross_ply_only": false
+ },
+ "geometries": {
+  "allow": "all",
+  "exclude": []
+ },
+ "max_iterations": 100,
+ "verification": {
+  "min": 5,
+  "max": 10
+ },
+ "_clarifications": [
+  "2026-11-21: follow-up of the finalized study boom_1m_comp100N_k40_tors1deg10Nmm_hub50 (best 105.5 g, L017/Y016/C008). Same requirements; 10 designs lighter than 105.5 g that the screen rejected only on estimates are run with choose --exploratory-screen (explore_lighter/), at the user request, to check that they fail."
+ ]
+}

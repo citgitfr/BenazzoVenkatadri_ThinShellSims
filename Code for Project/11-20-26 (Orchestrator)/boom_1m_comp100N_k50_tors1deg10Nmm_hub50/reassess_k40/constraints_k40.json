@@ -1,0 +1,61 @@
+{
+ "constraints": [
+  {
+   "name": "boom length",
+   "text": "boom length 1000 mm (requirements.json)",
+   "expr": "L",
+   "op": "==",
+   "limit": 1000,
+   "tol": 0.01,
+   "units": "mm"
+  },
+  {
+   "name": "bending stiffness",
+   "text": "relaxed by the user 2026-11-21: tip deflection <= 2.5 mm under 100 N (cantilever, load along z): k >= 40 N/mm",
+   "expr": "abs(force_z) / abs(tip_uz)",
+   "op": ">=",
+   "limit": 40.0,
+   "units": "N/mm"
+  },
+  {
+   "name": "buckling",
+   "text": "100 N under compression buckling load pin-pin",
+   "expr": "buckling_load",
+   "op": ">=",
+   "limit": 100.0,
+   "units": "N"
+  },
+  {
+   "name": "torsional stiffness",
+   "text": "torsional stiffness such that it will not rotate more than 1 degrees under 10 Nmm torque",
+   "expr": "tip_twist_deg",
+   "op": "<=",
+   "limit": 1.0,
+   "units": "deg"
+  },
+  {
+   "name": "no failure under the torque",
+   "text": "Hashin F < 1 under the 10 N mm torque (study step loadcases)",
+   "expr": "F_torsion",
+   "op": "<",
+   "limit": 1,
+   "units": "-"
+  },
+  {
+   "name": "no failure: axial100N",
+   "text": "ensure to check no material failure throughout the simulation runs: Hashin F < 1 under a 100 N axial compression tip load, linear, cantilever (interpreted as in the 11-19-26 study)",
+   "expr": "F_axial100N",
+   "op": "<",
+   "limit": 1,
+   "units": "-"
+  },
+  {
+   "name": "coiling on hub",
+   "text": "coil on 50 mm hub (taken as the hub RADIUS, as the user answered for the 11-19-26 study)",
+   "expr": "F_hub",
+   "op": "<",
+   "limit": 1,
+   "units": "-"
+  }
+ ]
+}
