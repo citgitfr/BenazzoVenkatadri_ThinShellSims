@@ -10,3 +10,7 @@ We wanted to add torsion as one of our load cases that we can use in the optimiz
 11/17/26 to 11/19/26
 Tara
 I ran a full optimization demo on a hard problem, which took about 2 days but found an optimal solution.  I did not specify a cross-section type to be used, but because I included torsional loading, it knew to choose a closed cross-section.  It found an optimal design but it failed the Abaqus verification (the buckling load from OpenSeesPy was just above the requirement, but the Abaqus verification, while very close to the OpenSeesPy value, fell just short.  It ended up going to the next-lightest design after that point.  This demonstrates a full end-to-end run of our system (use of the catalogs created by the librarian agent, use of the orchestrator agent to run the optimization, and use of Abaqus verification throughout the pipeline to make sure OpenSeesPy is modeling these thin-shell booms correctly).
+
+11/23/26
+Tara
+I iterated with Claude to create the demo slides and narrative report for Lab Report 4, which covers our 3 test cases over the past few weeks that go beyond the baseline.

@@ -1,0 +1,32 @@
+{
+ "ts": {
+  "evaluated": 179100,
+  "screen_ok": 7617,
+  "first_fail": {
+   "stiffness estimate": 79332,
+   "F_flat >= 1": 74233,
+   "F_hub >= 1": 17918
+  }
+ },
+ "k40": {
+  "evaluated": 716400,
+  "screen_ok": 241,
+  "first_fail": {
+   "stiffness estimate": 325278,
+   "F_flat >= 1": 335402,
+   "F_hub >= 1": 55376,
+   "torsion estimate": 103
+  }
+ },
+ "tara": {
+  "evaluated": 716400,
+  "screen_ok": 3322,
+  "first_fail": {
+   "stiffness estimate": 348658,
+   "F_flat >= 1": 335402,
+   "buckling estimate": 421,
+   "F_hub >= 1": 27175,
+   "torsion estimate": 1422
+  }
+ }
+}
